@@ -1,0 +1,106 @@
+import type { Meta, StoryObj } from "@storybook/react"
+import { Search, Eye, EyeOff } from "lucide-react"
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+
+const meta = {
+  title: "Design System/Input",
+  component: Input,
+  tags: ["autodocs"],
+  parameters: {},
+  argTypes: {
+    disabled:    { control: "boolean" },
+    placeholder: { control: "text" },
+    type: {
+      control: "select",
+      options: ["text", "email", "password", "number", "search"],
+    },
+  },
+} satisfies Meta<typeof Input>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Default: Story = {
+  args: { placeholder: "Type something…", type: "text" },
+  decorators: [(S) => <div className="w-72"><S /></div>],
+}
+
+export const WithLabel: Story = {
+  name: "With Label",
+  render: () => (
+    <div className="flex w-72 flex-col gap-2">
+      <label className="text-base font-medium text-foreground">Email address</label>
+      <Input type="email" placeholder="you@example.com" />
+    </div>
+  ),
+}
+
+export const WithIcon: Story = {
+  name: "With Icon (Search)",
+  render: () => (
+    <div className="relative w-72">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+      <Input type="search" placeholder="Suggestions" className="pl-10" />
+    </div>
+  ),
+}
+
+export const PasswordReveal: Story = {
+  name: "Password Reveal",
+  render: function Render() {
+    const [show, setShow] = useState(false)
+    return (
+      <div className="relative w-72">
+        <Input type={show ? "text" : "password"} placeholder="Enter password" className="pr-10" />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+        >
+          {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+        </button>
+      </div>
+    )
+  },
+}
+
+export const Disabled: Story = {
+  args: { placeholder: "Disabled field", disabled: true },
+  decorators: [(S) => <div className="w-72"><S /></div>],
+}
+
+export const FormGroup: Story = {
+  name: "Form Group",
+  render: () => (
+    <div className="liquid-glass rounded-2xl p-6 flex flex-col gap-4 w-80">
+      <h3 className="text-sm font-semibold text-gradient-primary">Sign in</h3>
+      <div className="flex flex-col gap-2">
+        <label className="text-base text-muted-foreground">Email</label>
+        <Input type="email" placeholder="you@example.com" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-base text-muted-foreground">Password</label>
+        <Input type="password" placeholder="••••••••" />
+      </div>
+      <Button className="w-full mt-1">Sign In</Button>
+    </div>
+  ),
+}
+
+// ── Dark + Light side-by-side ─────────────────────────────────────────────────
+export const DarkAndLight: Story = {
+  name: "Dark + Light",
+  globals: { theme: "side-by-side" },
+  render: () => (
+    <div className="flex flex-col gap-4 w-64">
+      <Input type="text" placeholder="Default input" />
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+        <Input type="search" placeholder="Suggestions" className="pl-10" />
+      </div>
+      <Input type="text" placeholder="Disabled" disabled />
+    </div>
+  ),
+}

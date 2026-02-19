@@ -1,26 +1,555 @@
 @import "tailwindcss";
 
+/* ============================================================
+   DESIGN SYSTEM — GLASSMORPHISM NEON
+   clinvetia-glass · Next.js + Tailwind CSS v4
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   LIGHT FROST (modo claro)
+   ---------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Superficies */
+  --background:       #f0f4f8;
+  --foreground:       #0d1117;
+  --card:             #ffffff;
+  --card-foreground:  #0d1117;
+  --popover:          #ffffff;
+  --popover-foreground: #0d1117;
+
+  /* Marca */
+  --primary:          #00f2fe;          /* Neon Cyan */
+  --primary-foreground: #0d1117;
+  --secondary:        #e2e8f0;
+  --secondary-foreground: #1e293b;
+
+  /* Semánticas */
+  --muted:            #e8edf3;
+  --muted-foreground: #64748b;
+  --accent:           #dbeafe;
+  --accent-foreground: #1e40af;
+  --destructive:      #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Estructura */
+  --border:           #cbd5e1;
+  --input:            #e2e8f0;
+  --ring:             #00f2fe;
+
+  /* Glass Frost */
+  --glass-bg:         rgba(255, 255, 255, 0.55);
+  --glass-border:     rgba(255, 255, 255, 0.70);
+  --glass-blur:       16px;
+
+  /* Liquid Glass — highlight interno (borde superior luminoso) */
+  --glass-highlight:  inset 0 1px 0 rgba(255, 255, 255, 0.80),
+                      inset 0 -1px 0 rgba(255, 255, 255, 0.20);
+
+  /* Liquid Glass — sombra exterior difuminada */
+  --glass-shadow:     0 8px 32px rgba(59, 130, 246, 0.15),
+                      0 2px 8px rgba(0, 0, 0, 0.08);
+
+  /* Sombras */
+  --shadow-sm:        0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md:        0 4px 16px rgba(0, 0, 0, 0.10);
+  --shadow-glow:      0 0 20px rgba(59, 130, 246, 0.25);
+
+  /* Radio global */
+  --radius:           0.75rem;
+
+  /* Neon colors */
+  --neon-green:       #43e97b;
+  --neon-cyan:        #00f2fe;
+  --neon-pink:        #f093fb;
+  --neon-red:         #ef4444;
+  --neon-amber:       #f59e0b;
+  --neon-blue:        #4facfe;
+
+  /* Semánticas extra */
+  --success:          #43e97b;
+  --success-foreground: #0d1117;
+  --warning:          #f59e0b;
+  --warning-foreground: #0d1117;
+
+  /* Gradientes */
+  --gradient-primary:   linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-accent:    linear-gradient(135deg, #4facfe 0%, #3b82f6 100%);
+  --gradient-surface:   linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
+
+  /* Glows */
+  --glow-primary:     0 0 25px rgba(0, 242, 254, 0.45),
+                      0 0 60px rgba(0, 242, 254, 0.15);
+  --glow-secondary:   0 0 25px rgba(240, 147, 251, 0.55),
+                      0 0 60px rgba(240, 147, 251, 0.20);
+  --glow-accent:      0 0 25px rgba(79, 172, 254, 0.45),
+                      0 0 60px rgba(79, 172, 254, 0.15);
+  --glow-destructive: 0 0 25px rgba(239, 68, 68, 0.50),
+                      0 0 60px rgba(239, 68, 68, 0.20);
+  --glow-lg:          0 0 60px rgba(0, 242, 254, 0.30), 0 0 120px rgba(0, 242, 254, 0.10);
+
+  /* Bordes neon (hover) */
+  --border-neon-primary:   rgba(0, 242, 254, 0.70);
+  --border-neon-secondary: rgba(240, 147, 251, 0.70);
+  --border-neon-accent:    rgba(79, 172, 254, 0.70);
+
+  /* ── RGB channels para uso en rgba() dentro de box-shadow ── */
+  --primary-rgb:      0,   242, 254;   /* #00f2fe */
+  --secondary-rgb:    240, 147, 251;   /* #f093fb */
+  --accent-rgb:       79,  172, 254;   /* #4facfe */
+  --destructive-rgb:  239, 68,  68;    /* #ef4444 */
+  --success-rgb:      67,  233, 123;   /* #43e97b */
+  --warning-rgb:      245, 158, 11;    /* #f59e0b */
+  --ring-rgb:         0,   242, 254;
 }
 
+/* ----------------------------------------------------------
+   DARK NEON ← MODO PRINCIPAL
+   ---------------------------------------------------------- */
+.dark {
+  /* Superficies */
+  --background:       #0a0a0f;
+  --foreground:       #ededed;
+  --card:             #0f0f1a;
+  --card-foreground:  #ededed;
+  --popover:          #12121f;
+  --popover-foreground: #ededed;
+
+  /* Marca — gradientes como fallback de color sólido */
+  --primary:          #43e97b;          /* Neon Green */
+  --primary-foreground: #0a0a0f;
+  --secondary:        #f093fb;          /* Pink (punto medio del gradiente) */
+  --secondary-foreground: #0a0a0f;
+
+  /* Semánticas */
+  --muted:            #1a1a2e;
+  --muted-foreground: #8892a4;
+  --accent:           #00f2fe1a;        /* Cyan 10 % opacidad */
+  --accent-foreground: #00f2fe;
+  --destructive:      #f5576c;
+  --destructive-foreground: #0a0a0f;
+
+  /* Estructura */
+  --border:           rgba(255, 255, 255, 0.10);
+  --input:            rgba(255, 255, 255, 0.08);
+  --ring:             #43e97b;
+
+  /* ── Gradientes de marca ── */
+  --gradient-primary:   linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-accent:    linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+  --gradient-surface:   linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+
+  /* ── Liquid Glass Neon ── */
+  --glass-bg:         rgba(15, 15, 28, 0.55);
+  --glass-border:     rgba(255, 255, 255, 0.12);
+  --glass-blur:       20px;
+
+  /* ── Liquid Glass — highlight interno (da el efecto 3D de lente) ── */
+  --glass-highlight:  inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                      inset 0 -1px 0 rgba(0, 0, 0, 0.30);
+
+  /* ── Liquid Glass — sombra exterior de superficie ── */
+  --glass-shadow:     0 8px 40px rgba(0, 0, 0, 0.50),
+                      0 2px 8px rgba(0, 0, 0, 0.30);
+
+  /* ── Glows / Sombras neon ── */
+  --glow-primary:     0 0 25px rgba(67, 233, 123, 0.55),
+                      0 0 60px rgba(67, 233, 123, 0.20);
+  --glow-secondary:   0 0 25px rgba(240, 147, 251, 0.55),
+                      0 0 60px rgba(240, 147, 251, 0.20);
+  --glow-accent:      0 0 25px rgba(0, 242, 254, 0.45),
+                      0 0 60px rgba(0, 242, 254, 0.15);
+  --glow-destructive: 0 0 25px rgba(245, 87, 108, 0.55),
+                      0 0 60px rgba(245, 87, 108, 0.20);
+  --glow-lg:          0 0 60px rgba(67, 233, 123, 0.30), 0 0 120px rgba(67, 233, 123, 0.10);
+
+  /* Sombras de superficie */
+  --shadow-sm:        0 1px 3px rgba(0, 0, 0, 0.40);
+  --shadow-md:        0 4px 24px rgba(0, 0, 0, 0.60);
+  --shadow-glow:      var(--glow-primary);
+
+  /* Bordes neon (hover) */
+  --border-neon-primary:   rgba(67, 233, 123, 0.70);
+  --border-neon-secondary: rgba(240, 147, 251, 0.70);
+  --border-neon-accent:    rgba(0, 242, 254, 0.70);
+
+  /* Neon colors */
+  --neon-green:       #43e97b;
+  --neon-cyan:        #00f2fe;
+  --neon-pink:        #f093fb;
+  --neon-red:         #f5576c;
+  --neon-amber:       #f59e0b;
+  --neon-blue:        #4facfe;
+
+  /* Semánticas extra */
+  --success:          #43e97b;
+  --success-foreground: #0a0a0f;
+  --warning:          #f59e0b;
+  --warning-foreground: #0a0a0f;
+
+  /* ── RGB channels para uso en rgba() dentro de box-shadow ── */
+  --primary-rgb:      67,  233, 123;   /* #43e97b */
+  --secondary-rgb:    240, 147, 251;   /* #f093fb */
+  --accent-rgb:       0,   242, 254;   /* #00f2fe */
+  --destructive-rgb:  245, 87,  108;   /* #f5576c */
+  --success-rgb:      67,  233, 123;   /* #43e97b */
+  --warning-rgb:      245, 158, 11;    /* #f59e0b */
+  --ring-rgb:         67,  233, 123;
+}
+
+/* ----------------------------------------------------------
+   TEMA TAILWIND v4 — mapeo de tokens a utilidades
+   ---------------------------------------------------------- */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Fuentes (inyectadas desde layout.tsx vía next/font) */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Colores semánticos → utilidades Tailwind */
+  --color-background:         var(--background);
+  --color-foreground:         var(--foreground);
+  --color-card:               var(--card);
+  --color-card-foreground:    var(--card-foreground);
+  --color-popover:            var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary:            var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary:          var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:              var(--muted);
+  --color-muted-foreground:   var(--muted-foreground);
+  --color-accent:             var(--accent);
+  --color-accent-foreground:  var(--accent-foreground);
+  --color-destructive:        var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border:             var(--border);
+  --color-input:              var(--input);
+  --color-ring:               var(--ring);
+  --color-success:            var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning:            var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  /* Neon colors */
+  --color-neon-green:  var(--neon-green);
+  --color-neon-cyan:   var(--neon-cyan);
+  --color-neon-pink:   var(--neon-pink);
+  --color-neon-red:    var(--neon-red);
+  --color-neon-amber:  var(--neon-amber);
+  --color-neon-blue:   var(--neon-blue);
+
+  /* Radio */
+  --radius-sm:  calc(var(--radius) - 4px);
+  --radius-md:  var(--radius);
+  --radius-lg:  calc(var(--radius) + 4px);
+  --radius-xl:  calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 16px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ----------------------------------------------------------
+   BASE STYLES
+   ---------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* ----------------------------------------------------------
+   UTILIDADES GLASS & NEON (clases reutilizables)
+   ---------------------------------------------------------- */
+
+/* Superficie glass — base glassmorphism */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+/* Liquid Glass — superficie con efecto 3D de lente (highlight interno + sombra exterior) */
+.liquid-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}
+
+/* Liquid Glass — variante con tinte de color primario (green en dark, cyan en light) */
+.liquid-glass-primary {
+  background: rgba(var(--primary-rgb), 0.08);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(var(--primary-rgb), 0.35);
+  box-shadow:
+    var(--glass-highlight),
+    0 0 25px rgba(var(--primary-rgb), 0.35),
+    var(--glass-shadow);
+}
+
+/* Liquid Glass — variante con tinte de color secundario (pink) */
+.liquid-glass-secondary {
+  background: rgba(var(--secondary-rgb), 0.08);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(var(--secondary-rgb), 0.35);
+  box-shadow:
+    var(--glass-highlight),
+    0 0 25px rgba(var(--secondary-rgb), 0.35),
+    var(--glass-shadow);
+}
+
+/* Glow sobre texto usando clip */
+.text-gradient-primary {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-secondary {
+  background: var(--gradient-secondary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.text-gradient-accent {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Bordes neon animados */
+.border-neon {
+  border: 1px solid var(--border-neon-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.border-neon:hover {
+  box-shadow: var(--glow-primary);
+}
+
+/* ── Liquid Glass Buttons — efecto "gummy glass" 3D ────────────────────────── */
+/* Inspirado en: buttons con borde grueso luminoso, highlight interno, sombra de glow */
+.btn-liquid {
+  position: relative;
+  isolation: isolate;
+  border-radius: 9999px;  /* pill completo */
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Capa de highlight interior (simula curvatura del cristal) */
+.btn-liquid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.00) 55%,
+    rgba(0, 0, 0, 0.10) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.btn-liquid:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.btn-liquid:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+/* Scrollbar custom (dark) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+  box-shadow: var(--glow-primary);
+}
+
+/* Selection color */
+::selection {
+  background: rgba(var(--primary-rgb), 0.30);
+  color: var(--foreground);
+}
+
+/* ── Variant utility classes (usan CSS variables) ─────────────────────────────── */
+
+/* Secondary variant */
+.btn-secondary {
+  background-color: rgba(var(--secondary-rgb), 0.15);
+  border-color: rgba(var(--secondary-rgb), 0.70);
+  color: var(--neon-pink);
+  box-shadow: 0 0 20px rgba(var(--secondary-rgb), 0.50), 0 0 60px rgba(var(--secondary-rgb), 0.20), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+.btn-secondary:hover {
+  background-color: rgba(var(--secondary-rgb), 0.22);
+  border-color: rgba(var(--secondary-rgb), 0.90);
+  box-shadow: 0 0 30px rgba(var(--secondary-rgb), 0.70), 0 0 80px rgba(var(--secondary-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
+/* Destructive variant */
+.btn-destructive {
+  background-color: rgba(var(--destructive-rgb), 0.15);
+  border-color: rgba(var(--destructive-rgb), 0.70);
+  color: var(--destructive);
+  box-shadow: 0 0 20px rgba(var(--destructive-rgb), 0.50), 0 0 60px rgba(var(--destructive-rgb), 0.20), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+.btn-destructive:hover {
+  background-color: rgba(var(--destructive-rgb), 0.22);
+  border-color: rgba(var(--destructive-rgb), 0.90);
+  box-shadow: 0 0 30px rgba(var(--destructive-rgb), 0.70), 0 0 80px rgba(var(--destructive-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
+/* Accent variant */
+.btn-accent {
+  background-color: rgba(var(--accent-rgb), 0.15);
+  border-color: rgba(var(--accent-rgb), 0.70);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.50), 0 0 60px rgba(var(--accent-rgb), 0.20), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+.btn-accent:hover {
+  background-color: rgba(var(--accent-rgb), 0.22);
+  border-color: rgba(var(--accent-rgb), 0.90);
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.70), 0 0 80px rgba(var(--accent-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
+/* Ghost variant */
+.btn-ghost-base {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn-ghost-base:hover {
+  background-color: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.20);
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* Badge variants */
+.badge-default {
+  background-color: rgba(var(--primary-rgb), 0.12);
+  border-color: rgba(var(--primary-rgb), 0.55);
+  color: var(--primary);
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.badge-default:hover {
+  background-color: rgba(var(--primary-rgb), 0.20);
+  box-shadow: 0 0 18px rgba(var(--primary-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+
+.badge-secondary {
+  background-color: rgba(var(--secondary-rgb), 0.12);
+  border-color: rgba(var(--secondary-rgb), 0.55);
+  color: var(--neon-pink);
+  box-shadow: 0 0 10px rgba(var(--secondary-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.badge-secondary:hover {
+  background-color: rgba(var(--secondary-rgb), 0.20);
+  box-shadow: 0 0 18px rgba(var(--secondary-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+
+.badge-destructive {
+  background-color: rgba(var(--destructive-rgb), 0.12);
+  border-color: rgba(var(--destructive-rgb), 0.55);
+  color: var(--destructive);
+  box-shadow: 0 0 10px rgba(var(--destructive-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.badge-destructive:hover {
+  background-color: rgba(var(--destructive-rgb), 0.20);
+  box-shadow: 0 0 18px rgba(var(--destructive-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+
+.badge-success {
+  background-color: rgba(var(--success-rgb), 0.12);
+  border-color: rgba(var(--success-rgb), 0.55);
+  color: var(--success);
+  box-shadow: 0 0 10px rgba(var(--success-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.badge-success:hover {
+  background-color: rgba(var(--success-rgb), 0.20);
+  box-shadow: 0 0 18px rgba(var(--success-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+
+.badge-warning {
+  background-color: rgba(var(--warning-rgb), 0.12);
+  border-color: rgba(var(--warning-rgb), 0.55);
+  color: var(--warning);
+  box-shadow: 0 0 10px rgba(var(--warning-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.badge-warning:hover {
+  background-color: rgba(var(--warning-rgb), 0.20);
+  box-shadow: 0 0 18px rgba(var(--warning-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+}
+
+/* Icon glow variants */
+.icon-glow-secondary {
+  color: var(--secondary);
+  filter: drop-shadow(0 0 8px rgba(var(--secondary-rgb), 0.50));
+}
+
+.icon-glow-accent {
+  color: var(--accent);
+  filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.50));
+}
+
+/* Toast variants */
+.toast-destructive {
+  border-color: rgba(var(--destructive-rgb), 0.50);
+  background-color: rgba(var(--destructive-rgb), 0.15);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 0 20px rgba(var(--destructive-rgb), 0.25), 0 8px 32px rgba(0,0,0,0.50);
+}
+
+.toast-success {
+  border-color: rgba(var(--success-rgb), 0.50);
+  background-color: rgba(var(--success-rgb), 0.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 0 20px rgba(var(--success-rgb), 0.20), 0 8px 32px rgba(0,0,0,0.50);
+}
+
+/* Input focus */
+.input-focus {
+  border-color: rgba(var(--primary-rgb), 0.70);
+}
+
+/* Dialog close hover */
+.dialog-close-hover:hover {
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.25);
+}
+
