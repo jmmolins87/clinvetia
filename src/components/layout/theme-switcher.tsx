@@ -35,7 +35,11 @@ export function ThemeSwitcher() {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="center" sideOffset={8} className="min-w-[160px] z-[110]">
+      <DropdownMenuContent 
+        align="center" 
+        sideOffset={8} 
+        className="min-w-[160px] z-[110]"
+      >
         {THEMES.map(({ value, label, icon: ItemIcon }) => (
           <DropdownMenuItem
             key={value}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Euro,
@@ -22,6 +23,7 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { Badge } from "@/components/ui/badge"
 import { BrandName } from "@/components/ui/brand-name"
 import { useROIStore } from "@/store/roi-store"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -45,6 +47,7 @@ function formatEur(n: number) {
 }
 
 export default function CalculadoraPage() {
+  const router = useRouter()
   const {
     monthlyPatients,
     averageTicket,
@@ -54,8 +57,15 @@ export default function CalculadoraPage() {
     setConversionLoss,
   } = useROIStore()
 
+  const [mounted, setMounted] = useState(false)
   const [showSkipDialog, setShowSkipDialog] = useState(false)
+  const [showWarningDialog, setShowWarningDialog] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const calculatingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleSliderChange = (setter: (v: number) => void) => (value: number) => {
@@ -91,7 +101,12 @@ export default function CalculadoraPage() {
   const isPositive = roi > 0
 
   function handleGoToContact() {
-    setShowSkipDialog(true)
+    const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
+    if (hasData) {
+      setShowSkipDialog(true)
+    } else {
+      setShowWarningDialog(true)
+    }
   }
 
   return (
@@ -176,11 +191,11 @@ export default function CalculadoraPage() {
                     icon={<Users className="w-4 h-4" />}
                     value={monthlyPatients}
                     onChange={handleSliderChange(setMonthlyPatients)}
-                    min={50}
+                    min={0}
                     max={1000}
                     step={10}
                     display={`${monthlyPatients}`}
-                    minLabel="50"
+                    minLabel="0"
                     maxLabel="1.000"
                     color="primary"
                     hint="Consultas o visitas que gestionas al mes."
@@ -192,11 +207,11 @@ export default function CalculadoraPage() {
                     icon={<ReceiptText className="w-4 h-4" />}
                     value={averageTicket}
                     onChange={handleSliderChange(setAverageTicket)}
-                    min={20}
+                    min={0}
                     max={200}
                     step={5}
                     display={`${averageTicket}€`}
-                    minLabel="20€"
+                    minLabel="0€"
                     maxLabel="200€"
                     color="secondary"
                     hint="Ingreso medio por visita o consulta (consulta + productos)."
@@ -220,67 +235,69 @@ export default function CalculadoraPage() {
                 </GlassCard>
 
                 {/* Fórmula explicada */}
-                <GlassCard className="p-5 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <p className="text-base font-medium text-muted-foreground">
-                      Cómo se calcula el ROI
-                    </p>
-                  </div>
-                  <div className="space-y-3 text-base">
-                    <FormulaRow
-                      label="Ingresos brutos mensuales"
-                      formula={`${monthlyPatients} pac × ${averageTicket}€`}
-                      result={formatEur(ingresosBrutos)}
-                      color="text-foreground"
-                      isCalculating={isCalculating}
-                    />
-                    <FormulaRow
-                      label="Pérdida mensual estimada"
-                      formula={`${monthlyPatients} × ${conversionLoss}% × ${averageTicket}€`}
-                      result={`-${formatEur(perdidaMensual)}`}
-                      color="text-destructive"
-                      isCalculating={isCalculating}
-                    />
-                    <FormulaRow
-                      label="Recuperación con ClinvetIA (70%)"
-                      formula={`${formatEur(perdidaMensual)} × 0.70`}
-                      result={`+${formatEur(recuperacionEstimada)}`}
-                      color="text-success"
-                      isCalculating={isCalculating}
-                    />
-                    <div className="border-t border-white/10 pt-3">
-                      <FormulaRow
-                        label="Coste mensual ClinvetIA"
-                        formula="Tarifa plana"
-                        result={`-${formatEur(CLINVETIA_MONTHLY_COST)}`}
-                        color="text-muted-foreground"
-                      />
+                {mounted && (
+                  <GlassCard className="p-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <p className="text-base font-medium text-muted-foreground">
+                        Cómo se calcula el ROI
+                      </p>
                     </div>
-                    <div className="border-t border-white/10 pt-3">
+                    <div className="space-y-3 text-base">
                       <FormulaRow
-                        label="Beneficio neto mensual"
-                        formula="Recuperado − Coste"
-                        result={
-                          beneficioNeto >= 0
-                            ? `+${formatEur(beneficioNeto)}`
-                            : `-${formatEur(Math.abs(beneficioNeto))}`
-                        }
-                        color={
-                          beneficioNeto >= 0
-                            ? "text-primary font-semibold"
-                            : "text-destructive font-semibold"
-                        }
+                        label="Ingresos brutos mensuales"
+                        formula={`${monthlyPatients} pac × ${averageTicket}€`}
+                        result={formatEur(ingresosBrutos)}
+                        color="text-foreground"
                         isCalculating={isCalculating}
                       />
+                      <FormulaRow
+                        label="Pérdida mensual estimada"
+                        formula={`${monthlyPatients} × ${conversionLoss}% × ${averageTicket}€`}
+                        result={`-${formatEur(perdidaMensual)}`}
+                        color="text-destructive"
+                        isCalculating={isCalculating}
+                      />
+                      <FormulaRow
+                        label="Recuperación con ClinvetIA (70%)"
+                        formula={`${formatEur(perdidaMensual)} × 0.70`}
+                        result={`+${formatEur(recuperacionEstimada)}`}
+                        color="text-success"
+                        isCalculating={isCalculating}
+                      />
+                      <div className="border-t border-white/10 pt-3">
+                        <FormulaRow
+                          label="Coste mensual ClinvetIA"
+                          formula="Tarifa plana"
+                          result={`-${formatEur(CLINVETIA_MONTHLY_COST)}`}
+                          color="text-muted-foreground"
+                        />
+                      </div>
+                      <div className="border-t border-white/10 pt-3">
+                        <FormulaRow
+                          label="Beneficio neto mensual"
+                          formula="Recuperado − Coste"
+                          result={
+                            beneficioNeto >= 0
+                              ? `+${formatEur(beneficioNeto)}`
+                              : `-${formatEur(Math.abs(beneficioNeto))}`
+                          }
+                          color={
+                            beneficioNeto >= 0
+                              ? "text-primary font-semibold"
+                              : "text-destructive font-semibold"
+                          }
+                          isCalculating={isCalculating}
+                        />
+                      </div>
+                      <div className="mt-3 rounded-lg bg-white/5 p-3 text-center text-base text-muted-foreground">
+                        <span className="font-mono">
+                          ROI = (Beneficio neto / Inversión) × 100
+                        </span>
+                      </div>
                     </div>
-                    <div className="mt-3 rounded-lg bg-white/5 p-3 text-center text-base text-muted-foreground">
-                      <span className="font-mono">
-                        ROI = (Beneficio neto / Inversión) × 100
-                      </span>
-                    </div>
-                  </div>
-                </GlassCard>
+                  </GlassCard>
+                )}
               </motion.div>
 
               {/* ── Panel de resultados ───────────────────────────────────── */}
@@ -289,86 +306,90 @@ export default function CalculadoraPage() {
                 transition={{ delay: 0.2 }}
                 className="space-y-4 flex flex-col"
               >
-                {/* ROI grande */}
-                <GlassCard className="p-6 text-center space-y-2">
-                  <p className="text-base text-muted-foreground font-medium">
-                    Tu ROI con ClinvetIA
-                  </p>
-                  <AnimatePresence mode="wait">
-                    {isCalculating ? (
-                      <motion.div
-                        key="loading"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center justify-center h-20"
-                      >
-                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                      </motion.div>
-                    ) : (
-                      <motion.p
-                        key={roi}
-                        initial={{ scale: 0.85, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className={`text-6xl font-bold tabular-nums ${isPositive ? "text-success drop-shadow-[0_0_20px_rgba(var(--success-rgb),0.5)]" : "text-destructive"}`}
-                      >
-                        {roi > 0 ? "+" : ""}
-                        {roi}%
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                  <p className="text-base text-muted-foreground">
-                    {isCalculating ? "Calculando..." : isPositive
-                      ? "ROI positivo — la inversión es muy rentable"
-                      : "Ajusta los valores para ver el potencial"}
-                  </p>
-                </GlassCard>
+                {mounted && (
+                  <>
+                    {/* ROI grande */}
+                    <GlassCard className="p-6 text-center space-y-2">
+                      <p className="text-base text-muted-foreground font-medium">
+                        Tu ROI con ClinvetIA
+                      </p>
+                      <AnimatePresence mode="wait">
+                        {isCalculating ? (
+                          <motion.div
+                            key="loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center justify-center h-[3.75rem]"
+                          >
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          </motion.div>
+                        ) : (
+                          <motion.p
+                            key={roi}
+                            initial={{ scale: 0.85, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className={`text-6xl font-bold tabular-nums ${isPositive ? "text-success drop-shadow-[0_0_20px_rgba(var(--success-rgb),0.5)]" : "text-destructive"}`}
+                          >
+                            {roi > 0 ? "+" : ""}
+                            {roi}%
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                      <p className="text-base text-muted-foreground">
+                        {isCalculating ? "Calculando..." : isPositive
+                          ? "ROI positivo — la inversión es muy rentable"
+                          : "Ajusta los valores para ver el potencial"}
+                      </p>
+                    </GlassCard>
 
-                {/* Cards métricas */}
-                <div className="grid grid-cols-2 gap-3">
-                  <MetricCard
-                    label="Pérdida mensual"
-                    value={`-${formatEur(perdidaMensual)}`}
-                    icon={<TrendingDown className="h-4 w-4" />}
-                    variant="destructive"
-                    isCalculating={isCalculating}
-                  />
-                  <MetricCard
-                    label="Recuperable"
-                    value={`+${formatEur(recuperacionEstimada)}`}
-                    icon={<TrendingUp className="h-4 w-4" />}
-                    variant="success"
-                    isCalculating={isCalculating}
-                  />
-                  <MetricCard
-                    label="Beneficio neto"
-                    value={
-                      beneficioNeto >= 0
-                        ? `+${formatEur(beneficioNeto)}`
-                        : `-${formatEur(Math.abs(beneficioNeto))}`
-                    }
-                    icon={<Euro className="h-4 w-4" />}
-                    variant={beneficioNeto >= 0 ? "primary" : "destructive"}
-                    isCalculating={isCalculating}
-                  />
-                  <MetricCard
-                    label="Payback"
-                    value={paybackDays ? `${paybackDays} días` : "—"}
-                    icon={<Calculator className="h-4 w-4" />}
-                    variant="muted"
-                    isCalculating={isCalculating}
-                  />
-                </div>
+                    {/* Cards métricas */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <MetricCard
+                        label="Pérdida mensual"
+                        value={`-${formatEur(perdidaMensual)}`}
+                        icon={<TrendingDown className="h-4 w-4" />}
+                        variant="destructive"
+                        isCalculating={isCalculating}
+                      />
+                      <MetricCard
+                        label="Recuperable"
+                        value={`+${formatEur(recuperacionEstimada)}`}
+                        icon={<TrendingUp className="h-4 w-4" />}
+                        variant="success"
+                        isCalculating={isCalculating}
+                      />
+                      <MetricCard
+                        label="Beneficio neto"
+                        value={
+                          beneficioNeto >= 0
+                            ? `+${formatEur(beneficioNeto)}`
+                            : `-${formatEur(Math.abs(beneficioNeto))}`
+                        }
+                        icon={<Euro className="h-4 w-4" />}
+                        variant={beneficioNeto >= 0 ? "primary" : "destructive"}
+                        isCalculating={isCalculating}
+                      />
+                      <MetricCard
+                        label="Payback"
+                        value={paybackDays ? `${paybackDays} días` : "—"}
+                        icon={<Calculator className="h-4 w-4" />}
+                        variant="muted"
+                        isCalculating={isCalculating}
+                      />
+                    </div>
 
-                {/* ROI positivo highlight */}
-                <AnimatePresence>
-                  {isPositive && (
+                    {/* ROI dinámico highlight - Siempre visible */}
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
                     >
-                      <GlassCard className="p-4 bg-gradient-to-br from-success/10 via-background to-primary/5 border-success/30">
+                      <GlassCard className={cn(
+                        "p-4 bg-gradient-to-br border-success/30",
+                        isPositive 
+                          ? "from-success/10 via-background to-primary/5" 
+                          : "from-white/5 via-background to-white/5"
+                      )}>
                         <p className="text-base text-foreground/80 text-center">
                           Por {" "}
                           <span className="font-bold text-foreground">1€</span>{" "}
@@ -376,15 +397,15 @@ export default function CalculadoraPage() {
                           {isCalculating ? (
                             <Loader2 className="inline h-4 w-4 animate-spin text-success" />
                           ) : (
-                            <span className="font-bold text-success">
-                              {(roi / 100 + 1).toFixed(1)}€
+                            <span className={cn("font-bold", isPositive ? "text-success" : "text-foreground")}>
+                              {Math.max(0, (roi / 100 + 1)).toFixed(1)}€
                             </span>
                           )}
                         </p>
                       </GlassCard>
                     </motion.div>
-                  )}
-                </AnimatePresence>
+                  </>
+                )}
 
                 {/* CTA a contacto */}
                 <GlassCard className="p-5 space-y-4">
@@ -434,12 +455,12 @@ export default function CalculadoraPage() {
               ¿Enviar estos datos a <BrandName />?
             </DialogTitle>
             <DialogDescription className="text-center text-base leading-relaxed">
-              Te mostraremos a nuestro equipo con los datos que has calculado para preparar una propuesta personalizada.
+              <BrandName /> utilizará este resultado para poder darte un <span className="text-primary font-semibold">feedback personalizado y mucho más exacto</span> sobre el potencial de tu clínica.
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-3">
-            <p className="text-base font-medium text-foreground">Resumen de tu clínica:</p>
+            <p className="text-base font-medium text-foreground">Resumen de tu cálculo:</p>
             <div className="space-y-2 text-base text-muted-foreground">
               <div className="flex justify-between">
                 <span>Pacientes/mes:</span>
@@ -454,16 +475,13 @@ export default function CalculadoraPage() {
                 <span className="font-semibold text-foreground">{conversionLoss}%</span>
               </div>
               <div className="border-t border-primary/20 pt-2 mt-2 flex justify-between">
-                <span>Tu ROI:</span>
+                <span>Tu ROI proyectado:</span>
                 <span className="font-bold text-success">{roi}%</span>
               </div>
             </div>
-            <p className="text-base text-muted-foreground pt-2">
-              ¿Enviamos los datos a <BrandName />?
-            </p>
           </div>
 
-          <DialogFooter className="flex-row justify-between gap-2">
+          <DialogFooter className="flex-row justify-between gap-2 mt-4">
             <Button
               variant="destructive"
               className="bg-destructive/15 border-2 border-destructive/70 text-destructive shadow-[0_0_20px_rgba(var(--destructive-rgb),0.50)]"
@@ -475,11 +493,44 @@ export default function CalculadoraPage() {
               variant="default"
               onClick={() => {
                 setShowSkipDialog(false);
-                window.location.href = "/contacto";
+                router.push("/contacto");
               }}
             >
-              Enviar
+              Continuar
               <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: advertencia datos en 0 ──────────────────────────────────── */}
+      <Dialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="space-y-3">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/30">
+              <Info className="h-7 w-7 text-destructive" />
+            </div>
+            <DialogTitle className="text-center text-xl">
+              Calculadora incompleta
+            </DialogTitle>
+            <DialogDescription className="text-center text-base leading-relaxed">
+              Para poder darte un feedback útil y personalizado, necesitamos que primero introduzcas los datos básicos de tu clínica en la calculadora.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4">
+            <p className="text-center text-base text-muted-foreground">
+              Mueve los sliders para ajustar el número de pacientes, ticket medio y pérdida de conversión.
+            </p>
+          </div>
+
+          <DialogFooter className="sm:justify-center">
+            <Button
+              variant="default"
+              onClick={() => setShowWarningDialog(false)}
+              className="w-full sm:w-auto"
+            >
+              Entendido, volver a la calculadora
             </Button>
           </DialogFooter>
         </DialogContent>

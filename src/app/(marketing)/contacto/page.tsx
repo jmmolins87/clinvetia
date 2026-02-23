@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Calculator, Mail, Phone, MapPin, Clock, CheckCircle2, Send, ArrowRight, Info } from "lucide-react"
@@ -39,6 +39,7 @@ function ContactFormWithROI() {
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   const {
     monthlyPatients,
@@ -47,9 +48,20 @@ function ContactFormWithROI() {
     isCalculated,
   } = useROIStore()
 
-  const [showCalculatorPrompt, setShowCalculatorPrompt] = useState(!isCalculated)
+  const [showCalculatorPrompt, setShowCalculatorPrompt] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    // El diálogo sale si no hay datos significativos (todos en 0)
+    const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
+    if (!hasData) {
+      setShowCalculatorPrompt(true)
+    }
+  }, [monthlyPatients, averageTicket, conversionLoss])
 
   const perdidaMensual = Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket)
+  const recuperacionEstimada = Math.round(perdidaMensual * 0.7)
+  const roi = Math.round(((recuperacionEstimada - 297) / 297) * 100)
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -89,25 +101,6 @@ function ContactFormWithROI() {
   return (
     <div className="grid gap-8 md:grid-cols-[1fr_300px]">
       <GlassCard className="p-6 md:p-8">
-        {isCalculated && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 rounded-lg bg-primary/10 border border-primary/30 p-4 flex items-center gap-3"
-          >
-            <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-primary">
-                Datos de rentabilidad adjuntos
-              </p>
-              <p className="text-base text-muted-foreground">
-                Pérdida estimada: {perdidaMensual.toLocaleString("es-ES")}€/mes •{" "}
-                {monthlyPatients} pacientes/mes • Ticket {averageTicket}€
-              </p>
-            </div>
-          </motion.div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -206,6 +199,45 @@ function ContactFormWithROI() {
       </GlassCard>
 
       <div className="space-y-4">
+        {mounted && isCalculated && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <GlassCard className="p-0 overflow-hidden border-primary/30 bg-primary/5">
+              <div className="bg-primary/10 px-4 py-3 border-b border-primary/20 flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                  Tu ROI Proyectado
+                </span>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="flex justify-between items-end">
+                  <span className="text-xs text-muted-foreground">Pérdida mensual</span>
+                  <span className="text-base font-bold text-destructive">-{perdidaMensual}€</span>
+                </div>
+                <div className="flex justify-between items-end border-t border-white/5 pt-2">
+                  <span className="text-xs text-muted-foreground">ROI Estimado</span>
+                  <span className="text-xl font-bold text-success">+{roi}%</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-3">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] uppercase text-muted-foreground">Pacientes</p>
+                    <p className="text-sm font-semibold">{monthlyPatients}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] uppercase text-muted-foreground">Ticket</p>
+                    <p className="text-sm font-semibold">{averageTicket}€</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-primary/5 px-4 py-2 text-[10px] text-muted-foreground italic border-t border-white/5">
+                Datos adjuntos a tu solicitud
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+
         <GlassCard className="p-6">
           <h3 className="mb-4 font-semibold">Información de contacto</h3>
           <ul className="space-y-4 text-sm">
@@ -248,8 +280,27 @@ function ContactFormWithROI() {
       </div>
 
       {/* Dialog: Calculator prompt */}
-      <Dialog open={showCalculatorPrompt} onOpenChange={setShowCalculatorPrompt}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog 
+        open={showCalculatorPrompt} 
+        onOpenChange={(open) => {
+          // No permitir cerrar el diálogo si no hay datos
+          const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
+          if (hasData) {
+            setShowCalculatorPrompt(open)
+          }
+        }}
+      >
+        <DialogContent 
+          className="sm:max-w-md"
+          onPointerDownOutside={(e) => {
+            const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
+            if (!hasData) e.preventDefault()
+          }}
+          onEscapeKeyDown={(e) => {
+            const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
+            if (!hasData) e.preventDefault()
+          }}
+        >
           <DialogHeader className="space-y-3">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-warning/10 border border-warning/30">
               <Info className="h-7 w-7 text-warning" />
@@ -281,15 +332,7 @@ function ContactFormWithROI() {
             </ul>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="destructive"
-              className="w-full sm:w-auto"
-              onClick={() => window.history.back()}
-            >
-              Cancelar
-              <ArrowRight className="ml-2 h-4 w-4 rotate-180" />
-            </Button>
+          <DialogFooter className="sm:justify-center">
             <Button
               variant="default"
               className="w-full sm:w-auto"

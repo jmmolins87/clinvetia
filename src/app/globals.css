@@ -6,101 +6,101 @@
    ============================================================ */
 
 /* ----------------------------------------------------------
-   LIGHT FROST (modo claro)
+   LIGHT FROST (modo claro) — Estilo Snow Glass
    ---------------------------------------------------------- */
 :root {
-  /* Superficies */
-  --background:       #f0f4f8;
-  --foreground:       #0d1117;
+  /* Superficies — blanco/nieve suave */
+  --background:       #fafbfc;
+  --foreground:       #1a1d23;
   --card:             #ffffff;
-  --card-foreground:  #0d1117;
+  --card-foreground:  #1a1d23;
   --popover:          #ffffff;
-  --popover-foreground: #0d1117;
+  --popover-foreground: #1a1d23;
 
-  /* Marca */
-  --primary:          #00f2fe;          /* Neon Cyan */
-  --primary-foreground: #0d1117;
-  --secondary:        #e2e8f0;
-  --secondary-foreground: #1e293b;
+  /* Marca — cyan neon para light */
+  --primary:          #00b4d8;
+  --primary-foreground: #ffffff;
+  --secondary:        #f8b4c4;
+  --secondary-foreground: #1a1d23;
 
   /* Semánticas */
-  --muted:            #e8edf3;
+  --muted:            #f1f5f9;
   --muted-foreground: #64748b;
-  --accent:           #dbeafe;
+  --accent:           #a8c5e2;
   --accent-foreground: #1e40af;
   --destructive:      #ef4444;
   --destructive-foreground: #ffffff;
 
-  /* Estructura */
-  --border:           #cbd5e1;
-  --input:            #e2e8f0;
-  --ring:             #00f2fe;
+  /* Estructura — bordes sutiles azulados */
+  --border:           rgba(160, 182, 200, 0.40);
+  --input:            rgba(160, 182, 200, 0.30);
+  --ring:             #00b4d8;
 
-  /* Glass Frost */
-  --glass-bg:         rgba(255, 255, 255, 0.55);
-  --glass-border:     rgba(255, 255, 255, 0.70);
-  --glass-blur:       16px;
+  /* Glass Frost — efecto cristal delicado */
+  --glass-bg:         rgba(255, 255, 255, 0.70);
+  --glass-border:     rgba(160, 182, 200, 0.35);
+  --glass-blur:       20px;
 
-  /* Liquid Glass — highlight interno (borde superior luminoso) */
-  --glass-highlight:  inset 0 1px 0 rgba(255, 255, 255, 0.80),
-                      inset 0 -1px 0 rgba(255, 255, 255, 0.20);
+  /* Liquid Glass — highlight interno sutil */
+  --glass-highlight:  inset 0 1px 0 rgba(255, 255, 255, 0.85),
+                      inset 0 -1px 0 rgba(160, 182, 200, 0.15);
 
-  /* Liquid Glass — sombra exterior difuminada */
-  --glass-shadow:     0 8px 32px rgba(59, 130, 246, 0.15),
-                      0 2px 8px rgba(0, 0, 0, 0.08);
+  /* Liquid Glass — sombra exterior suave */
+  --glass-shadow:     0 8px 32px rgba(160, 182, 200, 0.20),
+                      0 2px 8px rgba(160, 182, 200, 0.12);
 
-  /* Sombras */
-  --shadow-sm:        0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md:        0 4px 16px rgba(0, 0, 0, 0.10);
-  --shadow-glow:      0 0 20px rgba(59, 130, 246, 0.25);
+  /* Sombras — suaves y delicadas */
+  --shadow-sm:        0 1px 3px rgba(160, 182, 200, 0.10);
+  --shadow-md:        0 4px 16px rgba(160, 182, 200, 0.15);
+  --shadow-glow:      0 0 20px rgba(0, 180, 216, 0.20);
 
   /* Radio global */
   --radius:           0.75rem;
 
-  /* Neon colors */
-  --neon-green:       #43e97b;
-  --neon-cyan:        #00f2fe;
-  --neon-pink:        #f093fb;
+  /* Neon colors — versiones más suaves para light */
+  --neon-green:       #48bb78;
+  --neon-cyan:        #00b4d8;
+  --neon-pink:        #f8b4c4;
   --neon-red:         #ef4444;
   --neon-amber:       #f59e0b;
-  --neon-blue:        #4facfe;
+  --neon-blue:        #60a5fa;
 
   /* Semánticas extra */
-  --success:          #43e97b;
-  --success-foreground: #0d1117;
+  --success:          #48bb78;
+  --success-foreground: #ffffff;
   --warning:          #f59e0b;
-  --warning-foreground: #0d1117;
+  --warning-foreground: #ffffff;
 
-  /* Gradientes */
-  --gradient-primary:   linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --gradient-accent:    linear-gradient(135deg, #4facfe 0%, #3b82f6 100%);
-  --gradient-surface:   linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
+  /* Gradientes — más sutiles en light */
+  --gradient-primary:   linear-gradient(135deg, #00b4d8 0%, #48bb78 100%);
+  --gradient-secondary: linear-gradient(135deg, #f8b4c4 0%, #f472b6 100%);
+  --gradient-accent:    linear-gradient(135deg, #a8c5e2 0%, #60a5fa 100%);
+  --gradient-surface:   linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%);
 
-  /* Glows */
-  --glow-primary:     0 0 25px rgba(0, 242, 254, 0.45),
-                      0 0 60px rgba(0, 242, 254, 0.15);
-  --glow-secondary:   0 0 25px rgba(240, 147, 251, 0.55),
-                      0 0 60px rgba(240, 147, 251, 0.20);
-  --glow-accent:      0 0 25px rgba(79, 172, 254, 0.45),
-                      0 0 60px rgba(79, 172, 254, 0.15);
-  --glow-destructive: 0 0 25px rgba(239, 68, 68, 0.50),
-                      0 0 60px rgba(239, 68, 68, 0.20);
-  --glow-lg:          0 0 60px rgba(0, 242, 254, 0.30), 0 0 120px rgba(0, 242, 254, 0.10);
+  /* Glows — más sutiles en light */
+  --glow-primary:     0 0 15px rgba(0, 180, 216, 0.30),
+                      0 0 35px rgba(0, 180, 216, 0.10);
+  --glow-secondary:   0 0 15px rgba(248, 180, 196, 0.35),
+                      0 0 35px rgba(248, 180, 196, 0.12);
+  --glow-accent:      0 0 15px rgba(168, 197, 226, 0.30),
+                      0 0 35px rgba(168, 197, 226, 0.10);
+  --glow-destructive: 0 0 15px rgba(239, 68, 68, 0.35),
+                      0 0 35px rgba(239, 68, 68, 0.12);
+  --glow-lg:          0 0 30px rgba(0, 180, 216, 0.20), 0 0 60px rgba(0, 180, 216, 0.08);
 
-  /* Bordes neon (hover) */
-  --border-neon-primary:   rgba(0, 242, 254, 0.70);
-  --border-neon-secondary: rgba(240, 147, 251, 0.70);
-  --border-neon-accent:    rgba(79, 172, 254, 0.70);
+  /* Bordes sutiles (hover) */
+  --border-neon-primary:   rgba(0, 180, 216, 0.50);
+  --border-neon-secondary: rgba(248, 180, 196, 0.50);
+  --border-neon-accent:    rgba(168, 197, 226, 0.50);
 
-  /* ── RGB channels para uso en rgba() dentro de box-shadow ── */
-  --primary-rgb:      0,   242, 254;   /* #00f2fe */
-  --secondary-rgb:    240, 147, 251;   /* #f093fb */
-  --accent-rgb:       79,  172, 254;   /* #4facfe */
-  --destructive-rgb:  239, 68,  68;    /* #ef4444 */
-  --success-rgb:      67,  233, 123;   /* #43e97b */
-  --warning-rgb:      245, 158, 11;    /* #f59e0b */
-  --ring-rgb:         0,   242, 254;
+  /* RGB channels para uso en rgba() dentro de box-shadow */
+  --primary-rgb:      0,   180, 216;
+  --secondary-rgb:    248, 180, 196;
+  --accent-rgb:       168, 197, 226;
+  --destructive-rgb:  239, 68,  68;
+  --success-rgb:      72, 187, 120;
+  --warning-rgb:      245, 158, 11;
+  --ring-rgb:         0,   180, 216;
 }
 
 /* ----------------------------------------------------------
@@ -384,7 +384,12 @@ body {
   transform: translateY(0px) scale(0.98);
 }
 
-/* Scrollbar custom (dark) */
+/* Scrollbar custom - ambos temas */
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -401,7 +406,6 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
-  box-shadow: var(--glow-primary);
 }
 
 /* Selection color */

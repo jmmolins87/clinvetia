@@ -1,0 +1,39 @@
+# Cursor Rules - Clinvetia Glass
+
+Este archivo proporciona instrucciones críticas para el desarrollo en este repositorio.
+
+## 🛠️ Stack Tecnológico
+- **Framework:** Next.js 16 (App Router)
+- **Lenguaje:** TypeScript (Estricto)
+- **Estilos:** Tailwind CSS v4
+- **Componentes:** shadcn/ui (Estilo "New York")
+- **Iconos:** lucide-react (Vía componente wrapper `Icon`)
+- **Documentación:** Storybook 8
+
+## 🎨 Estilo Visual: "Liquid Glass"
+No es glassmorphism plano. Es un estilo de cristal 3D físico:
+1. **Fondo:** Translúcido con `backdrop-blur-xl`.
+2. **Bordes:** Bordes luminosos semitransparentes.
+3. **Highlights:** Sombras internas (`inset`) para simular curvatura.
+4. **Glow:** Sombras exteriores de neón multicapa.
+
+**Regla de Oro:** NUNCA hardcodear colores. Usar variables CSS: `--primary`, `--secondary`, `--glow-primary`, etc.
+
+## 📝 Convenciones de Código
+- **Iconos:** NUNCA usar `lucide-react` directamente. Usar siempre el componente `@/components/ui/icon`.
+  ```tsx
+  import { Icon } from "@/components/ui/icon";
+  import { Zap } from "lucide-react";
+  <Icon icon={Zap} variant="primary" />
+  ```
+- **Componentes:** Preferir Server Components. Usar `"use client"` solo si es estrictamente necesario.
+- **Imports:** Usar siempre el alias `@/`.
+- **Estilos:** Usar la utilidad `cn()` para combinar clases de Tailwind.
+
+## ⚠️ Reglas Generales
+- **Dark Mode Primero:** El diseño principal es oscuro (`.dark`).
+- **Storybook:** Cada componente nuevo DEBE tener su archivo `.stories.tsx`.
+- **Linting:** Ejecutar `npm run lint` antes de dar por terminada una tarea.
+- **Sin Comentarios:** No añadir comentarios de "explicación" en el código a menos que se pida explícitamente.
+
+Para más detalles, consulta `AGENTS.md`.

@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { persist } from "zustand/middleware"
 
 export type ClinicType = "pequena" | "mediana" | "grande" | "especializada" | null
 
@@ -18,29 +19,36 @@ interface ROIState {
 
 const initialState = {
   clinicType: null,
-  monthlyPatients: 300,
-  averageTicket: 50,
-  conversionLoss: 20,
+  monthlyPatients: 0,
+  averageTicket: 0,
+  conversionLoss: 0,
   isCalculated: false,
 }
 
-export const useROIStore = create<ROIState>((set) => ({
-  ...initialState,
+export const useROIStore = create<ROIState>()(
+  persist(
+    (set) => ({
+      ...initialState,
 
-  setClinicType: (clinicType) => set({ clinicType, isCalculated: true }),
+      setClinicType: (clinicType) => set({ clinicType, isCalculated: true }),
 
-  setMonthlyPatients: (monthlyPatients) => set({ monthlyPatients, isCalculated: true }),
+      setMonthlyPatients: (monthlyPatients) => set({ monthlyPatients, isCalculated: true }),
 
-  setAverageTicket: (averageTicket) => set({ averageTicket, isCalculated: true }),
+      setAverageTicket: (averageTicket) => set({ averageTicket, isCalculated: true }),
 
-  setConversionLoss: (conversionLoss) => set({ conversionLoss, isCalculated: true }),
+      setConversionLoss: (conversionLoss) => set({ conversionLoss, isCalculated: true }),
 
-  setClinicData: (data) =>
-    set((state) => ({
-      ...state,
-      ...data,
-      isCalculated: true,
-    })),
+      setClinicData: (data) =>
+        set((state) => ({
+          ...state,
+          ...data,
+          isCalculated: true,
+        })),
 
-  reset: () => set(initialState),
-}))
+      reset: () => set(initialState),
+    }),
+    {
+      name: "roi-storage",
+    }
+  )
+)
