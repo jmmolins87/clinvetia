@@ -168,12 +168,12 @@ export default function EscenariosPage() {
                     src={caso.imagen}
                     alt={caso.titulo}
                     fill
-                    className="object-contain"
+                    className="object-contain transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
 
                   {/* Overlay con blur que aparece en hover */}
-                  <div className="absolute inset-0 bg-background/90 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-background/70 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
                     <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
                       {/* Problema */}
                       <div className="col-span-2 rounded-xl border-2 border-destructive/50 bg-destructive/10 p-3">

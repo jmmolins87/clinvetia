@@ -101,8 +101,8 @@ export default function CalculadoraPage() {
   const isPositive = roi > 0
 
   function handleGoToContact() {
-    const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
-    if (hasData) {
+    // Si el ticket es 0, consideramos que la calculadora no está completa
+    if (averageTicket > 0) {
       setShowSkipDialog(true)
     } else {
       setShowWarningDialog(true)

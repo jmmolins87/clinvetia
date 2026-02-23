@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Calculator, Mail, Phone, MapPin, Clock, CheckCircle2, Send, ArrowRight, Info } from "lucide-react"
 
@@ -36,6 +37,7 @@ const initialFormData: FormData = {
 }
 
 function ContactFormWithROI() {
+  const router = useRouter()
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -52,12 +54,11 @@ function ContactFormWithROI() {
 
   useEffect(() => {
     setMounted(true)
-    // El diálogo sale si no hay datos significativos (todos en 0)
-    const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
-    if (!hasData) {
+    // El diálogo sale si el ticket es 0
+    if (averageTicket === 0) {
       setShowCalculatorPrompt(true)
     }
-  }, [monthlyPatients, averageTicket, conversionLoss])
+  }, [averageTicket])
 
   const perdidaMensual = Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket)
   const recuperacionEstimada = Math.round(perdidaMensual * 0.7)
@@ -102,7 +103,7 @@ function ContactFormWithROI() {
     <div className="grid gap-8 md:grid-cols-[1fr_300px]">
       <GlassCard className="p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="nombre" className="text-sm font-medium">
                 Nombre completo *
@@ -117,6 +118,7 @@ function ContactFormWithROI() {
                 className="glass"
               />
             </div>
+            
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email profesional *
@@ -132,9 +134,7 @@ function ContactFormWithROI() {
                 className="glass"
               />
             </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="telefono" className="text-sm font-medium">
                 Teléfono
@@ -149,6 +149,7 @@ function ContactFormWithROI() {
                 className="glass"
               />
             </div>
+
             <div className="space-y-2">
               <label htmlFor="clinica" className="text-sm font-medium">
                 Nombre de la clínica
@@ -162,22 +163,22 @@ function ContactFormWithROI() {
                 className="glass"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <label htmlFor="mensaje" className="text-sm font-medium">
-              Mensaje *
-            </label>
-            <Textarea
-              id="mensaje"
-              name="mensaje"
-              placeholder="Cuéntanos sobre tu clínica y cómo podemos ayudarte..."
-              value={formData.mensaje}
-              onChange={handleChange}
-              required
-              rows={5}
-              className="glass resize-none"
-            />
+            <div className="space-y-2">
+              <label htmlFor="mensaje" className="text-sm font-medium">
+                Mensaje *
+              </label>
+              <Textarea
+                id="mensaje"
+                name="mensaje"
+                placeholder="Cuéntanos sobre tu clínica y cómo podemos ayudarte..."
+                value={formData.mensaje}
+                onChange={handleChange}
+                required
+                rows={5}
+                className="glass resize-none"
+              />
+            </div>
           </div>
 
           <Button
@@ -282,24 +283,10 @@ function ContactFormWithROI() {
       {/* Dialog: Calculator prompt */}
       <Dialog 
         open={showCalculatorPrompt} 
-        onOpenChange={(open) => {
-          // No permitir cerrar el diálogo si no hay datos
-          const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
-          if (hasData) {
-            setShowCalculatorPrompt(open)
-          }
-        }}
+        onOpenChange={setShowCalculatorPrompt}
       >
         <DialogContent 
           className="sm:max-w-md"
-          onPointerDownOutside={(e) => {
-            const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
-            if (!hasData) e.preventDefault()
-          }}
-          onEscapeKeyDown={(e) => {
-            const hasData = monthlyPatients > 0 || averageTicket > 0 || conversionLoss > 0
-            if (!hasData) e.preventDefault()
-          }}
         >
           <DialogHeader className="space-y-3">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-warning/10 border border-warning/30">
@@ -332,11 +319,18 @@ function ContactFormWithROI() {
             </ul>
           </div>
 
-          <DialogFooter className="sm:justify-center">
+          <DialogFooter className="flex flex-col sm:flex-row justify-center gap-3">
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={() => router.back()}
+            >
+              Quedarme aquí
+            </Button>
             <Button
               variant="default"
               className="w-full sm:w-auto"
-              onClick={() => window.location.href = "/calculadora"}
+              onClick={() => router.push("/calculadora")}
             >
               Ir a la calculadora
               <Calculator className="ml-2 h-4 w-4" />
