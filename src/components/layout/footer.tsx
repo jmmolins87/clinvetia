@@ -8,9 +8,10 @@ const FOOTER_COLUMNS = [
   {
     heading: "Producto",
     links: [
-      { href: "/solucion",   label: "Solución"       },
-      { href: "/escenarios", label: "Escenarios"     },
-      { href: "/#roi",      label: "Calculadora ROI"},
+      { href: "/solucion",      label: "Solución"       },
+      { href: "/escenarios",    label: "Escenarios"     },
+      { href: "/como-funciona", label: "Cómo funciona"  },
+      { href: "/calculadora",   label: "Calculadora ROI"},
     ],
   },
   {

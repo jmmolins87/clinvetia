@@ -270,6 +270,33 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* ── Accordion animations ─────────────────────────────────────────── */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 0.3s ease-out forwards;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.3s ease-out forwards;
+}
+
 /* ----------------------------------------------------------
    UTILIDADES GLASS & NEON (clases reutilizables)
    ---------------------------------------------------------- */

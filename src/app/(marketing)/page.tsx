@@ -153,13 +153,13 @@ export default function MarketingPage() {
 
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Button size="lg" asChild>
-              <Link href="#demo" className="flex items-center gap-2">
+              <Link href="/demo" className="flex items-center gap-2">
                 <CalendarDays className="size-5" />
                 Reservar Demo
               </Link>
             </Button>
             <Button variant="secondary" size="lg" asChild>
-              <Link href="#roi" className="flex items-center gap-2">
+              <Link href="/calculadora" className="flex items-center gap-2">
                 Ver ROI
                 <ArrowRight className="size-4" />
               </Link>
@@ -197,11 +197,13 @@ export default function MarketingPage() {
                   "transition-all duration-300"
                 )}>
                   <CardContent className="p-6 flex gap-4">
-                    <div className={cn(
-                      "shrink-0 inline-flex rounded-full bg-white/10 p-3",
-                      idx % 2 === 0 ? "bg-secondary/10" : ""
-                    )}>
-                      <Icon className={cn("size-6", idx % 2 === 0 ? "text-secondary" : "text-primary")} />
+                    <div className="shrink-0">
+                      <div className={cn(
+                        "flex items-center justify-center rounded-full bg-white/10 p-3 h-12 w-12",
+                        idx % 2 === 0 ? "bg-secondary/10" : ""
+                      )}>
+                        <Icon className={cn("size-6", idx % 2 === 0 ? "text-secondary" : "text-primary")} />
+                      </div>
                     </div>
                     <div>
                       <h3 className="mb-2 text-lg font-semibold">{title}</h3>
@@ -465,7 +467,7 @@ export default function MarketingPage() {
             transition={{ delay: 0.4 }}
           >
             <Button size="lg" variant="secondary" asChild>
-              <Link href="#demo" className="flex items-center gap-2">
+              <Link href="/calculadora" className="flex items-center gap-2">
                 <Calculator className="size-5" />
                 Calcular mi ROI
               </Link>
@@ -474,16 +476,13 @@ export default function MarketingPage() {
         </div>
       </Section>
 
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          SECCIÓN: DEMO CTA FINAL
-      ═══════════════════════════════════════════════════════════════════════ */}
       <CtaSection
         id="demo"
         badge="¿Hablamos?"
         title="Prueba ClinvetIA gratis"
         description="Configuramos tu clínica en 30 minutos. Sin compromiso."
         variant="glow"
+        className="border-t border-white/8"
         actions={[
           { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: CalendarDays },
           { label: "Chatear", href: "#", variant: "ghost", icon: MessageSquare },
