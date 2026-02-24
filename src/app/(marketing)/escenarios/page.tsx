@@ -124,7 +124,7 @@ export default function EscenariosPage() {
       {/* ═══════════════════════════════════════════════════════════════════════
           HERO SIMPLE
       ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 md:py-32">
+      <section className="pt-16 pb-8 md:py-32">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="text-center">
             <Badge variant="secondary" className="mb-6">
@@ -146,7 +146,7 @@ export default function EscenariosPage() {
       {/* ═══════════════════════════════════════════════════════════════════════
           GRID DE CASOS DE USO
       ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="py-16 pb-24">
+      <section className="py-8 pb-24 md:py-16 md:pb-24">
         <div className="container mx-auto px-4">
           <div className="grid gap-8 md:grid-cols-2">
             {casos.map((caso, index) => (

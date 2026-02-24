@@ -109,26 +109,7 @@ const faqs = [
 
 export default function ComoFuncionaPage() {
   return (
-    <div className="relative overflow-hidden">
-      {/* Blobs de fondo */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          className="absolute -top-1/4 -left-1/4 h-[600px] w-[600px] rounded-full bg-primary/15 blur-[130px]"
-          animate={{ scale: [1, 1.1, 0.95, 1], opacity: [0.4, 0.6, 0.4] }}
-          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-1/2 -right-1/4 h-[500px] w-[500px] rounded-full bg-secondary/10 blur-[110px]"
-          animate={{ scale: [0.9, 1.05, 0.9], opacity: [0.3, 0.5, 0.3] }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 4,
-          }}
-        />
-      </div>
-
+    <div className="relative">
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <section className="pt-28 pb-16 md:pt-36 md:pb-24">
         <div className="container mx-auto px-4">

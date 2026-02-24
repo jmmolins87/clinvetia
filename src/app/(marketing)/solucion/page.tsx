@@ -108,25 +108,7 @@ const blobAnimation = {
 
 export default function SolucionPage() {
   return (
-    <div className="relative overflow-hidden">
-      {/* Animated Blobs Background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] rounded-full bg-primary/20 blur-[120px]"
-          {...blobAnimation}
-        />
-        <motion.div
-          className="absolute top-1/2 -right-1/4 w-[500px] h-[500px] rounded-full bg-secondary/15 blur-[100px]"
-          {...blobAnimation}
-          transition={{ ...blobAnimation.transition, delay: 3 }}
-        />
-        <motion.div
-          className="absolute -bottom-1/3 left-1/3 w-[400px] h-[400px] rounded-full bg-accent/10 blur-[80px]"
-          {...blobAnimation}
-          transition={{ ...blobAnimation.transition, delay: 6 }}
-        />
-      </div>
-
+    <div className="relative">
       {/* ═══════════════════════════════════════════════════════════════════════
           HERO SECTION
       ═══════════════════════════════════════════════════════════════════════ */}

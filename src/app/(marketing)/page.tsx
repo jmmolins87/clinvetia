@@ -120,12 +120,12 @@ export default function MarketingPage() {
         >
           <motion.div variants={fadeUp}>
             <Badge variant="default" className="mb-6 gap-2 px-4 py-1.5">
-              <Sparkles className="size-3" />
+              <Sparkles className="hidden sm:block size-3" />
               Nueva Generación de IA Veterinaria
             </Badge>
           </motion.div>
 
-          <motion.h1 variants={fadeUp} className="text-5xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+          <motion.h1 variants={fadeUp} className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
             <span className="text-foreground">Sistema de </span>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-neon-green">
               Atención Inteligente

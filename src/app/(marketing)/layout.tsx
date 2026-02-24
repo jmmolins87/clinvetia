@@ -27,9 +27,9 @@ export default function MarketingLayout({
   return (
     <>
       <SmoothScroll />
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col overflow-x-hidden max-w-full">
         <Navbar />
-        <main className="flex-1 pt-16">
+        <main className="flex-1 pt-16 max-w-full">
           {children}
         </main>
         <Footer />

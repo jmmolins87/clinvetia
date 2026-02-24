@@ -10,7 +10,7 @@ export function GlobalBackground() {
   const isAltPage = pathname === "/contacto" || pathname === "/demo"
 
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-background">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-background w-screen max-w-full">
       {/* Orbe 1: Primario - Arriba Izquierda */}
       <div 
         className="glow-orb bg-primary h-[600px] w-[600px] -top-40 -left-40" 

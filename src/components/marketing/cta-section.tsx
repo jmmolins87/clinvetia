@@ -58,6 +58,7 @@ export function CtaSection({
               key={action.href}
               variant={action.variant ?? "default"}
               size="lg"
+              className="w-full sm:w-auto"
               asChild
             >
               <Link href={action.href} className="gap-2">
@@ -73,7 +74,7 @@ export function CtaSection({
 
   if (variant === "glow") {
     return (
-      <section id={id} className={cn("py-32", className)}>
+      <section id={id} className={cn("py-32 overflow-hidden relative", className)}>
         <div className="container mx-auto px-4">
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 -z-10 rounded-full bg-primary/10 blur-[120px]" />
           <motion.div

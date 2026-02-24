@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
 import { CalendarDays, Calculator } from "lucide-react"
@@ -5,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { SwitchWithLabel } from "@/components/ui/switch"
 import { BrandName } from "@/components/ui/brand-name"
 import { ThemeSwitcher } from "@/components/layout/theme-switcher"
+import { MobileNav } from "@/components/layout/mobile-nav"
 import { cn } from "@/lib/utils"
 
 // ── Datos ─────────────────────────────────────────────────────────────────────
@@ -79,39 +82,48 @@ export function Navbar() {
 
         <Logo />
 
-        {/* ── Nav links + Acciones alineados a la derecha ────────────────────── */}
+        {/* ── Nav links + Acciones ────────────────────── */}
         <div className="flex items-center gap-2">
 
           <NavLinks />
 
-          {/* Selector de idioma — Switch ES/EN */}
+          {/* Selector de idioma — Oculto en mobile */}
           <div className="hidden md:flex">
             <SwitchWithLabel labelLeft="ES" labelRight="EN" />
           </div>
 
-          <ThemeSwitcher />
+          {/* ThemeSwitcher — Oculto en mobile */}
+          <div className="hidden md:flex">
+            <ThemeSwitcher />
+          </div>
 
-          {/* Calculadora ROI */}
-          <Button
-            variant="secondary"
-            size="sm"
-            className="gap-1.5"
-            asChild
-          >
-            <Link href="/calculadora">
-              <Calculator className="size-4" aria-hidden />
-              <span className="hidden sm:inline">Calculadora ROI</span>
-              <span className="sm:hidden">ROI</span>
-            </Link>
-          </Button>
+          {/* Calculadora ROI — Oculto en mobile */}
+          <div className="hidden md:flex">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-1.5"
+              asChild
+            >
+              <Link href="/calculadora">
+                <Calculator className="size-4" aria-hidden />
+                <span>Calculadora ROI</span>
+              </Link>
+            </Button>
+          </div>
 
-          {/* CTA principal */}
-          <Button size="sm" asChild>
-            <Link href="/demo" className="flex items-center gap-2">
-              <CalendarDays className="size-4" aria-hidden />
-              <span>Reservar demo</span>
-            </Link>
-          </Button>
+          {/* CTA principal — Oculto en mobile */}
+          <div className="hidden md:flex">
+            <Button size="sm" asChild>
+              <Link href="/demo" className="flex items-center gap-2">
+                <CalendarDays className="size-4" aria-hidden />
+                <span>Reservar demo</span>
+              </Link>
+            </Button>
+          </div>
+
+          {/* Menú Mobile — Único visible junto al logo en mobile */}
+          <MobileNav />
 
         </div>
       </div>

@@ -13,6 +13,11 @@ function LoaderContent() {
     // Cuando cambia la ruta, mostramos el loader brevemente
     setLoading(true)
     
+    // Forzamos el scroll al inicio de la página inmediatamente
+    window.scrollTo(0, 0)
+    document.documentElement.scrollTo(0, 0)
+    document.body.scrollTo(0, 0)
+    
     // Simulamos un tiempo mínimo de carga para que el usuario perciba la transición premium
     // y damos tiempo a que el DOM se prepare
     const timer = setTimeout(() => {
