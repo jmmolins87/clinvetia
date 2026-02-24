@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export interface SkeletonLoaderProps {
-  isLoading: boolean
+  isLoading?: boolean
   duration?: number
-  children: React.ReactNode
+  children?: React.ReactNode
   className?: string
   skeletonVariants?: ("default" | "glass" | "primary" | "secondary")[]
 }
@@ -66,10 +66,10 @@ export function SkeletonOverlay({
   className,
   children,
 }: { 
-  isLoading: boolean
+  isLoading?: boolean
   duration?: number
   className?: string
-  children: React.ReactNode 
+  children?: React.ReactNode 
 }) {
   const [showSkeleton, setShowSkeleton] = React.useState(false)
 

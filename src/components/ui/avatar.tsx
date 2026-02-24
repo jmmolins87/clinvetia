@@ -11,8 +11,10 @@ const Avatar = React.forwardRef<
     size?: "xs" | "sm" | "default" | "lg" | "xl"
     variant?: "default" | "primary" | "secondary"
     initials?: string
+    src?: string
+    alt?: string
   }
->(({ className, size = "default", variant = "default", initials, ...props }, ref) => {
+>(({ className, size = "default", variant = "default", initials, src, alt, ...props }, ref) => {
   const sizeClasses = {
     xs:      "h-6 w-6 text-xs",
     sm:      "h-8 w-8 text-sm",
@@ -38,9 +40,10 @@ const Avatar = React.forwardRef<
       )}
       {...props}
     >
-      {initials && (
-        <span>{initials}</span>
-      )}
+      {src && <AvatarImage src={src} alt={alt} />}
+      <AvatarFallback className="bg-transparent">
+        {initials}
+      </AvatarFallback>
     </AvatarPrimitive.Root>
   )
 })
