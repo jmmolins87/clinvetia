@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Avatar, AvatarGroup } from "@/components/ui/avatar"
 import { BrandName } from "@/components/ui/brand-name"
+import { Icon } from "@/components/ui/icon"
 
 // ── Datos ──────────────────────────────────────────────────────────────────────
 
@@ -45,9 +46,9 @@ const MONTHS = [
 ]
 
 const DURATION_OPTIONS = [
-  { label: "30 min", value: 30, description: "Consulta rápida" },
-  { label: "45 min", value: 45, description: "Demo completa" },
-  { label: "60 min", value: 60, description: "Evaluación técnica" },
+  { label: "30m", value: 30 },
+  { label: "45m", value: 45 },
+  { label: "60m", value: 60 },
 ]
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -104,23 +105,27 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onPrev}
-          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
+          className="h-8 w-8 text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
           aria-label="Mes anterior"
         >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
+          <Icon icon={ChevronLeft} size="sm" />
+        </Button>
         <span className="text-sm font-semibold text-foreground">
           {MONTHS[month]} {year}
         </span>
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onNext}
-          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
+          className="h-8 w-8 text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
           aria-label="Mes siguiente"
         >
-          <ChevronRight className="h-4 w-4" />
-        </button>
+          <Icon icon={ChevronRight} size="sm" />
+        </Button>
       </div>
 
       <div className="grid grid-cols-7 gap-px">
@@ -170,6 +175,7 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
   )
 }
 
+
 interface TimeSlotPickerProps {
   selected: string | null
   onSelect: (slot: string) => void
@@ -183,28 +189,21 @@ function TimeSlotPicker({ selected, onSelect }: TimeSlotPickerProps) {
         const isSelected = selected === slot
 
         return (
-          <button
+          <Button
             key={slot}
+            variant={isSelected ? "default" : "ghost"}
             disabled={unavailable}
             onClick={() => onSelect(slot)}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium",
-              "transition-all duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              unavailable ? "cursor-not-allowed opacity-30 border-white/5 bg-white/2" : "cursor-pointer",
-              !unavailable && !isSelected && [
-                "border-white/10 bg-white/5",
-                "hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
-              ],
-              isSelected && [
-                "border-primary/60 bg-primary/15 text-primary",
-                "shadow-[0_0_12px_rgba(var(--primary-rgb),0.25)]",
-              ],
+              "flex h-auto items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-150",
+              !unavailable && !isSelected && "border-white/10 bg-white/5 hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
+              isSelected && "border-primary/60 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary-rgb),0.25)] hover:bg-primary/20",
+              unavailable && "opacity-30 border-white/5 bg-white/2"
             )}
           >
-            <Clock className={cn("h-3.5 w-3.5 shrink-0", isSelected ? "text-primary" : "text-muted-foreground")} />
+            <Icon icon={Clock} size="xs" className={isSelected ? "text-primary" : "text-muted-foreground"} />
             {slot}
-          </button>
+          </Button>
         )
       })}
     </div>
@@ -246,18 +245,18 @@ function ConfirmationView({ date, time, duration, onBack, onConfirm }: Confirmat
 
       <GlassCard className="p-4 space-y-3 bg-primary/5 border-primary/20">
         <div className="flex items-start gap-3">
-          <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <Icon icon={CalendarDays} size="sm" className="mt-0.5 text-primary" />
           <div>
             <p className="text-sm font-medium text-foreground capitalize">{formattedDate}</p>
             <p className="text-base text-muted-foreground">{time} – {endTime}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+          <Icon icon={Sparkles} size="sm" className="text-primary" />
           <p className="text-sm text-foreground">Demo personalizada con <BrandName /></p>
         </div>
         <div className="flex items-center gap-3">
-          <Clock className="h-4 w-4 shrink-0 text-primary" />
+          <Icon icon={Clock} size="sm" className="text-primary" />
           <p className="text-base text-muted-foreground">{duration} minutos · Videollamada</p>
         </div>
       </GlassCard>
@@ -265,7 +264,7 @@ function ConfirmationView({ date, time, duration, onBack, onConfirm }: Confirmat
       <div className="flex flex-col gap-2">
         <Button size="lg" className="w-full gap-2" onClick={onConfirm}>
           Confirmar reserva
-          <CheckCircle2 className="h-4 w-4" />
+          <Icon icon={CheckCircle2} size="sm" />
         </Button>
         <Button variant="ghost" size="sm" className="w-full" onClick={onBack}>
           Cambiar fecha u hora
@@ -292,7 +291,7 @@ function SuccessView({ date, time }: SuccessViewProps) {
       className="flex flex-col items-center gap-5 py-4 text-center"
     >
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-success/10 border border-success/30">
-        <CheckCircle2 className="h-8 w-8 text-success" />
+        <Icon icon={CheckCircle2} size="xl" variant="primary" className="text-success" />
       </div>
       <div className="space-y-1">
         <p className="text-lg font-bold text-foreground">¡Demo reservada!</p>
@@ -302,12 +301,13 @@ function SuccessView({ date, time }: SuccessViewProps) {
         Recibirás un email de confirmación con el enlace a la videollamada.
       </p>
       <Badge variant="accent" className="gap-2">
-        <CheckCircle2 className="h-3.5 w-3.5" />
+        <Icon icon={CheckCircle2} size="xs" />
         Confirmación enviada
       </Badge>
     </motion.div>
   )
 }
+
 
 // ── BookingCalendar ────────────────────────────────────────────────────────────
 
@@ -417,24 +417,22 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
         </div>
 
         {/* Duración */}
-        <div className="space-y-2 mb-4 md:mb-0">
-          <p className="text-base font-medium text-muted-foreground">Duración de la sesión</p>
+        <div className="my-3">
           <div className="flex gap-2">
             {DURATION_OPTIONS.map((opt) => (
-              <button
+              <Button
                 key={opt.value}
+                variant={duration === opt.value ? "default" : "ghost"}
                 onClick={() => setDuration(opt.value)}
                 className={cn(
-                  "flex-1 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all duration-150",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "flex-1 cursor-pointer rounded-xl border px-2 py-3 text-center transition-all duration-150",
                   duration === opt.value
                     ? "border-primary/50 bg-primary/10 text-primary"
                     : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground",
                 )}
               >
-                <p className="text-sm font-bold">{opt.label}</p>
-                <p className="text-sm opacity-70">{opt.description}</p>
-              </button>
+                <p className="text-xs font-bold">Sesión de {opt.label}</p>
+              </Button>
             ))}
           </div>
         </div>
@@ -509,7 +507,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                   </>
                 ) : (
                   <div className="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
-                    <CalendarDays className="h-10 w-10 text-muted-foreground/40" />
+                    <Icon icon={CalendarDays} size="xl" variant="muted" className="opacity-40" />
                     <p className="text-base text-muted-foreground">
                       Selecciona un día para ver los horarios disponibles
                     </p>
@@ -524,7 +522,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                 onClick={() => setStep("confirm")}
               >
                 Continuar
-                <ArrowRight className="h-4 w-4" />
+                <Icon icon={ArrowRight} size="sm" />
               </Button>
 
               {/* Social proof */}

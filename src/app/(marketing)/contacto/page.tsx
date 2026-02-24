@@ -51,12 +51,20 @@ const VALIDATION_RULES: Record<string, ValidationRule> = {
   mensaje:  { min: 10, max: 500 },
 }
 
-const CONTACT_FIELDS = [
+interface ContactField {
+  id: keyof FormData
+  label: string
+  placeholder: string
+  required: boolean
+  type?: string
+}
+
+const CONTACT_FIELDS: ContactField[] = [
   { id: "nombre",   label: "Nombre completo *",     placeholder: "Dr. Juan García", required: true },
   { id: "email",    label: "Email profesional *",   placeholder: "juan@clinica.com", required: true, type: "email" },
   { id: "telefono", label: "Teléfono *",            placeholder: "+34 612 345 678", required: true, type: "tel" },
   { id: "clinica",  label: "Nombre de la clínica *", placeholder: "Clínica Veterinaria Central", required: true },
-] as const
+]
 
 function ContactFormWithROI() {
   const router = useRouter()
@@ -217,7 +225,7 @@ function ContactFormWithROI() {
                           exit={{ opacity: 0 }}
                           className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"
                         >
-                          <AlertCircle className="h-3 w-3" />
+                          <AlertCircle className="h-4 w-4" />
                           {errors[field.id as keyof FormData]}
                         </motion.span>
                       )}
@@ -250,7 +258,7 @@ function ContactFormWithROI() {
                         exit={{ opacity: 0 }}
                         className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"
                       >
-                        <AlertCircle className="h-3 w-3" />
+                        <AlertCircle className="h-4 w-4" />
                         {errors.mensaje}
                       </motion.span>
                     )}
@@ -347,7 +355,11 @@ function ContactFormWithROI() {
       </form>
 
       <Dialog open={showCalculatorPrompt} onOpenChange={setShowCalculatorPrompt}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent 
+          className="sm:max-w-md [&>button]:hidden" 
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader className="space-y-3">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-warning/10 border border-warning/30"><Info className="h-7 w-7 text-warning" /></div>
             <DialogTitle className="text-center text-xl">¿Has usado la calculadora?</DialogTitle>

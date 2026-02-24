@@ -38,7 +38,7 @@ const fadeUp = {
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true },
   transition: { duration: 0.5 },
-}
+} as const
 
 const CLINVETIA_MONTHLY_COST = 297
 
@@ -185,7 +185,7 @@ function SliderField({ label, icon: Icon, value, onChange, min, max, step, displ
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className={`text-base font-medium flex items-center gap-2 ${colorMap[color]}`}><span className={`h-2 w-2 rounded-full ${dotMap[color]}`} /><span className="text-foreground/80">{label}</span><Icon className="w-4 h-4" /></label>
+        <label className={`text-base font-medium flex items-center gap-2 ${colorMap[color]}`}><span className={`h-2 w-2 rounded-full ${dotMap[color]}`} /><span className="text-foreground/80">{label}</span><Icon className="w-5 h-5" /></label>
         <span className={`text-base font-bold tabular-nums ${colorMap[color]}`}>{display}</span>
       </div>
       <Slider value={[value]} onValueChange={([v]) => onChange(v)} min={min} max={max} step={step} className="py-1" />

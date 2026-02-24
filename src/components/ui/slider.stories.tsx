@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react"
 import { useState } from "react"
 import { Users, ReceiptText, PercentCircle } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
 
 const meta = {
   title: "Design System/Slider",
@@ -102,11 +103,11 @@ function SliderField({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className={`text-sm font-medium flex items-center gap-2 ${colorMap[color]}`}>
+        <Label className={`text-sm font-medium flex items-center gap-2 ${colorMap[color]}`}>
           <span className={`h-2 w-2 shrink-0 rounded-full ${dotMap[color]}`} />
           <span className="text-foreground/80">{label}</span>
           {icon}
-        </label>
+        </Label>
         <span className={`text-base font-bold tabular-nums ${colorMap[color]}`}>{formatValue(value)}</span>
       </div>
       <Slider

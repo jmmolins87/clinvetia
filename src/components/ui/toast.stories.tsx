@@ -2,6 +2,7 @@
 
 import type { Meta, StoryObj } from "@storybook/react"
 import { CheckCircle, AlertTriangle, Info } from "lucide-react"
+import { Icon } from "@/components/ui/icon"
 import {
   Toast,
   ToastTitle,
@@ -54,7 +55,7 @@ export const Default: Story = {
       <div className="grid gap-0.5">
         <ToastTitle>
           <span className="flex items-center gap-2">
-            <Info className="size-4 text-primary" />
+            <Icon icon={Info} size="xs" variant="primary" />
             Scheduled: Catch up
           </span>
         </ToastTitle>
@@ -72,7 +73,7 @@ export const Success: Story = {
       <div className="grid gap-0.5">
         <ToastTitle>
           <span className="flex items-center gap-2">
-            <CheckCircle className="size-4 text-success" />
+            <Icon icon={CheckCircle} size="xs" variant="primary" className="text-success" />
             Deployment successful
           </span>
         </ToastTitle>
@@ -89,7 +90,7 @@ export const Destructive: Story = {
       <div className="grid gap-0.5">
         <ToastTitle>
           <span className="flex items-center gap-2">
-            <AlertTriangle className="size-4" />
+            <Icon icon={AlertTriangle} size="xs" variant="destructive" />
             Connection error
           </span>
         </ToastTitle>
@@ -130,7 +131,7 @@ export const AllVariants: Story = {
       <Toast open>
         <div className="grid gap-0.5">
           <ToastTitle className="flex items-center gap-2">
-            <Info className="size-4 text-primary" />
+            <Icon icon={Info} size="xs" variant="primary" />
             Default Toast
           </ToastTitle>
           <ToastDescription>Información general del sistema.</ToastDescription>
@@ -141,7 +142,7 @@ export const AllVariants: Story = {
       <Toast open variant="success">
         <div className="grid gap-0.5">
           <ToastTitle className="flex items-center gap-2">
-            <CheckCircle className="size-4 text-success" />
+            <Icon icon={CheckCircle} size="xs" variant="primary" className="text-success" />
             Success Toast
           </ToastTitle>
           <ToastDescription>Operación completada con éxito.</ToastDescription>
@@ -152,7 +153,7 @@ export const AllVariants: Story = {
       <Toast open variant="destructive">
         <div className="grid gap-0.5">
           <ToastTitle className="flex items-center gap-2">
-            <AlertTriangle className="size-4" />
+            <Icon icon={AlertTriangle} size="xs" variant="destructive" />
             Destructive Toast
           </ToastTitle>
           <ToastDescription>Error crítico en el sistema.</ToastDescription>

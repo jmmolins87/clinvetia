@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
 
 const meta = {
   title: "Design System/DropdownMenu",
@@ -68,24 +69,24 @@ export const Default: Story = {
       <DropdownMenuContent>
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <User className="mr-2 size-4" />
+        <DropdownMenuItem className="gap-2">
+          <Icon icon={User} size="xs" />
           <span>Profile</span>
           <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <CreditCard className="mr-2 size-4" />
+        <DropdownMenuItem className="gap-2">
+          <Icon icon={CreditCard} size="xs" />
           <span>Billing</span>
           <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="mr-2 size-4" />
+        <DropdownMenuItem className="gap-2">
+          <Icon icon={Settings} size="xs" />
           <span>Settings</span>
           <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <LogOut className="mr-2 size-4" />
+        <DropdownMenuItem className="gap-2">
+          <Icon icon={LogOut} size="xs" />
           <span>Log out</span>
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
@@ -104,32 +105,32 @@ export const WithGroups: Story = {
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <Plus className="mr-2 size-4" />
+          <DropdownMenuItem className="gap-2">
+            <Icon icon={Plus} size="xs" />
             <span>New Item</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Mail className="mr-2 size-4" />
+          <DropdownMenuItem className="gap-2">
+            <Icon icon={Mail} size="xs" />
             <span>Send Email</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <MessageSquare className="mr-2 size-4" />
+          <DropdownMenuItem className="gap-2">
+            <Icon icon={MessageSquare} size="xs" />
             <span>Messages</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Support</DropdownMenuLabel>
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <Github className="mr-2 size-4" />
+          <DropdownMenuItem className="gap-2">
+            <Icon icon={Github} size="xs" />
             <span>GitHub</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <LifeBuoy className="mr-2 size-4" />
+          <DropdownMenuItem className="gap-2">
+            <Icon icon={LifeBuoy} size="xs" />
             <span>Help</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Keyboard className="mr-2 size-4" />
+          <DropdownMenuItem className="gap-2">
+            <Icon icon={Keyboard} size="xs" />
             <span>Keyboard Shortcuts</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
@@ -213,28 +214,28 @@ export const WithSubmenu: Story = {
         <DropdownMenuLabel>Invite Users</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <Mail className="mr-2 size-4" />
+          <DropdownMenuItem className="gap-2">
+            <Icon icon={Mail} size="xs" />
             <span>Email</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <MessageSquare className="mr-2 size-4" />
+          <DropdownMenuItem className="gap-2">
+            <Icon icon={MessageSquare} size="xs" />
             <span>Message</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Users className="mr-2 size-4" />
+          <DropdownMenuSubTrigger className="gap-2">
+            <Icon icon={Users} size="xs" />
             <span>More Options</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuItem>
-              <Cloud className="mr-2 size-4" />
+            <DropdownMenuItem className="gap-2">
+              <Icon icon={Cloud} size="xs" />
               <span>Share Link</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Github className="mr-2 size-4" />
+            <DropdownMenuItem className="gap-2">
+              <Icon icon={Github} size="xs" />
               <span>GitHub</span>
             </DropdownMenuItem>
           </DropdownMenuSubContent>
@@ -253,12 +254,12 @@ export const Destructive: Story = {
       <DropdownMenuContent>
         <DropdownMenuLabel>Danger Zone</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-[rgba(var(--destructive-rgb),0.10)]">
-          <LogOut className="mr-2 size-4" />
+        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-[rgba(var(--destructive-rgb),0.10)] gap-2">
+          <Icon icon={LogOut} size="xs" />
           <span>Delete Account</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-[rgba(var(--destructive-rgb),0.10)]">
-          <Settings className="mr-2 size-4" />
+        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-[rgba(var(--destructive-rgb),0.10)] gap-2">
+          <Icon icon={Settings} size="xs" />
           <span>Reset All Data</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -277,20 +278,21 @@ export const DarkAndLight: Story = {
       <DropdownMenuContent>
         <DropdownMenuLabel>Liquid Glass</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <User className="mr-2 size-4" />
+        <DropdownMenuItem className="gap-2">
+          <Icon icon={User} size="xs" />
           Profile
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="mr-2 size-4" />
+        <DropdownMenuItem className="gap-2">
+          <Icon icon={Settings} size="xs" />
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <LogOut className="mr-2 size-4" />
+        <DropdownMenuItem className="gap-2">
+          <Icon icon={LogOut} size="xs" />
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   ),
 }
+

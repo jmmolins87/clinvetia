@@ -18,7 +18,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: "badge-default",
-        primary: "badge-default", // Usamos el mismo estilo que default o uno específico
+        primary: "badge-default",
         secondary: "badge-secondary",
         destructive: "badge-destructive",
         outline: [
@@ -32,8 +32,10 @@ const badgeVariants = cva(
         warning: "badge-warning",
       },
     },
-    defaultVariants: { variant: "default" },
-  },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
 )
 
 export interface BadgeProps

@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { Trash2, LogOut } from "lucide-react"
+import { Icon } from "@/components/ui/icon"
 import {
   Dialog, DialogTrigger, DialogContent,
   DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -7,6 +8,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 
@@ -57,11 +59,11 @@ export const Default: Story = {
         </DialogHeader>
         <div className="flex flex-col gap-3 py-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-base text-muted-foreground">Display name</label>
+            <Label className="text-base text-muted-foreground">Display name</Label>
             <Input defaultValue="John Doe" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-base text-muted-foreground">Email</label>
+            <Label className="text-base text-muted-foreground">Email</Label>
             <Input defaultValue="john@example.com" type="email" />
           </div>
         </div>
@@ -86,8 +88,8 @@ export const Destructive: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive">
-          <Trash2 className="size-4" />Delete account
+        <Button variant="destructive" className="gap-2">
+          <Icon icon={Trash2} size="xs" />Delete account
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -99,8 +101,8 @@ export const Destructive: Story = {
         </DialogHeader>
         <DialogFooter>
           <DialogCancel size="sm">Cancel</DialogCancel>
-          <Button variant="destructive" size="sm">
-            <Trash2 className="size-4" />Delete permanently
+          <Button variant="destructive" size="sm" className="gap-2">
+            <Icon icon={Trash2} size="xs" />Delete permanently
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -120,8 +122,8 @@ export const SignOut: Story = {
   render: () => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost">
-          <LogOut className="size-4" />Sign out
+        <Button variant="ghost" className="gap-2">
+          <Icon icon={LogOut} size="xs" />Sign out
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-sm">
@@ -133,14 +135,15 @@ export const SignOut: Story = {
         </DialogHeader>
         <DialogFooter>
           <DialogCancel size="sm">Stay</DialogCancel>
-          <Button size="sm">
-            <LogOut className="size-4" />Sign out
+          <Button size="sm" className="gap-2">
+            <Icon icon={LogOut} size="xs" />Sign out
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   ),
 }
+
 
 export const DarkAndLight: Story = {
   name: "Dark + Light",

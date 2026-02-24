@@ -3,6 +3,7 @@ import { Search, Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 
 const meta = {
   title: "Design System/Input",
@@ -31,7 +32,7 @@ export const WithLabel: Story = {
   name: "With Label",
   render: () => (
     <div className="flex w-72 flex-col gap-2">
-      <label className="text-base font-medium text-foreground">Email address</label>
+      <Label className="text-base font-medium text-foreground">Email address</Label>
       <Input type="email" placeholder="you@example.com" />
     </div>
   ),
@@ -54,13 +55,15 @@ export const PasswordReveal: Story = {
     return (
       <div className="relative w-72">
         <Input type={show ? "text" : "password"} placeholder="Enter password" className="pr-10" />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => setShow((s) => !s)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary transition-colors hover:bg-transparent"
         >
           {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-        </button>
+        </Button>
       </div>
     )
   },
@@ -77,11 +80,11 @@ export const FormGroup: Story = {
     <div className="liquid-glass rounded-2xl p-6 flex flex-col gap-4 w-80">
       <h3 className="text-sm font-semibold text-gradient-primary">Sign in</h3>
       <div className="flex flex-col gap-2">
-        <label className="text-base text-muted-foreground">Email</label>
+        <Label className="text-base text-muted-foreground">Email</Label>
         <Input type="email" placeholder="you@example.com" />
       </div>
       <div className="flex flex-col gap-2">
-        <label className="text-base text-muted-foreground">Password</label>
+        <Label className="text-base text-muted-foreground">Password</Label>
         <Input type="password" placeholder="••••••••" />
       </div>
       <Button className="w-full mt-1">Sign In</Button>

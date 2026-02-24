@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 
 const meta = {
   title: "Design System/Textarea",
@@ -26,7 +27,7 @@ export const WithLabel: Story = {
   name: "With Label",
   render: () => (
     <div className="flex w-80 flex-col gap-2">
-      <label className="text-base font-medium text-foreground">Your message</label>
+      <Label className="text-base font-medium text-foreground">Your message</Label>
       <Textarea placeholder="Describe your issue in detail…" rows={4} />
       <p className="text-base text-muted-foreground">Maximum 500 characters</p>
     </div>
@@ -44,7 +45,7 @@ export const InCard: Story = {
     <div className="liquid-glass-secondary rounded-2xl p-6 flex flex-col gap-4 w-96">
       <h3 className="text-sm font-semibold text-gradient-secondary">Send feedback</h3>
       <div className="flex flex-col gap-2">
-        <label className="text-base text-muted-foreground">Comments</label>
+        <Label className="text-base text-muted-foreground">Comments</Label>
         <Textarea placeholder="What could we improve?" rows={5} />
       </div>
       <div className="flex gap-2 justify-end">

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { Zap, Trash2, ArrowRight, Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
 
 const meta = {
   title: "Design System/Button",
@@ -132,7 +133,7 @@ export const Sizes: Story = {
       <Button size="sm">Small</Button>
       <Button size="default">Default</Button>
       <Button size="lg">Large</Button>
-      <Button size="icon"><Zap /></Button>
+      <Button size="icon"><Icon icon={Zap} /></Button>
     </div>
   ),
 }
@@ -148,10 +149,10 @@ export const WithIcons: Story = {
   },
   render: () => (
     <div className="flex flex-wrap gap-4">
-      <Button><Zap className="mr-1" />Launch</Button>
-      <Button variant="accent"><Plus className="mr-1" />Add collaborator</Button>
-      <Button variant="outline"><ArrowRight className="mr-1" />Continue</Button>
-      <Button variant="destructive"><Trash2 className="mr-1" />Delete</Button>
+      <Button className="gap-2"><Icon icon={Zap} size="sm" />Launch</Button>
+      <Button variant="accent" className="gap-2"><Icon icon={Plus} size="sm" />Add collaborator</Button>
+      <Button variant="outline" className="gap-2"><Icon icon={ArrowRight} size="sm" />Continue</Button>
+      <Button variant="destructive" className="gap-2"><Icon icon={Trash2} size="sm" />Delete</Button>
     </div>
   ),
 }
@@ -165,8 +166,8 @@ export const Loading: Story = {
     },
   },
   render: () => (
-    <Button disabled>
-      <Loader2 className="animate-spin" />
+    <Button disabled className="gap-2">
+      <Icon icon={Loader2} className="animate-spin" size="sm" />
       Processing...
     </Button>
   ),
@@ -204,3 +205,4 @@ export const DarkAndLight: Story = {
     </div>
   ),
 }
+

@@ -1,67 +1,83 @@
+"use client"
+
 import * as React from "react"
-import Image from "next/image"
+import * as AvatarPrimitive from "@radix-ui/react-avatar"
+
 import { cn } from "@/lib/utils"
 
-// ── Avatar ────────────────────────────────────────────────────────────────────
+const Avatar = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> & {
+    size?: "xs" | "sm" | "default" | "lg" | "xl"
+    variant?: "default" | "primary" | "secondary"
+    initials?: string
+  }
+>(({ className, size = "default", variant = "default", initials, ...props }, ref) => {
+  const sizeClasses = {
+    xs:      "h-6 w-6 text-xs",
+    sm:      "h-8 w-8 text-sm",
+    default: "h-10 w-10 text-sm",
+    lg:      "h-12 w-12 text-base",
+    xl:      "h-16 w-16 text-lg",
+  }
 
-export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
-  src?: string
-  alt?: string
-  initials?: string
-  size?: "xs" | "sm" | "default" | "lg" | "xl"
-  variant?: "default" | "primary" | "secondary"
-}
+  const variantClasses = {
+    default:   "bg-white/10 border-white/20 text-foreground",
+    primary:   "bg-primary/15 border-primary/40 text-primary",
+    secondary: "bg-neon-pink/15 border-neon-pink/40 text-neon-pink",
+  }
 
-const sizeClasses = {
-  xs:      "h-6 w-6 text-sm",
-  sm:      "h-8 w-8 text-sm",
-  default: "h-10 w-10 text-sm",
-  lg:      "h-12 w-12 text-base",
-  xl:      "h-16 w-16 text-lg",
-}
-
-const variantClasses = {
-  default:   "bg-white/10 border-white/20 text-foreground",
-  primary:   "bg-primary/15 border-primary/40 text-primary",
-  secondary: "bg-neon-pink/15 border-neon-pink/40 text-neon-pink",
-}
-
-export function Avatar({
-  src, alt, initials, size = "default", variant = "default", className, ...props
-}: AvatarProps) {
   return (
-    <div
+    <AvatarPrimitive.Root
+      ref={ref}
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center overflow-hidden",
-        "rounded-full border font-semibold",
-        "overflow-hidden select-none",
-        "liquid-glass",
-        sizeClasses[size],
-        variantClasses[variant],
-        className,
+        "relative flex shrink-0 overflow-hidden rounded-full border liquid-glass items-center justify-center font-semibold select-none",
+        sizeClasses[size as keyof typeof sizeClasses],
+        variantClasses[variant as keyof typeof variantClasses],
+        className
       )}
       {...props}
     >
-      {src ? (
-        <Image
-          src={src}
-          alt={alt ?? ""}
-          fill
-          className="object-cover"
-          sizes="64px"
-        />
-      ) : (
-        <span aria-label={alt}>{initials}</span>
+      {initials && (
+        <span>{initials}</span>
       )}
-    </div>
+    </AvatarPrimitive.Root>
   )
-}
+})
+Avatar.displayName = AvatarPrimitive.Root.displayName
+
+const AvatarImage = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Image>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Image
+    ref={ref}
+    className={cn("aspect-square h-full w-full object-cover", className)}
+    {...props}
+  />
+))
+AvatarImage.displayName = AvatarPrimitive.Image.displayName
+
+const AvatarFallback = React.forwardRef<
+  React.ElementRef<typeof AvatarPrimitive.Fallback>,
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>
+>(({ className, ...props }, ref) => (
+  <AvatarPrimitive.Fallback
+    ref={ref}
+    className={cn(
+      "flex h-full w-full items-center justify-center rounded-full bg-muted font-semibold",
+      className
+    )}
+    {...props}
+  />
+))
+AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
 
 // ── AvatarGroup ───────────────────────────────────────────────────────────────
 
 export interface AvatarGroupProps extends React.HTMLAttributes<HTMLDivElement> {
   max?: number
-  size?: AvatarProps["size"]
+  size?: "xs" | "sm" | "default" | "lg" | "xl"
   children: React.ReactNode
 }
 
@@ -69,6 +85,14 @@ export function AvatarGroup({ max, size = "default", children, className, ...pro
   const items = React.Children.toArray(children)
   const visible = max ? items.slice(0, max) : items
   const overflow = max ? Math.max(0, items.length - max) : 0
+
+  const sizeClasses = {
+    xs:      "h-6 w-6 text-xs",
+    sm:      "h-8 w-8 text-sm",
+    default: "h-10 w-10 text-sm",
+    lg:      "h-12 w-12 text-base",
+    xl:      "h-16 w-16 text-lg",
+  }
 
   const overlapClasses = {
     xs:      "-ml-2",
@@ -87,7 +111,7 @@ export function AvatarGroup({ max, size = "default", children, className, ...pro
           style={{ zIndex: visible.length - i }}
         >
           {React.isValidElement(child)
-            ? React.cloneElement(child as React.ReactElement<AvatarProps>, { size })
+            ? React.cloneElement(child as React.ReactElement<any>, { size })
             : child}
         </div>
       ))}
@@ -108,3 +132,5 @@ export function AvatarGroup({ max, size = "default", children, className, ...pro
     </div>
   )
 }
+
+export { Avatar, AvatarImage, AvatarFallback }

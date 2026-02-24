@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { useState } from "react"
 import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 const meta = {
   title: "Design System/Switch",
@@ -44,12 +45,12 @@ export const WithLabel: Story = {
           checked={checked}
           onCheckedChange={setChecked}
         />
-        <label
+        <Label
           htmlFor="pro-plan"
           className="text-sm font-medium text-foreground cursor-pointer select-none"
         >
           {checked ? "Pro plan" : "Free plan"}
-        </label>
+        </Label>
       </div>
     )
   },
@@ -66,7 +67,7 @@ export const SettingsGroup: Story = {
         { id: "weekly",  label: "Weekly digest",      defaultChecked: true  },
       ].map(({ id, label, defaultChecked }) => (
         <div key={id} className="flex items-center justify-between">
-          <label htmlFor={id} className="text-sm text-foreground cursor-pointer">{label}</label>
+          <Label htmlFor={id} className="text-sm text-foreground cursor-pointer">{label}</Label>
           <Switch id={id} defaultChecked={defaultChecked} />
         </div>
       ))}

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react"
 import { Zap, Circle, AlertTriangle, CheckCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Icon } from "@/components/ui/icon"
 
 const meta = {
   title: "Design System/Badge",
@@ -63,11 +64,11 @@ export const WithIcon: Story = {
   name: "With Icons",
   render: () => (
     <div className="flex flex-wrap gap-3">
-      <Badge variant="default"><Zap className="size-3" />Powered</Badge>
-      <Badge variant="accent"><Circle className="size-3 fill-current" />Online</Badge>
-      <Badge variant="destructive"><AlertTriangle className="size-3" />Critical</Badge>
-      <Badge variant="warning"><AlertTriangle className="size-3" />Caution</Badge>
-      <Badge variant="secondary"><CheckCircle className="size-3" />Verified</Badge>
+      <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" />Powered</Badge>
+      <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" className="fill-current" />Online</Badge>
+      <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Critical</Badge>
+      <Badge variant="warning" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Caution</Badge>
+      <Badge variant="secondary" className="gap-1.5"><Icon icon={CheckCircle} size="xs" />Verified</Badge>
     </div>
   ),
 }
@@ -89,11 +90,11 @@ export const InContext: Story = {
     <div className="liquid-glass rounded-xl p-6 w-80 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm text-foreground">API Status</span>
-        <Badge variant="accent"><Circle className="size-2 fill-current" />Operational</Badge>
+        <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" className="fill-current" />Operational</Badge>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-foreground">Deploy</span>
-        <Badge variant="default"><Zap className="size-3" />v2.4.1</Badge>
+        <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" />v2.4.1</Badge>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-foreground">Database</span>
@@ -101,7 +102,7 @@ export const InContext: Story = {
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-foreground">Auth Service</span>
-        <Badge variant="destructive"><AlertTriangle className="size-3" />Degraded</Badge>
+        <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Degraded</Badge>
       </div>
     </div>
   ),
@@ -119,3 +120,4 @@ export const DarkAndLight: Story = {
     </div>
   ),
 }
+

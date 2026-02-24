@@ -19,7 +19,7 @@ const fadeUp = {
   initial: { opacity: 0, y: 30 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.6, ease: "easeOut" }
-}
+} as const
 
 const staggerContainer = {
   initial: {},
@@ -48,9 +48,9 @@ const FLUJO_PASOS = [
 ] as const
 
 const BENEFICIOS = [
-  { icon: Brain, title: "Urgencias 24/7", description: "Nunca más una urgencia sin atender" },
+  { icon: Brain, title: "Urgencias 24/7", description: "Nunca más una urgencia sin atender", color: "primary" },
   { icon: Phone, title: "Menos llamadas repetitivas", description: "El sistema hace el trabajo pesado", color: "secondary" },
-  { icon: Heart, title: "Dueños tranquilos", description: "Respuesta inmediata, siempre" }
+  { icon: Heart, title: "Dueños tranquilos", description: "Respuesta inmediata, siempre", color: "primary" }
 ] as const
 
 const ESCENARIOS = [
@@ -69,7 +69,7 @@ const ROI_DATOS = [
 const SOLUCION_MOCK_STEPS = [
   { label: "Análisis", value: "Posible obstrucción - Urgencia media", color: "text-secondary" },
   { label: "Cita propuesta", value: "Hoy 16:30 - Dr. García", color: "text-success" },
-  { value: "✓ Cita confirmada", color: "text-primary font-bold" }
+  { label: "", value: "✓ Cita confirmada", color: "text-primary font-bold" }
 ] as const
 
 function Section({ id, children, className }: { id: string; children: React.ReactNode; className?: string }) {

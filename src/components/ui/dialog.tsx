@@ -7,10 +7,13 @@ import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button, type ButtonProps } from "@/components/ui/button"
 
-const Dialog      = DialogPrimitive.Root
+const Dialog = DialogPrimitive.Root
+
 const DialogTrigger = DialogPrimitive.Trigger
-const DialogPortal  = DialogPrimitive.Portal
-const DialogClose   = DialogPrimitive.Close
+
+const DialogPortal = DialogPrimitive.Portal
+
+const DialogClose = DialogPrimitive.Close
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
@@ -80,7 +83,10 @@ const DialogContent = React.forwardRef<
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
-const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+const DialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
     {...props}
@@ -88,11 +94,14 @@ const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 )
 DialogHeader.displayName = "DialogHeader"
 
-const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
-      "pt-2 border-t border-white/8",
+      "flex flex-col gap-3 sm:flex-row sm:justify-stretch pt-4 border-t border-white/8",
+      "sm:[&>*]:flex-1",
       className,
     )}
     {...props}
@@ -128,16 +137,6 @@ const DialogDescription = React.forwardRef<
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
-/**
- * Botón Cancelar para diálogos — usa variante destructive
- * @example
- * ```tsx
- * <DialogFooter>
- *   <DialogCancel>Cancelar</DialogCancel>
- *   <Button>Confirmar</Button>
- * </DialogFooter>
- * ```
- */
 const DialogCancel = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, ...props }, ref) => (
     <DialogClose asChild>
@@ -151,8 +150,8 @@ export {
   Dialog,
   DialogPortal,
   DialogOverlay,
-  DialogClose,
   DialogTrigger,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogFooter,
