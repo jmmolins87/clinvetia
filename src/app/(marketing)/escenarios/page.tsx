@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 
 import { CtaSection } from "@/components/marketing/cta-section"
+import { Badge } from "@/components/ui/badge"
 
 const casos = [
   {
@@ -123,9 +124,12 @@ export default function EscenariosPage() {
       {/* ═══════════════════════════════════════════════════════════════════════
           HERO SIMPLE
       ═══════════════════════════════════════════════════════════════════════ */}
-      <section className="py-20">
+      <section className="py-24 md:py-32">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="text-center">
+            <Badge variant="secondary" className="mb-6">
+              Casos de uso reales
+            </Badge>
             <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
               Situaciones veterinarias{" "}
               <span className="bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">

@@ -58,17 +58,43 @@ export function LoadingOverlay({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4",
-        "bg-background/80 backdrop-blur-md",
+        "fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-8",
+        "bg-background/60 backdrop-blur-xl",
+        "transition-all duration-500 animate-in fade-in",
         className
       )}
     >
-      <Spinner size="xl" variant={variant} />
-      {message && (
-        <p className="text-base font-medium text-foreground animate-pulse">
-          {message}
-        </p>
-      )}
+      <div className="relative flex items-center justify-center">
+        {/* Glow background */}
+        <div className={cn(
+          "absolute h-24 w-24 rounded-full blur-3xl opacity-20",
+          variant === "primary" && "bg-primary",
+          variant === "secondary" && "bg-secondary",
+          variant === "accent" && "bg-accent",
+          variant === "default" && "bg-muted-foreground"
+        )} />
+        
+        {/* Main Spinner Ring */}
+        <LoadingRing size="xl" variant={variant} className="h-20 w-20 border-[4px]" />
+        
+        {/* Center brand dot */}
+        <div className={cn(
+          "absolute h-3 w-3 rounded-full",
+          variant === "primary" && "bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.8)]",
+          variant === "secondary" && "bg-secondary shadow-[0_0_15px_rgba(var(--secondary-rgb),0.8)]",
+          variant === "accent" && "bg-accent shadow-[0_0_15px_rgba(var(--accent-rgb),0.8)]",
+          variant === "default" && "bg-muted-foreground"
+        )} />
+      </div>
+
+      <div className="flex flex-col items-center gap-2">
+        {message && (
+          <p className="text-sm font-semibold tracking-[0.2em] uppercase text-foreground/80 animate-pulse">
+            {message}
+          </p>
+        )}
+        <LoadingDots size="sm" variant={variant} className="opacity-50" />
+      </div>
     </div>
   )
 }

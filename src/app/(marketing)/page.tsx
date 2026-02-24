@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { BrandName } from "@/components/ui/brand-name"
+import { SectionBackground } from "@/components/ui/section-background"
 
 // Animaciones reutilizables
 const fadeUp = {
@@ -86,7 +87,7 @@ const ROI_DATOS = [
 // Componentes helper
 function Section({ id, children, className }: { id: string; children: React.ReactNode; className?: string }) {
   return (
-    <section id={id} className={cn("relative border-t border-white/8 px-4 py-20 sm:py-28", className)}>
+    <section id={id} className={cn("relative overflow-hidden border-t border-white/8 px-4 py-20 sm:py-28", className)}>
       {children}
     </section>
   )
@@ -102,17 +103,6 @@ function SectionHeader({ badge, title, subtitle }: { badge?: string; title: stri
   )
 }
 
-function BackgroundGlow({ className, color = "primary" }: { className?: string; color?: "primary" | "secondary" | "accent" }) {
-  const colors = {
-    primary: "bg-primary/10",
-    secondary: "bg-secondary/10",
-    accent: "bg-success/10"
-  }
-  return (
-    <div aria-hidden className={cn("pointer-events-none absolute -z-10 rounded-full blur-[120px]", colors[color], className)} />
-  )
-}
-
 // Page principal
 export default function MarketingPage() {
   return (
@@ -121,10 +111,7 @@ export default function MarketingPage() {
       {/* ═══════════════════════════════════════════════════════════════════════
           HERO SECTION
       ═══════════════════════════════════════════════════════════════════════ */}
-      <Section id="hero" className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-0">
-        <BackgroundGlow className="left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2" color="primary" />
-        <BackgroundGlow className="left-[70%] top-[60%] h-[350px] w-[350px] -translate-x-1/2 -translate-y-1/2" color="secondary" />
-        
+      <Section id="hero" className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-0 border-t-0">
         <motion.div
           initial="initial"
           animate="animate"
@@ -173,7 +160,6 @@ export default function MarketingPage() {
           SECCIÓN: PROBLEMA
       ═══════════════════════════════════════════════════════════════════════ */}
       <Section id="problema">
-        <BackgroundGlow className="left-0 top-1/2 h-[450px] w-[450px] -translate-y-1/2" color="secondary" />
         
         <div className="mx-auto max-w-6xl">
           <SectionHeader
@@ -222,7 +208,6 @@ export default function MarketingPage() {
           SECCIÓN: SOLUCIÓN
       ═══════════════════════════════════════════════════════════════════════ */}
       <Section id="solucion">
-        <BackgroundGlow className="right-0 top-1/2 h-[400px] w-[400px] -translate-y-1/2" color="accent" />
         
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
           <motion.div
@@ -299,7 +284,6 @@ export default function MarketingPage() {
           SECCIÓN: FLUJO
       ═══════════════════════════════════════════════════════════════════════ */}
       <Section id="flujo">
-        <BackgroundGlow className="left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2" color="primary" />
         
         <div className="mx-auto max-w-6xl">
           <SectionHeader
@@ -377,7 +361,6 @@ export default function MarketingPage() {
           SECCIÓN: ESCENARIOS
       ═══════════════════════════════════════════════════════════════════════ */}
       <Section id="escenarios">
-        <BackgroundGlow className="right-0 top-1/2 h-[350px] w-[350px] -translate-y-1/2" color="secondary" />
         
         <div className="mx-auto max-w-4xl">
           <SectionHeader
@@ -415,8 +398,6 @@ export default function MarketingPage() {
           SECCIÓN: ROI
       ═══════════════════════════════════════════════════════════════════════ */}
       <Section id="roi">
-        <BackgroundGlow className="left-1/2 top-1/2 h-[450px] w-[450px] -translate-x-1/2 -translate-y-1/2" color="accent" />
-        <BackgroundGlow className="left-[15%] top-[30%] h-[250px] w-[250px]" color="secondary" />
         
         <div className="mx-auto max-w-4xl text-center">
           <SectionHeader

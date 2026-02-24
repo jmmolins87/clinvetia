@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
 import { useROIStore } from "@/store/roi-store"
 
 interface ROICalculatorProps {
@@ -80,21 +81,26 @@ export function ROICalculator({ trigger }: ROICalculatorProps) {
                   <span className="w-2 h-2 rounded-full bg-primary" />
                   Pacientes / mes
                 </label>
-                <span className="text-base font-semibold text-primary tabular-nums">
-                  {monthlyPatients}
-                </span>
+                <div className="relative w-20">
+                  <Input
+                    type="number"
+                    value={monthlyPatients}
+                    onChange={(e) => setMonthlyPatients(Number(e.target.value))}
+                    className="h-8 px-2 text-right font-bold text-primary glass"
+                  />
+                </div>
               </div>
               <Slider
                 value={[monthlyPatients]}
                 onValueChange={([value]) => setMonthlyPatients(value)}
-                min={100}
-                max={1000}
+                min={0}
+                max={2000}
                 step={10}
                 className="py-1"
               />
-              <div className="flex justify-between text-base text-muted-foreground">
-                <span>100</span>
-                <span>1000</span>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>0</span>
+                <span>2000</span>
               </div>
             </div>
 
@@ -104,21 +110,27 @@ export function ROICalculator({ trigger }: ROICalculatorProps) {
                   <span className="w-2 h-2 rounded-full bg-secondary" />
                   Ticket Medio (€)
                 </label>
-                <span className="text-base font-semibold text-secondary tabular-nums">
-                  {averageTicket}€
-                </span>
+                <div className="relative w-20">
+                  <Input
+                    type="number"
+                    value={averageTicket}
+                    onChange={(e) => setAverageTicket(Number(e.target.value))}
+                    className="h-8 px-2 pr-5 text-right font-bold text-secondary glass"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-secondary/60">€</span>
+                </div>
               </div>
               <Slider
                 value={[averageTicket]}
                 onValueChange={([value]) => setAverageTicket(value)}
-                min={30}
-                max={150}
+                min={0}
+                max={500}
                 step={5}
                 className="py-1"
               />
-              <div className="flex justify-between text-base text-muted-foreground">
-                <span>30€</span>
-                <span>150€</span>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>0€</span>
+                <span>500€</span>
               </div>
             </div>
 
@@ -128,21 +140,27 @@ export function ROICalculator({ trigger }: ROICalculatorProps) {
                   <span className="w-2 h-2 rounded-full bg-destructive" />
                   % Pérdida de conversión
                 </label>
-                <span className="text-base font-semibold text-destructive tabular-nums">
-                  {conversionLoss}%
-                </span>
+                <div className="relative w-20">
+                  <Input
+                    type="number"
+                    value={conversionLoss}
+                    onChange={(e) => setConversionLoss(Number(e.target.value))}
+                    className="h-8 px-2 pr-5 text-right font-bold text-destructive glass"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-destructive/60">%</span>
+                </div>
               </div>
               <Slider
                 value={[conversionLoss]}
                 onValueChange={([value]) => setConversionLoss(value)}
                 min={0}
-                max={50}
+                max={100}
                 step={1}
                 className="py-1"
               />
-              <div className="flex justify-between text-base text-muted-foreground">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>0%</span>
-                <span>50%</span>
+                <span>100%</span>
               </div>
             </div>
           </div>

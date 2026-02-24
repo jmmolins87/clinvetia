@@ -261,6 +261,31 @@ type Story = StoryObj<typeof meta>
 export function cn(...inputs: ClassValue[]) { ... }
 ```
 
+### Manejo de Errores
+
+```typescript
+// Validar props requeridas con console.warn
+const Icon = React.forwardRef<SVGSVGElement, IconProps>(
+  ({ className, icon: IconComponent, variant, size, ...props }, ref) => {
+    if (!IconComponent) {
+      console.warn("Icon component: icon prop is required")
+      return null
+    }
+    return (
+      <IconComponent
+        ref={ref}
+        className={cn(iconVariants({ variant, size }), className)}
+        {...props}
+      />
+    )
+  }
+)
+```
+
+### Nota sobre Storybook
+
+No todos los componentes tienen stories en Storybook. Los componentes de marketing (como `CtaSection`, usada en la página "cómo funciona") pueden implementarse directamente en páginas sin story. Verificar antes de crear una nueva story.
+
 ---
 
 ## 🔧 Stack Tecnológico
@@ -289,7 +314,39 @@ export function cn(...inputs: ClassValue[]) { ... }
 
 ---
 
-## 📚 Storybook
+## 📚 Archivos de Configuración Adicionales
+
+- **`.cursorrules`**: Reglas específicas para Cursor IDE
+- **`.storybook/`**: Configuración de Storybook (Vite + React)
+
+### Storybook
+
+Configuración en `.storybook/`:
+- `main.ts`: Vite + React + alias `@/*`
+- `preview.ts`: Carga de `globals.css` + backgrounds custom
+
+Estructura de stories:
+```typescript
+const meta = {
+  title: "Design System/Button",
+  component: Button,
+  tags: ["autodocs"],
+  parameters: { backgrounds: { default: "dark-neon" } },
+} satisfies Meta<typeof Button>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Default: Story = {
+  args: { children: "Primary Action" },
+}
+```
+
+**Nota:** No todos los componentes tienen stories. Los componentes de marketing (como `CtaSection`) pueden implementarse directamente en páginas sin story. Verificar antes de crear.
+
+---
+
+## 🗺️ Roadmap
 
 Configuración en `.storybook/`:
 - `main.ts`: Vite + React + alias `@/*`

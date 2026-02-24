@@ -1,16 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
-import { Calculator, Mail, Phone, MapPin, Clock, CheckCircle2, Send, ArrowRight, Info } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
+import { Calculator, Mail, Phone, MapPin, Clock, CheckCircle2, Send, ArrowRight, Info, CalendarDays, Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { useROIStore } from "@/store/roi-store"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -38,27 +39,67 @@ const initialFormData: FormData = {
 
 function ContactFormWithROI() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [mounted, setMounted] = useState(false)
+  
+  // Estado local para la reserva persistida
+  const [storedBooking, setStoredBooking] = useState<{
+    date: string;
+    time: string;
+    duration: string;
+  } | null>(null)
 
   const {
     monthlyPatients,
     averageTicket,
     conversionLoss,
     isCalculated,
+    reset: resetROI
   } = useROIStore()
+
+  useEffect(() => {
+    setMounted(true)
+    
+    // Cargar y validar reserva desde localStorage
+    const savedBooking = localStorage.getItem("clinvetia_booking")
+    if (savedBooking) {
+      try {
+        const parsed = JSON.parse(savedBooking)
+        const now = new Date()
+        const expiration = new Date(parsed.expiresAt)
+        
+        if (now > expiration) {
+          localStorage.removeItem("clinvetia_booking")
+        } else {
+          setStoredBooking(parsed)
+        }
+      } catch (e) {
+        console.error("Error parsing booking", e)
+      }
+    }
+  }, [])
+
+  // Datos de reserva: Prioridad URL > LocalStorage
+  const bookingDateStr = searchParams.get("booking_date") || storedBooking?.date
+  const bookingTime = searchParams.get("booking_time") || storedBooking?.time
+  const bookingDuration = searchParams.get("booking_duration") || storedBooking?.duration
+
+  const bookingDate = bookingDateStr ? new Date(bookingDateStr) : null
+  const hasBooking = bookingDate && bookingTime
 
   const [showCalculatorPrompt, setShowCalculatorPrompt] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-    // El diálogo sale si el ticket es 0
-    if (averageTicket === 0) {
-      setShowCalculatorPrompt(true)
+    if (mounted) {
+      // El diálogo sale si el ticket es 0 (cálculo incompleto)
+      if (averageTicket === 0) {
+        setShowCalculatorPrompt(true)
+      }
     }
-  }, [averageTicket])
+  }, [averageTicket, mounted])
 
   const perdidaMensual = Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket)
   const recuperacionEstimada = Math.round(perdidaMensual * 0.7)
@@ -76,6 +117,11 @@ function ContactFormWithROI() {
     setIsSubmitting(true)
     
     await new Promise((resolve) => setTimeout(resolve, 1500))
+    
+    // Limpieza después de enviar
+    if (!hasBooking) {
+      resetROI()
+    }
     
     setIsSubmitting(false)
     setIsSubmitted(true)
@@ -100,194 +146,292 @@ function ContactFormWithROI() {
   }
 
   return (
-    <div className="grid gap-8 md:grid-cols-[1fr_300px]">
-      <GlassCard className="p-6 md:p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="grid gap-8 md:grid-cols-[1fr_300px]">
+          {/* Form fields card */}
+          <GlassCard className="p-6 md:p-8">
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <label htmlFor="nombre" className="text-sm font-medium">
+                  Nombre completo *
+                </label>
+                <Input
+                  id="nombre"
+                  name="nombre"
+                  placeholder="Dr. Juan García"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  required
+                  className="glass mt-2"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email profesional *
+                </label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="juan@clinica.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="glass mt-2"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label htmlFor="telefono" className="text-sm font-medium">
+                  Teléfono
+                </label>
+                <Input
+                  id="telefono"
+                  name="telefono"
+                  type="tel"
+                  placeholder="+34 612 345 678"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  className="glass mt-2"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label htmlFor="clinica" className="text-sm font-medium">
+                  Nombre de la clínica
+                </label>
+                <Input
+                  id="clinica"
+                  name="clinica"
+                  placeholder="Clínica Veterinaria Central"
+                  value={formData.clinica}
+                  onChange={handleChange}
+                  className="glass mt-2"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label htmlFor="mensaje" className="text-sm font-medium">
+                  Mensaje *
+                </label>
+                <Textarea
+                  id="mensaje"
+                  name="mensaje"
+                  placeholder="Cuéntanos sobre tu clínica y cómo podemos ayudarte..."
+                  value={formData.mensaje}
+                  onChange={handleChange}
+                  required
+                  rows={5}
+                  className="glass resize-none mt-2"
+                />
+              </div>
+            </div>{" "}
+          </GlassCard>
+
+          {/* Sidebar */}
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="nombre" className="text-sm font-medium">
-                Nombre completo *
-              </label>
-              <Input
-                id="nombre"
-                name="nombre"
-                placeholder="Dr. Juan García"
-                value={formData.nombre}
-                onChange={handleChange}
-                required
-                className="glass"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email profesional *
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="juan@clinica.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="glass"
-              />
-            </div>
+            {/* Estado de la Reserva */}
+            {mounted &&
+              (hasBooking ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <GlassCard className="p-0 overflow-hidden border-primary/40 bg-primary/10 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)]">
+                    <div className="bg-primary/20 px-4 py-3 border-b border-primary/30 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                          Tu Reserva Demo
+                        </span>
+                      </div>
+                      <Badge
+                        variant="primary"
+                        className="h-5 px-1.5 text-[10px]"
+                      >
+                        Confirmada
+                      </Badge>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <div className="space-y-1">
+                        <p className="text-[10px] uppercase text-muted-foreground font-semibold">
+                          Fecha y hora
+                        </p>
+                        <p className="text-sm font-bold capitalize">
+                          {bookingDate.toLocaleDateString("es-ES", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                          })}
+                        </p>
+                        <p className="text-base font-bold text-primary">
+                          {bookingTime} ({bookingDuration} min)
+                        </p>
+                      </div>
 
-            <div className="space-y-2">
-              <label htmlFor="telefono" className="text-sm font-medium">
-                Teléfono
-              </label>
-              <Input
-                id="telefono"
-                name="telefono"
-                type="tel"
-                placeholder="+34 612 345 678"
-                value={formData.telefono}
-                onChange={handleChange}
-                className="glass"
-              />
-            </div>
+                      <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        <p className="text-xs text-muted-foreground">
+                          Demo personalizada con experto
+                        </p>
+                      </div>
 
-            <div className="space-y-2">
-              <label htmlFor="clinica" className="text-sm font-medium">
-                Nombre de la clínica
-              </label>
-              <Input
-                id="clinica"
-                name="clinica"
-                placeholder="Clínica Veterinaria Central"
-                value={formData.clinica}
-                onChange={handleChange}
-                className="glass"
-              />
-            </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full h-8 mt-2 text-xs border-primary/20 hover:bg-primary/10 hover:text-primary"
+                        asChild
+                      >
+                        <Link href="/demo">
+                          <Clock className="mr-2 h-3 w-3" />
+                          Reagendar cita
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="bg-primary/5 px-4 py-2 text-[10px] text-muted-foreground italic border-t border-white/10">
+                      Completa el formulario para recibir el enlace
+                    </div>
+                  </GlassCard>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <GlassCard className="p-0 overflow-hidden border-warning/30 bg-warning/5">
+                    <div className="bg-warning/10 px-4 py-3 border-b border-warning/20 flex items-center gap-2">
+                      <Info className="h-4 w-4 text-warning" />
+                      <span className="text-xs font-bold text-warning uppercase tracking-wider">
+                        Sin reserva previa
+                      </span>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        No hemos detectado una reserva de demo activa para tu
+                        sesión.
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full h-8 text-xs border-warning/20 hover:bg-warning/10 hover:text-warning"
+                        asChild
+                      >
+                        <Link href="/demo">
+                          Reservar demo ahora
+                          <ArrowRight className="ml-2 h-3 w-3" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </GlassCard>
+                </motion.div>
+              ))}
 
-            <div className="space-y-2">
-              <label htmlFor="mensaje" className="text-sm font-medium">
-                Mensaje *
-              </label>
-              <Textarea
-                id="mensaje"
-                name="mensaje"
-                placeholder="Cuéntanos sobre tu clínica y cómo podemos ayudarte..."
-                value={formData.mensaje}
-                onChange={handleChange}
-                required
-                rows={5}
-                className="glass resize-none"
-              />
-            </div>
-          </div>
+            {mounted && isCalculated && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <GlassCard className="p-0 overflow-hidden border-primary/30 bg-primary/5">
+                  <div className="bg-primary/10 px-4 py-3 border-b border-primary/20 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                        Tu ROI Proyectado
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-primary/60 hover:text-primary"
+                      asChild
+                    >
+                      <Link href="/calculadora" title="Recalcular">
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs text-muted-foreground">
+                        Pérdida mensual
+                      </span>
+                      <span className="text-base font-bold text-destructive">
+                        -{perdidaMensual}€
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-end border-t border-white/5 pt-2">
+                      <span className="text-xs text-muted-foreground">
+                        ROI Estimado
+                      </span>
+                      <span className="text-xl font-bold text-success">
+                        +{roi}%
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-3">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] uppercase text-muted-foreground">
+                          Pacientes
+                        </p>
+                        <p className="text-sm font-semibold">
+                          {monthlyPatients}
+                        </p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] uppercase text-muted-foreground">
+                          Ticket
+                        </p>
+                        <p className="text-sm font-semibold">
+                          {averageTicket}€
+                        </p>
+                      </div>
+                    </div>
 
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full gap-2"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              "Enviando..."
-            ) : (
-              <>
-                <Send className="size-4" />
-                Enviar solicitud
-              </>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-8 text-xs border-primary/20 hover:bg-primary/10 hover:text-primary"
+                      asChild
+                    >
+                      <Link href="/calculadora">
+                        <Calculator className="mr-2 h-3 w-3" />
+                        Recalcular ROI
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="bg-primary/5 px-4 py-2 text-[10px] text-muted-foreground italic border-t border-white/5">
+                    Datos adjuntos a tu solicitud
+                  </div>
+                </GlassCard>
+              </motion.div>
             )}
-          </Button>
-        </form>
-      </GlassCard>
+          </div>
+        </div>
 
-      <div className="space-y-4">
-        {mounted && isCalculated && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <GlassCard className="p-0 overflow-hidden border-primary/30 bg-primary/5">
-              <div className="bg-primary/10 px-4 py-3 border-b border-primary/20 flex items-center gap-2">
-                <Calculator className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                  Tu ROI Proyectado
-                </span>
-              </div>
-              <div className="p-4 space-y-4">
-                <div className="flex justify-between items-end">
-                  <span className="text-xs text-muted-foreground">Pérdida mensual</span>
-                  <span className="text-base font-bold text-destructive">-{perdidaMensual}€</span>
-                </div>
-                <div className="flex justify-between items-end border-t border-white/5 pt-2">
-                  <span className="text-xs text-muted-foreground">ROI Estimado</span>
-                  <span className="text-xl font-bold text-success">+{roi}%</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-3">
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] uppercase text-muted-foreground">Pacientes</p>
-                    <p className="text-sm font-semibold">{monthlyPatients}</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] uppercase text-muted-foreground">Ticket</p>
-                    <p className="text-sm font-semibold">{averageTicket}€</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-primary/5 px-4 py-2 text-[10px] text-muted-foreground italic border-t border-white/5">
-                Datos adjuntos a tu solicitud
-              </div>
-            </GlassCard>
-          </motion.div>
-        )}
-
-        <GlassCard className="p-6">
-          <h3 className="mb-4 font-semibold">Información de contacto</h3>
-          <ul className="space-y-4 text-sm">
-            <li className="flex items-start gap-3">
-              <Mail className="mt-0.5 h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">hola@clinvetia.com</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <Phone className="mt-0.5 h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">+34 900 123 456</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <Clock className="mt-0.5 h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">
-                Lun-Vie: 9:00 - 18:00
-                <br />
-                Sáb: 10:00 - 14:00
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">
-                Barcelona, España
-              </span>
-            </li>
-          </ul>
-        </GlassCard>
-
-        <GlassCard className="p-6 bg-gradient-to-br from-primary/10 to-accent/10">
-          <h3 className="mb-2 font-semibold">¿Prefieres hablar ahora?</h3>
-          <p className="mb-4 text-base text-muted-foreground">
-            Schedule una llamada de 15 minutos con nuestro equipo.
-          </p>
-          <Button variant="secondary" className="w-full" asChild>
-            <Link href="/demo">
-              Reservar llamada
-            </Link>
-          </Button>
-        </GlassCard>
-      </div>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full gap-2 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] h-14 text-lg"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            "Enviando..."
+          ) : (
+            <>
+              <Send className="size-5" />
+              Enviar solicitud
+            </>
+          )}
+        </Button>
+      </form>
 
       {/* Dialog: Calculator prompt */}
-      <Dialog 
-        open={showCalculatorPrompt} 
+      <Dialog
+        open={showCalculatorPrompt}
         onOpenChange={setShowCalculatorPrompt}
       >
-        <DialogContent 
-          className="sm:max-w-md"
-        >
+        <DialogContent className="sm:max-w-md">
           <DialogHeader className="space-y-3">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-warning/10 border border-warning/30">
               <Info className="h-7 w-7 text-warning" />
@@ -296,8 +440,8 @@ function ContactFormWithROI() {
               ¿Has usado la calculadora?
             </DialogTitle>
             <DialogDescription className="text-center text-base leading-relaxed">
-              Si quieres una propuesta personalizada con el ROI real de tu clínica,
-              te recomendamos usar primero la calculadora.
+              Si quieres una propuesta personalizada con el ROI real de tu
+              clínica, te recomendamos usar primero la calculadora.
             </DialogDescription>
           </DialogHeader>
 
@@ -338,16 +482,19 @@ function ContactFormWithROI() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  )
+    </>
+  );
 }
 
 export default function ContactoPage() {
   return (
-    <div className="min-h-screen pt-24 pb-16">
+    <div className="min-h-screen py-24 md:py-32 pb-16">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl">
           <div className="mb-12 text-center">
+            <Badge variant="secondary" className="mb-6">
+              Contacto
+            </Badge>
             <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">
               Hablemos de tu clínica
             </h1>
@@ -356,7 +503,9 @@ export default function ContactoPage() {
             </p>
           </div>
 
-          <ContactFormWithROI />
+          <Suspense fallback={<div className="h-96 flex items-center justify-center"><p className="text-muted-foreground animate-pulse">Cargando...</p></div>}>
+            <ContactFormWithROI />
+          </Suspense>
         </div>
       </div>
     </div>

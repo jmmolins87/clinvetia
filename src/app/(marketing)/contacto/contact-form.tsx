@@ -82,7 +82,7 @@ export function ContactForm() {
                 value={formData.nombre}
                 onChange={handleChange}
                 required
-                className="glass"
+                className="glass mt-2"
               />
             </div>
             <div className="space-y-2">
@@ -97,7 +97,7 @@ export function ContactForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="glass"
+                className="glass mt-2"
               />
             </div>
           </div>
@@ -114,7 +114,7 @@ export function ContactForm() {
                 placeholder="+34 612 345 678"
                 value={formData.telefono}
                 onChange={handleChange}
-                className="glass"
+                className="glass mt-2"
               />
             </div>
             <div className="space-y-2">
@@ -127,7 +127,7 @@ export function ContactForm() {
                 placeholder="Clínica Veterinaria Central"
                 value={formData.clinica}
                 onChange={handleChange}
-                className="glass"
+                className="glass mt-2"
               />
             </div>
           </div>
@@ -144,7 +144,7 @@ export function ContactForm() {
               onChange={handleChange}
               required
               rows={5}
-              className="glass resize-none"
+              className="glass mt-2 resize-none"
             />
           </div>
 

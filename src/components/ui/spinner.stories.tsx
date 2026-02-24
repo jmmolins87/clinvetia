@@ -95,39 +95,37 @@ export const SpinnerSizes: Story = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const OverlayDefault: Story = {
-  name: "LoadingOverlay",
+  name: "LoadingOverlay · Premium",
   parameters: {
     docs: {
       description: {
-        story: "Pantalla completa con efecto glass para estados de carga.",
+        story: "Nueva versión premium con branding, glow y desenfoque profundo para transiciones de página.",
       },
     },
     layout: "fullscreen",
   },
   render: () => (
-    <div className="relative h-64 w-full overflow-hidden rounded-xl border border-white/10">
-      <div className="absolute inset-0 bg-background/50" />
-      <p className="absolute top-4 left-4 text-muted-foreground">
-        Contenido debajo del overlay...
-      </p>
-      <LoadingOverlay message="Cargando datos..." variant="primary" />
+    <div className="relative h-96 w-full overflow-hidden rounded-2xl border border-white/5 bg-background">
+      <div className="absolute inset-0 p-8">
+        <h2 className="text-xl font-bold mb-4">Contenido de fondo</h2>
+        <p className="text-muted-foreground">
+          Este contenido se desenfoca cuando el overlay está activo. 
+          El overlay utiliza un backdrop-filter de 40px para un efecto de cristal puro.
+        </p>
+      </div>
+      <LoadingOverlay message="Clinvetia" variant="primary" className="absolute" />
     </div>
   ),
 }
 
-export const OverlayNoMessage: Story = {
-  name: "LoadingOverlay · Sin mensaje",
+export const OverlaySecondary: Story = {
+  name: "LoadingOverlay · Secondary",
   parameters: {
-    docs: {
-      description: {
-        story: "Overlay sin texto, solo el spinner.",
-      },
-    },
     layout: "fullscreen",
   },
   render: () => (
-    <div className="relative h-64 w-full overflow-hidden rounded-xl border border-white/10">
-      <LoadingOverlay variant="secondary" />
+    <div className="relative h-96 w-full overflow-hidden rounded-2xl border border-white/5 bg-background">
+      <LoadingOverlay message="Preparando..." variant="secondary" className="absolute" />
     </div>
   ),
 }

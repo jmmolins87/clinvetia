@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion"
 import {
-  Workflow,
   CheckCircle2,
   AlertCircle,
   MessageSquare,
@@ -18,11 +17,11 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
-import { BrandName } from "@/components/ui/brand-name"
 import { Icon } from "@/components/ui/icon"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
+import { CalendarDays, Calculator } from 'lucide-react';
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -145,7 +144,9 @@ export default function ComoFuncionaPage() {
               className="mb-6 text-4xl font-bold tracking-tight md:text-6xl"
             >
               De consulta a cita, con{" "}
-              <span className="text-gradient-primary">criterio veterinario</span>
+              <span className="text-gradient-primary">
+                criterio veterinario
+              </span>
             </motion.h1>
             <motion.p
               {...fadeUp}
@@ -174,7 +175,7 @@ export default function ComoFuncionaPage() {
                 primary: "bg-primary/10 border-primary/30",
                 secondary: "bg-secondary/10 border-secondary/30",
                 accent: "bg-accent/10 border-accent/30",
-              }
+              };
               return (
                 <motion.div
                   key={step.title}
@@ -184,13 +185,21 @@ export default function ComoFuncionaPage() {
                 >
                   <GlassCard className="h-full p-6 space-y-4 hover:border-primary/30 transition-colors">
                     <div className="flex items-center justify-between">
-                      <div className={cn(
-                        "flex h-12 w-12 items-center justify-center rounded-xl border",
-                        bgColors[step.color as keyof typeof bgColors]
-                      )}>
-                        <Icon icon={step.icon} variant={step.color as any} size="lg" />
+                      <div
+                        className={cn(
+                          "flex h-12 w-12 items-center justify-center rounded-xl border",
+                          bgColors[step.color as keyof typeof bgColors],
+                        )}
+                      >
+                        <Icon
+                          icon={step.icon}
+                          variant={step.color as any}
+                          size="lg"
+                        />
                       </div>
-                      <span className="text-4xl font-bold opacity-10">{idx + 1}</span>
+                      <span className="text-4xl font-bold opacity-10">
+                        {idx + 1}
+                      </span>
                     </div>
                     <h3 className="text-xl font-bold text-foreground">
                       {step.title}
@@ -200,7 +209,7 @@ export default function ComoFuncionaPage() {
                     </p>
                   </GlassCard>
                 </motion.div>
-              )
+              );
             })}
           </div>
         </div>
@@ -215,7 +224,8 @@ export default function ComoFuncionaPage() {
                 Qué información recoge y por qué
               </h2>
               <p className="mb-8 text-lg text-muted-foreground">
-                Solo lo necesario para atender bien a la mascota y optimizar la agenda de tu clínica.
+                Solo lo necesario para atender bien a la mascota y optimizar la
+                agenda de tu clínica.
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 {dataNeeded.map((item, idx) => (
@@ -230,7 +240,7 @@ export default function ComoFuncionaPage() {
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               {...fadeUp}
               transition={{ delay: 0.2 }}
               className="space-y-6"
@@ -260,10 +270,13 @@ export default function ComoFuncionaPage() {
               <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-6 backdrop-blur-md">
                 <div className="flex items-center gap-3 mb-2">
                   <AlertCircle className="h-5 w-5 text-destructive" />
-                  <p className="font-bold text-destructive uppercase tracking-wider text-sm">Aviso Importante</p>
+                  <p className="font-bold text-destructive uppercase tracking-wider text-sm">
+                    Aviso Importante
+                  </p>
                 </div>
                 <p className="text-lg font-medium text-foreground">
-                  Cada consulta sin responder es un cliente que se va a otra clínica.
+                  Cada consulta sin responder es un cliente que se va a otra
+                  clínica.
                 </p>
               </div>
             </motion.div>
@@ -279,13 +292,16 @@ export default function ComoFuncionaPage() {
               WhatsApp y agenda, sin fricción
             </h2>
             <p className="text-lg text-muted-foreground">
-              El flujo está diseñado para conversaciones reales con dueños de mascotas y para encajar con tu forma de organizar la clínica.
+              El flujo está diseñado para conversaciones reales con dueños de
+              mascotas y para encajar con tu forma de organizar la clínica.
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
             <GlassCard className="p-8 space-y-4">
-              <h3 className="text-xl font-bold text-primary">Para la clínica</h3>
+              <h3 className="text-xl font-bold text-primary">
+                Para la clínica
+              </h3>
               <ul className="space-y-3">
                 {[
                   "Agenda optimizada según tipo de servicio.",
@@ -301,7 +317,9 @@ export default function ComoFuncionaPage() {
               </ul>
             </GlassCard>
             <GlassCard className="p-8 space-y-4">
-              <h3 className="text-xl font-bold text-secondary">Para el dueño</h3>
+              <h3 className="text-xl font-bold text-secondary">
+                Para el dueño
+              </h3>
               <ul className="space-y-3">
                 {[
                   "Respuestas inmediatas 24/7.",
@@ -333,7 +351,11 @@ export default function ComoFuncionaPage() {
             <GlassCard className="p-2">
               <Accordion type="single" collapsible className="w-full">
                 {faqs.map((faq, idx) => (
-                  <AccordionItem key={idx} value={`faq-${idx}`} last={idx === faqs.length - 1}>
+                  <AccordionItem
+                    key={idx}
+                    value={`faq-${idx}`}
+                    last={idx === faqs.length - 1}
+                  >
                     <AccordionTrigger className="text-base font-medium px-4">
                       {faq.q}
                     </AccordionTrigger>
@@ -348,18 +370,23 @@ export default function ComoFuncionaPage() {
         </div>
       </section>
 
-      {/* ── CTA FINAL ─────────────────────────────────────────────────────── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          CTA FINAL
+      ═══════════════════════════════════════════════════════════════════════ */}
       <CtaSection
-        badge="¿Empezamos?"
-        title="Transforma la atención de tu clínica"
-        description="Te mostramos el flujo completo y lo adaptamos a tus protocolos veterinarios en una demo de 30 minutos."
-        variant="glow"
-        className="border-t border-white/8"
+        title="¿Tu clínica vive alguna de estas situaciones?"
+        description="Descubre cómo ClinvetIA puede transformar la atención de tu clínica."
         actions={[
-          { label: "Reservar Demo", href: "/contacto", icon: Calendar },
-          { label: "Ver calculadora ROI", href: "/calculadora", variant: "secondary" },
+          { label: "Reservar demo", href: "/demo", icon: CalendarDays },
+          {
+            label: "Calcular mi ROI",
+            href: "/calculadora",
+            variant: "secondary",
+            icon: Calculator,
+          },
         ]}
+        className="pb-8"
       />
     </div>
-  )
+  );
 }

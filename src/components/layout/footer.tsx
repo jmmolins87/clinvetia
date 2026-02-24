@@ -122,7 +122,7 @@ export function Footer() {
       aria-label="Pie de página de Clinvetia"
       className={cn(
         "border-t border-white/10",
-        "bg-black/40 backdrop-blur-sm",
+        "bg-white/40 dark:bg-black/40 backdrop-blur-sm",
         "py-14",
       )}
     >

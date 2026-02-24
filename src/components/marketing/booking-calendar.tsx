@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ChevronLeft,
@@ -105,7 +106,7 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
       <div className="flex items-center justify-between">
         <button
           onClick={onPrev}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
+          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
           aria-label="Mes anterior"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -115,7 +116,7 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
         </span>
         <button
           onClick={onNext}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
+          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
           aria-label="Mes siguiente"
         >
           <ChevronRight className="h-4 w-4" />
@@ -149,7 +150,7 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
                 "relative flex h-9 w-full items-center justify-center rounded-lg text-sm font-medium",
                 "transition-all duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                disabled && "cursor-not-allowed opacity-30",
+                disabled ? "cursor-not-allowed opacity-30" : "cursor-pointer",
                 !disabled && !isSelected && "hover:bg-primary/15 hover:text-primary",
                 isToday && !isSelected && "border border-primary/40 text-primary",
                 isSelected && "bg-primary text-primary-foreground shadow-[0_0_16px_rgba(var(--primary-rgb),0.5)]",
@@ -190,7 +191,7 @@ function TimeSlotPicker({ selected, onSelect }: TimeSlotPickerProps) {
               "flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium",
               "transition-all duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              unavailable && "cursor-not-allowed opacity-30 border-white/5 bg-white/2",
+              unavailable ? "cursor-not-allowed opacity-30 border-white/5 bg-white/2" : "cursor-pointer",
               !unavailable && !isSelected && [
                 "border-white/10 bg-white/5",
                 "hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
@@ -318,6 +319,7 @@ export interface BookingCalendarProps {
 type Step = "calendar" | "confirm" | "success"
 
 export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
+  const router = useRouter()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
@@ -325,6 +327,30 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [duration, setDuration] = useState(45)
   const [step, setStep] = useState<Step>("calendar")
+
+  // Restaurar estado desde localStorage al montar
+  useEffect(() => {
+    const saved = localStorage.getItem("clinvetia_booking")
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        const date = new Date(parsed.date)
+        const now = new Date()
+        const expiration = new Date(parsed.expiresAt)
+        
+        if (now < expiration) {
+          setSelectedDate(date)
+          setSelectedTime(parsed.time)
+          setDuration(parseInt(parsed.duration))
+          setYear(date.getFullYear())
+          setMonth(date.getMonth())
+          setStep("confirm") // Ir directamente al resumen en el panel derecho
+        }
+      } catch (e) {
+        console.error("Error restoring booking", e)
+      }
+    }
+  }, [])
 
   function handlePrevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1) }
@@ -342,9 +368,26 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
   }
 
   function handleConfirm() {
-    setStep("success")
     if (selectedDate && selectedTime) {
       onBooked?.(selectedDate, selectedTime, duration)
+      
+      const bookingData = {
+        date: selectedDate.toISOString(),
+        time: selectedTime,
+        duration: duration.toString(),
+        expiresAt: new Date(selectedDate.setHours(23, 59, 59, 999)).toISOString()
+      }
+      
+      localStorage.setItem("clinvetia_booking", JSON.stringify(bookingData))
+      
+      // Construir params para la página de contacto
+      const params = new URLSearchParams({
+        booking_date: bookingData.date,
+        booking_time: bookingData.time,
+        booking_duration: bookingData.duration,
+      })
+      
+      router.push(`/contacto?${params.toString()}`)
     }
   }
 
@@ -382,7 +425,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                 key={opt.value}
                 onClick={() => setDuration(opt.value)}
                 className={cn(
-                  "flex-1 rounded-xl border px-3 py-2 text-left transition-all duration-150",
+                  "flex-1 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all duration-150",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   duration === opt.value
                     ? "border-primary/50 bg-primary/10 text-primary"
