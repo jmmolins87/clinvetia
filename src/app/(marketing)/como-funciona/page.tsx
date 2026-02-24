@@ -7,21 +7,22 @@ import {
   MessageSquare,
   Database,
   Calendar,
-  FileText,
   ShieldCheck,
   Zap,
   Clock,
   Heart,
   HelpCircle,
+  FileText,
+  CalendarDays,
+  Calculator,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
-import { Icon } from "@/components/ui/icon"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { cn } from "@/lib/utils"
-import { CalendarDays, Calculator } from 'lucide-react';
+import { BrandName } from "@/components/ui/brand-name"
+import { MarketingCard } from "@/components/ui/marketing-card"
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -115,27 +116,21 @@ export default function ComoFuncionaPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-4xl text-center">
             <motion.div {...fadeUp} transition={{ delay: 0.1 }}>
-              <Badge variant="default" className="mb-6">
-                Cómo funciona
-              </Badge>
+              <Badge variant="default" className="mb-6">Cómo funciona</Badge>
             </motion.div>
             <motion.h1
               {...fadeUp}
               transition={{ delay: 0.2 }}
               className="mb-6 text-4xl font-bold tracking-tight md:text-6xl"
             >
-              De consulta a cita, con{" "}
-              <span className="text-gradient-primary">
-                criterio veterinario
-              </span>
+              De consulta a cita, con <span className="text-gradient-primary">criterio veterinario</span>
             </motion.h1>
             <motion.p
               {...fadeUp}
               transition={{ delay: 0.3 }}
               className="mx-auto max-w-2xl text-lg text-muted-foreground"
             >
-              Un flujo claro para atender consultas sobre mascotas, clasificar
-              urgencias y agendar citas sin sobrecargar al equipo.
+              Un flujo claro para atender consultas sobre mascotas, clasificar urgencias y agendar citas sin sobrecargar al equipo.
             </motion.p>
           </div>
         </div>
@@ -145,53 +140,20 @@ export default function ComoFuncionaPage() {
       <section className="py-20 border-t border-white/8">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="mb-12 text-center">
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              El flujo en 4 pasos
-            </h2>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">El flujo en 4 pasos</h2>
           </motion.div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {steps.map((step, idx) => {
-              const bgColors = {
-                primary: "bg-primary/10 border-primary/30",
-                secondary: "bg-secondary/10 border-secondary/30",
-                accent: "bg-accent/10 border-accent/30",
-              };
-              return (
-                <motion.div
-                  key={step.title}
-                  {...fadeUp}
-                  transition={{ delay: idx * 0.1 }}
-                  className="relative"
-                >
-                  <GlassCard className="h-full p-6 space-y-4 hover:border-primary/30 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div
-                        className={cn(
-                          "flex h-12 w-12 items-center justify-center rounded-xl border",
-                          bgColors[step.color as keyof typeof bgColors],
-                        )}
-                      >
-                        <Icon
-                          icon={step.icon}
-                          variant={step.color as any}
-                          size="lg"
-                        />
-                      </div>
-                      <span className="text-4xl font-bold opacity-10">
-                        {idx + 1}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground">
-                      {step.title}
-                    </h3>
-                    <p className="text-base text-muted-foreground leading-relaxed">
-                      {step.text}
-                    </p>
-                  </GlassCard>
-                </motion.div>
-              );
-            })}
+            {steps.map((step, idx) => (
+              <MarketingCard
+                key={step.title}
+                icon={step.icon}
+                title={step.title}
+                description={step.text}
+                index={idx}
+                iconClassName={idx % 2 !== 0 ? "bg-secondary/10" : ""}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -201,18 +163,15 @@ export default function ComoFuncionaPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-12 lg:grid-cols-2 items-center">
             <motion.div {...fadeUp}>
-              <h2 className="mb-6 text-3xl font-bold tracking-tight md:text-4xl">
-                Qué información recoge y por qué
-              </h2>
+              <h2 className="mb-6 text-3xl font-bold tracking-tight md:text-4xl">Qué información recoge y por qué</h2>
               <p className="mb-8 text-lg text-muted-foreground">
-                Solo lo necesario para atender bien a la mascota y optimizar la
-                agenda de tu clínica.
+                Solo lo necesario para atender bien a la mascota y optimizar la agenda de tu clínica.
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 {dataNeeded.map((item, idx) => (
-                  <GlassCard key={item.title} className="p-5 space-y-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
-                      <Icon icon={item.icon} variant="primary" size="sm" />
+                  <GlassCard key={item.title} className="p-5 space-y-2 border-white/10 hover:border-primary/20 transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
+                      <item.icon className="h-5 w-5" />
                     </div>
                     <h4 className="font-bold text-foreground">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.text}</p>
@@ -221,15 +180,11 @@ export default function ComoFuncionaPage() {
               </div>
             </motion.div>
 
-            <motion.div
-              {...fadeUp}
-              transition={{ delay: 0.2 }}
-              className="space-y-6"
-            >
+            <motion.div {...fadeUp} transition={{ delay: 0.2 }} className="space-y-6">
               <GlassCard className="p-8 border-primary/30 bg-primary/5">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 border border-primary/40">
-                    <ShieldCheck className="h-6 w-6 text-primary" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 border border-primary/40 text-primary">
+                    <ShieldCheck className="h-6 w-6" />
                   </div>
                   <h3 className="text-2xl font-bold">Control y supervisión</h3>
                 </div>
@@ -251,70 +206,11 @@ export default function ComoFuncionaPage() {
               <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-6 backdrop-blur-md">
                 <div className="flex items-center gap-3 mb-2">
                   <AlertCircle className="h-5 w-5 text-destructive" />
-                  <p className="font-bold text-destructive uppercase tracking-wider text-sm">
-                    Aviso Importante
-                  </p>
+                  <p className="font-bold text-destructive uppercase tracking-wider text-sm">Aviso Importante</p>
                 </div>
-                <p className="text-lg font-medium text-foreground">
-                  Cada consulta sin responder es un cliente que se va a otra
-                  clínica.
-                </p>
+                <p className="text-lg font-medium text-foreground">Cada consulta sin responder es un cliente que se va a otra clínica.</p>
               </div>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── EXPERIENCIA ────────────────────────────────────────────────────── */}
-      <section className="py-20 border-t border-white/8">
-        <div className="container mx-auto max-w-4xl px-4">
-          <div className="mx-auto max-w-3xl text-center mb-16">
-            <h2 className="mb-6 text-3xl font-bold tracking-tight md:text-4xl">
-              WhatsApp y agenda, sin fricción
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              El flujo está diseñado para conversaciones reales con dueños de
-              mascotas y para encajar con tu forma de organizar la clínica.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <GlassCard className="p-8 space-y-4">
-              <h3 className="text-xl font-bold text-primary">
-                Para la clínica
-              </h3>
-              <ul className="space-y-3">
-                {[
-                  "Agenda optimizada según tipo de servicio.",
-                  "Triaje automático antes de que el cliente llegue.",
-                  "Menos llamadas repetitivas en recepción.",
-                  "Historial de conversación disponible siempre.",
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </GlassCard>
-            <GlassCard className="p-8 space-y-4">
-              <h3 className="text-xl font-bold text-secondary">
-                Para el dueño
-              </h3>
-              <ul className="space-y-3">
-                {[
-                  "Respuestas inmediatas 24/7.",
-                  "Lenguaje claro y cercano.",
-                  "Orientación sobre qué hacer ante síntomas.",
-                  "Tranquilidad de atención profesional.",
-                ].map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-secondary shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </GlassCard>
           </div>
         </div>
       </section>
@@ -325,24 +221,14 @@ export default function ComoFuncionaPage() {
           <div className="mx-auto max-w-3xl">
             <div className="flex items-center justify-center gap-3 mb-12">
               <HelpCircle className="h-8 w-8 text-primary" />
-              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                Preguntas frecuentes
-              </h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Preguntas frecuentes</h2>
             </div>
             <GlassCard className="p-2">
               <Accordion type="single" collapsible className="w-full">
                 {faqs.map((faq, idx) => (
-                  <AccordionItem
-                    key={idx}
-                    value={`faq-${idx}`}
-                    last={idx === faqs.length - 1}
-                  >
-                    <AccordionTrigger className="text-base font-medium px-4">
-                      {faq.q}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-base px-4">
-                      {faq.a}
-                    </AccordionContent>
+                  <AccordionItem key={idx} value={`faq-${idx}`} last={idx === faqs.length - 1}>
+                    <AccordionTrigger className="text-base font-medium px-4">{faq.q}</AccordionTrigger>
+                    <AccordionContent className="text-base px-4">{faq.a}</AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>
@@ -351,23 +237,15 @@ export default function ComoFuncionaPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          CTA FINAL
-      ═══════════════════════════════════════════════════════════════════════ */}
       <CtaSection
         title="¿Tu clínica vive alguna de estas situaciones?"
         description="Descubre cómo ClinvetIA puede transformar la atención de tu clínica."
         actions={[
-          { label: "Reservar demo", href: "/demo", icon: CalendarDays },
-          {
-            label: "Calcular mi ROI",
-            href: "/calculadora",
-            variant: "secondary",
-            icon: Calculator,
-          },
+          { label: "Agendar Demo", href: "/contacto", icon: CalendarDays },
+          { label: "Calcular ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
         ]}
         className="pb-8"
       />
     </div>
-  );
+  )
 }

@@ -15,10 +15,12 @@ import {
   Scissors,
   ClipboardList,
   Dog,
+  LucideIcon,
 } from "lucide-react"
 
 import { CtaSection } from "@/components/marketing/cta-section"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 const casos = [
   {
@@ -118,99 +120,73 @@ const fadeUp = {
   transition: { duration: 0.5 },
 }
 
+// ── Sub-componentes Reutilizables ─────────────────────────────────────────────
+
+function DetailBox({ label, text, icon: Icon, className, fullWidth }: { 
+  label?: string, 
+  text: string, 
+  icon?: LucideIcon, 
+  className?: string,
+  fullWidth?: boolean
+}) {
+  return (
+    <div className={cn(
+      "rounded-xl border p-3",
+      fullWidth ? "col-span-2" : "",
+      className
+    )}>
+      {label && (
+        <div className="flex items-center gap-2 mb-1">
+          {Icon && <Icon className="h-4 w-4" />}
+          <p className="text-xs font-bold uppercase tracking-wider">{label}</p>
+        </div>
+      )}
+      <p className={cn("text-sm leading-relaxed", !label ? "italic" : "")}>{text}</p>
+    </div>
+  )
+}
+
 export default function EscenariosPage() {
   return (
     <div className="relative">
-      {/* ═══════════════════════════════════════════════════════════════════════
-          HERO SIMPLE
-      ═══════════════════════════════════════════════════════════════════════ */}
       <section className="pt-16 pb-8 md:py-32">
-        <div className="container mx-auto px-4">
-          <motion.div {...fadeUp} className="text-center">
-            <Badge variant="secondary" className="mb-6">
-              Casos de uso reales
-            </Badge>
+        <div className="container mx-auto px-4 text-center">
+          <motion.div {...fadeUp}>
+            <Badge variant="secondary" className="mb-6">Casos de uso reales</Badge>
             <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-              Situaciones veterinarias{" "}
-              <span className="bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent">
-                reales
-              </span>
+              Situaciones veterinarias <span className="text-gradient-primary">reales</span>
             </h1>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl">
-              El sistema se adapta al ritmo de tu clínica veterinaria.
-            </p>
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">El sistema se adapta al ritmo de tu clínica veterinaria.</p>
           </motion.div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          GRID DE CASOS DE USO
-      ═══════════════════════════════════════════════════════════════════════ */}
       <section className="py-8 pb-24 md:py-16 md:pb-24">
         <div className="container mx-auto px-4">
           <div className="grid gap-8 md:grid-cols-2">
             {casos.map((caso, index) => (
-              <motion.div
-                key={caso.id}
-                {...fadeUp}
-                transition={{ delay: index * 0.05 }}
-              >
-                {/* Título con icono - ANTES de la imagen */}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/15 border border-primary/30">
-                    <caso.icono className="h-5 w-5 text-primary" />
+              <motion.div key={caso.id} {...fadeUp} transition={{ delay: index * 0.05 }}>
+                {/* Cabecera Tarjeta */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/15 border border-primary/30 text-primary">
+                    <caso.icono className="h-6 w-6" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-foreground">{caso.titulo}</h3>
-                    <p className="text-base text-muted-foreground">{caso.subtitulo}</p>
+                    <p className="text-sm text-muted-foreground">{caso.subtitulo}</p>
                   </div>
                 </div>
 
-                {/* Imagen con overlay en hover */}
-                <div className="group relative w-full aspect-video overflow-hidden rounded-xl bg-white/5">
-                  <Image
-                    src={caso.imagen}
-                    alt={caso.titulo}
-                    fill
-                    className="object-contain transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-
-                  {/* Overlay con blur que aparece en hover */}
-                  <div className="absolute inset-0 bg-background/70 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
+                {/* Imagen y Overlay */}
+                <div className="group relative aspect-video overflow-hidden rounded-2xl bg-white/5 border border-white/5">
+                  <Image src={caso.imagen} alt={caso.titulo} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
                     <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
-                      {/* Problema */}
-                      <div className="col-span-2 rounded-xl border-2 border-destructive/50 bg-destructive/10 p-3">
-                        <p className="text-base text-destructive font-semibold mb-1">PROBLEMA</p>
-                        <p className="text-base text-foreground">{caso.descripcion}</p>
-                      </div>
-
-                      {/* Mensaje del dueño */}
-                      <div className="rounded-xl border border-white/15 bg-white/5 p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <MessageSquare className="h-4 w-4 text-primary" />
-                          <p className="text-base text-primary font-semibold">Mensaje</p>
-                        </div>
-                        <p className="text-base text-foreground italic">{caso.mensaje}</p>
-                      </div>
-
-                      {/* Lo que hace el sistema */}
-                      <div className="rounded-xl border border-white/15 bg-white/5 p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Cog className="h-4 w-4 text-secondary" />
-                          <p className="text-base text-secondary font-semibold">Sistema</p>
-                        </div>
-                        <p className="text-base text-foreground/90">{caso.sistema}</p>
-                      </div>
-
-                      {/* Resultado */}
-                      <div className="col-span-2 rounded-xl border-2 border-success/50 bg-success/10 p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <CheckCircle2 className="h-4 w-4 text-success" />
-                          <p className="text-base text-success font-semibold">RESULTADO</p>
-                        </div>
-                        <p className="text-base text-foreground/90">{caso.resultado}</p>
-                      </div>
+                      <DetailBox label="Problema" text={caso.descripcion} className="border-destructive/30 bg-destructive/10 text-destructive" fullWidth />
+                      <DetailBox label="Mensaje" text={caso.mensaje} icon={MessageSquare} className="border-white/10 bg-white/5 text-primary" />
+                      <DetailBox label="Sistema" text={caso.sistema} icon={Cog} className="border-white/10 bg-white/5 text-secondary" />
+                      <DetailBox label="Resultado" text={caso.resultado} icon={CheckCircle2} className="border-success/30 bg-success/10 text-success" fullWidth />
                     </div>
                   </div>
                 </div>
@@ -220,15 +196,12 @@ export default function EscenariosPage() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          CTA FINAL
-      ═══════════════════════════════════════════════════════════════════════ */}
       <CtaSection
         title="¿Tu clínica vive alguna de estas situaciones?"
         description="Descubre cómo ClinvetIA puede transformar la atención de tu clínica."
         actions={[
-          { label: "Reservar demo", href: "/demo", icon: CalendarDays },
-          { label: "Calcular mi ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
+          { label: "Agendar Demo", href: "/contacto", icon: CalendarDays },
+          { label: "Calcular ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
         ]}
         className="pb-8"
       />
