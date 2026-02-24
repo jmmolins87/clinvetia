@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import {
@@ -21,6 +22,10 @@ import {
 import { CtaSection } from "@/components/marketing/cta-section"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog"
 
 const casos = [
   {
@@ -147,8 +152,34 @@ function DetailBox({ label, text, icon: Icon, className, fullWidth }: {
 }
 
 export default function EscenariosPage() {
+  const [selectedCaso, setSelectedCaso] = useState<typeof casos[0] | null>(null)
+
   return (
     <div className="relative">
+      <Dialog open={!!selectedCaso} onOpenChange={(open) => !open && setSelectedCaso(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-6">
+          {selectedCaso && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/15 border border-primary/30 text-primary">
+                  <selectedCaso.icono className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">{selectedCaso.titulo}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedCaso.subtitulo}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailBox label="Problema" text={selectedCaso.descripcion} className="col-span-2 border-destructive/30 bg-destructive/10 text-destructive" />
+                <DetailBox label="Mensaje" text={selectedCaso.mensaje} icon={MessageSquare} className="border-white/10 bg-white/5 text-primary" />
+                <DetailBox label="Sistema" text={selectedCaso.sistema} icon={Cog} className="border-white/10 bg-white/5 text-secondary" />
+                <DetailBox label="Resultado" text={selectedCaso.resultado} icon={CheckCircle2} className="col-span-2 border-success/30 bg-success/10 text-success" />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <section className="pt-16 pb-8 md:py-32">
         <div className="container mx-auto px-4 text-center">
           <motion.div {...fadeUp}>
@@ -178,10 +209,13 @@ export default function EscenariosPage() {
                 </div>
 
                 {/* Imagen y Overlay */}
-                <div className="group relative aspect-video overflow-hidden rounded-2xl bg-white/5 border border-white/5">
+                <div 
+                  className="group relative aspect-video overflow-hidden rounded-2xl bg-white/5 border border-white/5 cursor-pointer md:cursor-auto"
+                  onClick={() => setSelectedCaso(caso)}
+                >
                   <Image src={caso.imagen} alt={caso.titulo} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
                   
-                  <div className="absolute inset-0 bg-background/80 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4">
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-md opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 pointer-events-none md:pointer-events-auto">
                     <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
                       <DetailBox label="Problema" text={caso.descripcion} className="border-destructive/30 bg-destructive/10 text-destructive" fullWidth />
                       <DetailBox label="Mensaje" text={caso.mensaje} icon={MessageSquare} className="border-white/10 bg-white/5 text-primary" />

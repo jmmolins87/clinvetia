@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calculator, Mail, Phone, MapPin, Clock, CheckCircle2, Send, ArrowRight, Info, CalendarDays, Sparkles } from "lucide-react"
+import { Calculator, Clock, CheckCircle2, Send, ArrowRight, Info, CalendarDays, Sparkles, AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +20,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
 
 interface FormData {
   nombre: string
@@ -37,17 +38,32 @@ const initialFormData: FormData = {
   mensaje: "",
 }
 
+interface ValidationRule {
+  min?: number
+  max: number
+}
+
+const VALIDATION_RULES: Record<string, ValidationRule> = {
+  nombre:   { min: 3, max: 50 },
+  email:    { max: 100 },
+  telefono: { min: 9, max: 15 },
+  clinica:  { min: 2, max: 60 },
+  mensaje:  { min: 10, max: 500 },
+}
+
 const CONTACT_FIELDS = [
   { id: "nombre",   label: "Nombre completo *",     placeholder: "Dr. Juan García", required: true },
   { id: "email",    label: "Email profesional *",   placeholder: "juan@clinica.com", required: true, type: "email" },
-  { id: "telefono", label: "Teléfono",              placeholder: "+34 612 345 678", type: "tel" },
-  { id: "clinica",  label: "Nombre de la clínica",  placeholder: "Clínica Veterinaria Central" },
+  { id: "telefono", label: "Teléfono *",            placeholder: "+34 612 345 678", required: true, type: "tel" },
+  { id: "clinica",  label: "Nombre de la clínica *", placeholder: "Clínica Veterinaria Central", required: true },
 ] as const
 
 function ContactFormWithROI() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState<FormData>(initialFormData)
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
+  const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -95,13 +111,77 @@ function ContactFormWithROI() {
   const recuperacionEstimada = Math.round(perdidaMensual * 0.7)
   const roi = Math.round(((recuperacionEstimada - 297) / 297) * 100)
 
+  const validateField = (name: keyof FormData, value: string) => {
+    const rules = VALIDATION_RULES[name]
+    if (!rules) return ""
+
+    if (!value.trim()) {
+      return "Este campo es obligatorio"
+    }
+
+    if (rules.min && value.length < rules.min) {
+      return `Mínimo ${rules.min} caracteres`
+    }
+
+    if (value.length > rules.max) {
+      return `Máximo ${rules.max} caracteres`
+    }
+
+    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return "Email no válido"
+    }
+
+    return ""
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    const { name, value } = e.target as { name: keyof FormData, value: string }
+    const rules = VALIDATION_RULES[name]
+
+    // Bloquear escritura si supera el máximo
+    if (rules && value.length > rules.max) {
+      setErrors(prev => ({ ...prev, [name]: `Máximo ${rules.max} caracteres` }))
+      return
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Si ya estaba tocado, validar en tiempo real
+    if (touched[name]) {
+      setErrors(prev => ({ ...prev, [name]: validateField(name, value) }))
+    } else {
+      // Limpiar error de "máximo" si se borra
+      setErrors(prev => ({ ...prev, [name]: "" }))
+    }
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target as { name: keyof FormData, value: string }
+    setTouched(prev => ({ ...prev, [name]: true }))
+    setErrors(prev => ({ ...prev, [name]: validateField(name, value) }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validar todos los campos antes de enviar
+    const newErrors: Partial<Record<keyof FormData, string>> = {}
+    let hasErrors = false
+
+    ;(Object.keys(formData) as Array<keyof FormData>).forEach(key => {
+      const error = validateField(key, formData[key])
+      if (error) {
+        newErrors[key] = error
+        hasErrors = true
+      }
+    })
+
+    if (hasErrors) {
+      setErrors(newErrors)
+      setTouched({ nombre: true, email: true, telefono: true, clinica: true, mensaje: true })
+      return
+    }
+
     setIsSubmitting(true)
     await new Promise((resolve) => setTimeout(resolve, 1500))
     if (!hasBooking) resetROI()
@@ -121,13 +201,28 @@ function ContactFormWithROI() {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-8" noValidate>
         <div className="grid gap-8 md:grid-cols-[1fr_300px]">
           <GlassCard className="p-6 md:p-8">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {CONTACT_FIELDS.map((field) => (
                 <div key={field.id} className="space-y-3">
-                  <label htmlFor={field.id} className="text-sm font-medium">{field.label}</label>
+                  <div className="flex justify-between items-end">
+                    <label htmlFor={field.id} className="text-sm font-medium">{field.label}</label>
+                    <AnimatePresence>
+                      {errors[field.id as keyof FormData] && (
+                        <motion.span 
+                          initial={{ opacity: 0, y: 5 }} 
+                          animate={{ opacity: 1, y: 0 }} 
+                          exit={{ opacity: 0 }}
+                          className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"
+                        >
+                          <AlertCircle className="h-3 w-3" />
+                          {errors[field.id as keyof FormData]}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <Input
                     id={field.id}
                     name={field.id}
@@ -135,23 +230,54 @@ function ContactFormWithROI() {
                     placeholder={field.placeholder}
                     value={formData[field.id as keyof FormData]}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required={field.required}
-                    className="glass mt-2"
+                    className={cn(
+                      "glass transition-all duration-200",
+                      errors[field.id as keyof FormData] ? "border-destructive/50 ring-destructive/20 focus-visible:ring-destructive" : ""
+                    )}
                   />
                 </div>
               ))}
               <div className="space-y-3">
-                <label htmlFor="mensaje" className="text-sm font-medium">Mensaje *</label>
+                <div className="flex justify-between items-end">
+                  <label htmlFor="mensaje" className="text-sm font-medium">Mensaje *</label>
+                  <AnimatePresence>
+                    {errors.mensaje && (
+                      <motion.span 
+                        initial={{ opacity: 0, y: 5 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        exit={{ opacity: 0 }}
+                        className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"
+                      >
+                        <AlertCircle className="h-3 w-3" />
+                        {errors.mensaje}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
                 <Textarea
                   id="mensaje"
                   name="mensaje"
                   placeholder="Cuéntanos sobre tu clínica y cómo podemos ayudarte..."
                   value={formData.mensaje}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   required
                   rows={5}
-                  className="glass resize-none mt-2"
+                  className={cn(
+                    "glass resize-none transition-all duration-200",
+                    errors.mensaje ? "border-destructive/50 ring-destructive/20 focus-visible:ring-destructive" : ""
+                  )}
                 />
+                <div className="flex justify-end">
+                  <span className={cn(
+                    "text-[10px] tabular-nums font-medium",
+                    formData.mensaje.length >= 500 ? "text-destructive" : "text-muted-foreground"
+                  )}>
+                    {formData.mensaje.length} / 500
+                  </span>
+                </div>
               </div>
             </div>
           </GlassCard>
@@ -195,7 +321,7 @@ function ContactFormWithROI() {
             {mounted && isCalculated && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                 <GlassCard className="p-0 overflow-hidden border-primary/30 bg-primary/5">
-                  <div className="bg-primary/10 px-4 py-3 border-b border-primary/20 flex items-center justify-between">
+                  <div className="bg-primary/10 px-4 py-3 border-b border-primary/30 flex items-center justify-between">
                     <div className="flex items-center gap-2"><Calculator className="h-4 w-4 text-primary" /><span className="text-xs font-bold text-primary uppercase tracking-wider">Tu ROI Proyectado</span></div>
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-primary/60 hover:text-primary" asChild><Link href="/calculadora" title="Recalcular"><ArrowRight className="h-3 w-3" /></Link></Button>
                   </div>

@@ -18,6 +18,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: "badge-default",
+        primary: "badge-default", // Usamos el mismo estilo que default o uno específico
         secondary: "badge-secondary",
         destructive: "badge-destructive",
         outline: [

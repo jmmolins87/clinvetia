@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { BrandName } from "@/components/ui/brand-name"
 import { MarketingCard } from "@/components/ui/marketing-card"
 
 const fadeUp = {
@@ -168,7 +167,7 @@ export default function ComoFuncionaPage() {
                 Solo lo necesario para atender bien a la mascota y optimizar la agenda de tu clínica.
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
-                {dataNeeded.map((item, idx) => (
+                {dataNeeded.map((item) => (
                   <GlassCard key={item.title} className="p-5 space-y-2 border-white/10 hover:border-primary/20 transition-colors">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
                       <item.icon className="h-5 w-5" />

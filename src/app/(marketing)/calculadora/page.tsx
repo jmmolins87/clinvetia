@@ -177,7 +177,9 @@ export default function CalculadoraPage() {
 
 // ── Sub-componentes ────────────────────────────────────────────────────────────
 
-function SliderField({ label, icon: Icon, value, onChange, min, max, step, display, color, hint }: any) {
+type SliderColor = "primary" | "secondary" | "destructive"
+
+function SliderField({ label, icon: Icon, value, onChange, min, max, step, display, color, hint }: { label: string, icon: React.ComponentType<{ className?: string }>, value: number, onChange: (v: number) => void, min: number, max: number, step: number, display: string, color: SliderColor, hint?: string }) {
   const colorMap = { primary: "text-primary", secondary: "text-neon-pink", destructive: "text-destructive" }
   const dotMap = { primary: "bg-primary", secondary: "bg-neon-pink", destructive: "bg-destructive" }
   return (
@@ -192,7 +194,7 @@ function SliderField({ label, icon: Icon, value, onChange, min, max, step, displ
   )
 }
 
-function FormulaRow({ label, formula, result, color, isCalculating }: any) {
+function FormulaRow({ label, formula, result, color, isCalculating }: { label: string; formula: string; result: string; color: string; isCalculating: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="min-w-0"><p className="text-base text-muted-foreground truncate">{label}</p><p className="text-base font-mono text-muted-foreground/60 truncate">{formula}</p></div>
@@ -201,8 +203,10 @@ function FormulaRow({ label, formula, result, color, isCalculating }: any) {
   )
 }
 
-function MetricCard({ label, value, icon: Icon, variant, isCalculating }: any) {
-  const styles: any = { primary: "border-primary/30 bg-primary/5 text-primary", destructive: "border-destructive/30 bg-destructive/5 text-destructive", success: "border-success/30 bg-success/5 text-success", muted: "border-white/10 bg-white/5 text-muted-foreground" }
+type MetricVariant = "primary" | "destructive" | "success" | "muted"
+
+function MetricCard({ label, value, icon: Icon, variant, isCalculating }: { label: string; value: string; icon: React.ComponentType<{ className?: string }>; variant: MetricVariant; isCalculating: boolean }) {
+  const styles: Record<MetricVariant, string> = { primary: "border-primary/30 bg-primary/5 text-primary", destructive: "border-destructive/30 bg-destructive/5 text-destructive", success: "border-success/30 bg-success/5 text-success", muted: "border-white/10 bg-white/5 text-muted-foreground" }
   return (
     <div className={`rounded-xl border p-3 space-y-1 ${styles[variant]}`}>
       <div className="flex items-center gap-1.5 opacity-70"><Icon className="h-4 w-4" /><span className="text-base font-medium">{label}</span></div>
@@ -211,7 +215,14 @@ function MetricCard({ label, value, icon: Icon, variant, isCalculating }: any) {
   )
 }
 
-function ResultDialog({ open, onOpenChange, data, onConfirm }: any) {
+interface ResultDialogData {
+  monthlyPatients: number
+  averageTicket: number
+  conversionLoss: number
+  roi: number
+}
+
+function ResultDialog({ open, onOpenChange, data, onConfirm }: { open: boolean; onOpenChange: (open: boolean) => void; data: ResultDialogData; onConfirm: () => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -235,7 +246,7 @@ function ResultDialog({ open, onOpenChange, data, onConfirm }: any) {
   )
 }
 
-function WarningDialog({ open, onOpenChange }: any) {
+function WarningDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">

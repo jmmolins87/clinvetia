@@ -109,6 +109,14 @@ const config: Config = {
           "0%":   { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "accordion-down": {
+          from: { height: "0", opacity: "0" },
+          to: { height: "var(--radix-accordion-content-height)", opacity: "1" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)", opacity: "1" },
+          to: { height: "0", opacity: "0" },
+        },
       },
       animation: {
         "glow-pulse":           "glow-pulse 2s ease-in-out infinite",
@@ -117,6 +125,8 @@ const config: Config = {
         "float":                "float 3s ease-in-out infinite",
         "border-glow":          "border-glow 2s ease-in-out infinite",
         "fade-in":              "fade-in 0.4s ease-out forwards",
+        "accordion-down":       "accordion-down 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+        "accordion-up":         "accordion-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards",
       },
 
       // ── Typography ───────────────────────────────────────────────────

@@ -1,13 +1,9 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
 
 export function GlobalBackground() {
   const pathname = usePathname()
-  
-  // Podemos variar ligeramente los colores según la página si quisiéramos
-  const isAltPage = pathname === "/contacto" || pathname === "/demo"
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-background w-screen max-w-full">

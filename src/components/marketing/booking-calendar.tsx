@@ -417,7 +417,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
         </div>
 
         {/* Duración */}
-        <div className="space-y-2">
+        <div className="space-y-2 mb-4 md:mb-0">
           <p className="text-base font-medium text-muted-foreground">Duración de la sesión</p>
           <div className="flex gap-2">
             {DURATION_OPTIONS.map((opt) => (
@@ -450,7 +450,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
         />
 
         {/* Leyenda */}
-        <div className="flex flex-wrap gap-4 text-base text-muted-foreground">
+        <div className="flex flex-wrap gap-4 text-base text-muted-foreground mt-6 md:mt-4">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-primary/40 ring-1 ring-primary/60" />
             Disponible

@@ -12,6 +12,8 @@ import {
   ArrowRight,
   CalendarDays,
   Calculator,
+  ShieldCheck,
+  Stethoscope,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -73,10 +75,10 @@ const flujoPasos = [
 ]
 
 const seguridadItems = [
-  "Identifica síntomas graves y deriva urgencias",
-  "No diagnostica: guía y propone cita",
-  "Confirma datos antes de agendar",
-  "Mantiene tono profesional siempre",
+  { text: "Identifica síntomas graves y deriva urgencias", icon: AlertTriangle },
+  { text: "No diagnostica: guía y propone cita", icon: Stethoscope },
+  { text: "Confirma datos antes de agendar", icon: CheckCircle2 },
+  { text: "Mantiene tono profesional siempre", icon: ShieldCheck },
 ]
 
 const fadeUp = {
@@ -203,8 +205,8 @@ export default function SolucionPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">
-              Flujo sin <span className="text-accent">fricciones</span>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+              Flujo sin fricciones
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Desde la consulta del dueño hasta la cita confirmada, sin intervención manual.
@@ -212,9 +214,6 @@ export default function SolucionPage() {
           </motion.div>
 
           <div className="relative">
-            {/* Connecting Line (desktop) */}
-            <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent -translate-y-1/2 opacity-20" />
-
             <div className="grid gap-6 lg:grid-cols-4">
               {flujoPasos.map((paso, index) => (
                 <motion.div
@@ -225,9 +224,6 @@ export default function SolucionPage() {
                 >
                   <GlassCard className="p-6 h-full border-white/10 hover:border-primary/30 transition-colors">
                     <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-background">
-                      {index + 1}
-                    </div>
-                    <div className="mb-2 text-sm font-semibold text-primary">
                       {paso.numero}
                     </div>
                     <h3 className="mb-2 text-lg font-semibold">{paso.titulo}</h3>
@@ -265,15 +261,15 @@ export default function SolucionPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {seguridadItems.map((item, index) => (
                 <motion.div
-                  key={item}
+                  key={item.text}
                   {...fadeUp}
                   transition={{ delay: 0.1 + index * 0.1 }}
                 >
-                  <GlassCard className="p-5 flex items-start gap-4 border-white/10 hover:border-primary/20 transition-colors">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/20">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                  <GlassCard className="p-6 flex items-center gap-5 border-white/10 hover:border-primary/20 transition-colors">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 border border-primary/20 text-primary">
+                      <item.icon className="h-6 w-6" />
                     </div>
-                    <span className="text-base font-medium">{item}</span>
+                    <span className="text-base font-semibold leading-tight">{item.text}</span>
                   </GlassCard>
                 </motion.div>
               ))}

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { CalendarDays, Calculator } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SwitchWithLabel } from "@/components/ui/switch"
@@ -41,27 +42,33 @@ function Logo() {
 }
 
 function NavLinks() {
+  const pathname = usePathname()
+  
   return (
     <nav
       aria-label="Navegación principal"
       className="hidden md:flex items-center gap-0.5"
     >
-      {NAV_LINKS.map(({ href, label }) => (
-        <Link
-          key={href}
-          href={href}
-          className={cn(
-            "rounded-full px-4 py-1.5",
-            "text-sm font-medium",
-            "text-muted-foreground",
-            "transition-colors duration-200",
-            "hover:text-primary hover:bg-primary/8",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          )}
-        >
-          {label}
-        </Link>
-      ))}
+      {NAV_LINKS.map(({ href, label }) => {
+        const isActive = pathname === href
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "rounded-full px-4 py-1.5",
+              "text-sm font-medium",
+              "transition-colors duration-200",
+              isActive 
+                ? "text-primary bg-primary/10" 
+                : "text-muted-foreground hover:text-primary hover:bg-primary/8",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            )}
+          >
+            {label}
+          </Link>
+        )
+      })}
     </nav>
   )
 }

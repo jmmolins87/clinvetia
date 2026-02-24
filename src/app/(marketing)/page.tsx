@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
+import Image from "next/image"
 import {
   CalendarDays, ArrowRight, Sparkles, Moon, Phone, Clock,
   Bell, Brain, Heart,
@@ -94,9 +95,25 @@ export default function MarketingPage() {
     <>
       {/* HERO */}
       <Section id="hero" className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-0 border-t-0">
-        <motion.div initial="initial" animate="animate" variants={staggerContainer} className="relative z-10 mx-auto max-w-6xl px-4 text-center">
-          <motion.div variants={fadeUp}><Badge variant="default" className="mb-6 gap-2 px-4 py-1.5"><Sparkles className="hidden sm:block size-3" />Nueva Generación de IA Veterinaria</Badge></motion.div>
-          <motion.h1 variants={fadeUp} className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl"><span className="text-foreground">Sistema de </span><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-neon-green">Atención Inteligente</span></motion.h1>
+                <motion.div initial="initial" animate="animate" variants={staggerContainer} className="relative z-10 mx-auto max-w-6xl px-4 text-center">
+                  <motion.div 
+                    variants={fadeUp}
+                    className="mb-8 hidden sm:flex justify-center"
+                  >
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-primary/20 blur-[40px] rounded-full animate-pulse" />
+                      <Image
+                        src="/logo.png"
+                        alt="Clinvetia Logo"
+                        width={128}
+                        height={128}
+                        className="relative h-24 w-24 md:h-32 md:w-32 drop-shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]"
+                      />
+                    </div>
+                  </motion.div>
+        
+                  <motion.div variants={fadeUp}><Badge variant="default" className="mb-6 gap-2 px-4 py-1.5"><Sparkles className="hidden sm:block size-3" />Nueva Generación de IA Veterinaria</Badge></motion.div>
+                  <motion.h1 variants={fadeUp} className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl"><span className="text-foreground">Sistema de </span><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-neon-green">Atención Inteligente</span></motion.h1>
           <motion.p variants={fadeUp} className="mt-6 text-lg text-muted-foreground sm:text-xl">No es un chatbot. Es un sistema que entiende consultas, clasifica urgencias, <br className="hidden sm:block" />verifica disponibilidad y agenda citas.</motion.p>
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Button size="lg" asChild><Link href="/demo" className="flex items-center gap-2"><CalendarDays className="size-5" />Reservar Demo</Link></Button>

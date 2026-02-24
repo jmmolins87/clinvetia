@@ -16,8 +16,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Clinvetia Glass",
-  description: "Glassmorphism Neon Design System",
+  title: "Clinvetia - Software Veterinario con IA",
+  description: "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({

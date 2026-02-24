@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, CalendarDays, Calculator, Sparkles } from "lucide-react"
+import { Menu, X, Sparkles } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { Button } from "@/components/ui/button"
@@ -127,16 +127,14 @@ export function MobileNav() {
                 transition={{ delay: 0.4 }}
                 className="space-y-4"
               >
-                <Button variant="secondary" size="lg" className="w-full h-14 text-lg gap-3" asChild>
+                <Button variant="secondary" size="lg" className="w-full h-14 text-lg" asChild>
                   <Link href="/calculadora">
-                    <Calculator className="h-5 w-5" />
                     Calcular ROI
                   </Link>
                 </Button>
 
-                <Button size="lg" className="w-full h-16 text-xl gap-3 shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]" asChild>
+                <Button size="lg" className="w-full h-16 text-xl shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]" asChild>
                   <Link href="/demo">
-                    <CalendarDays className="h-6 w-6" />
                     Reservar Demo
                   </Link>
                 </Button>
