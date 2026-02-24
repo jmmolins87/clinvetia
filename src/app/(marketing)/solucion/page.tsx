@@ -265,11 +265,11 @@ export default function SolucionPage() {
                   {...fadeUp}
                   transition={{ delay: 0.1 + index * 0.1 }}
                 >
-                  <GlassCard className="p-6 flex items-center gap-5 border-white/10 hover:border-primary/20 transition-colors">
+                  <GlassCard className="p-6 flex items-start gap-4 border-white/10 hover:border-primary/20 transition-colors">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 border border-primary/20 text-primary">
                       <item.icon className="h-6 w-6" />
                     </div>
-                    <span className="text-base font-semibold leading-tight">{item.text}</span>
+                    <span className="text-base font-semibold leading-tight pt-1">{item.text}</span>
                   </GlassCard>
                 </motion.div>
               ))}

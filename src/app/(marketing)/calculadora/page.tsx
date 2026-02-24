@@ -194,7 +194,7 @@ function SliderField({ label, icon: Icon, value, onChange, min, max, step, displ
   )
 }
 
-function FormulaRow({ label, formula, result, color, isCalculating }: { label: string; formula: string; result: string; color: string; isCalculating: boolean }) {
+function FormulaRow({ label, formula, result, color, isCalculating }: { label: string; formula: string; result: string; color: string; isCalculating?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="min-w-0"><p className="text-base text-muted-foreground truncate">{label}</p><p className="text-base font-mono text-muted-foreground/60 truncate">{formula}</p></div>
@@ -205,7 +205,7 @@ function FormulaRow({ label, formula, result, color, isCalculating }: { label: s
 
 type MetricVariant = "primary" | "destructive" | "success" | "muted"
 
-function MetricCard({ label, value, icon: Icon, variant, isCalculating }: { label: string; value: string; icon: React.ComponentType<{ className?: string }>; variant: MetricVariant; isCalculating: boolean }) {
+function MetricCard({ label, value, icon: Icon, variant, isCalculating }: { label: string; value: string; icon: React.ComponentType<{ className?: string }>; variant: MetricVariant; isCalculating?: boolean }) {
   const styles: Record<MetricVariant, string> = { primary: "border-primary/30 bg-primary/5 text-primary", destructive: "border-destructive/30 bg-destructive/5 text-destructive", success: "border-success/30 bg-success/5 text-success", muted: "border-white/10 bg-white/5 text-muted-foreground" }
   return (
     <div className={`rounded-xl border p-3 space-y-1 ${styles[variant]}`}>
