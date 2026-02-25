@@ -58,6 +58,37 @@ const config: StorybookConfig = {
 
         // Resuelve los paths de tsconfig.json → "@/components/..." funciona
         tsconfigPaths(),
+
+        // Intercepta next/navigation ANTES que cualquier resolución de Vite.
+        // Necesario porque @storybook/react-vite no incluye el App Router context
+        // y el useRouter real lanza "invariant expected app router to be mounted".
+        {
+          name: "storybook-mock-next-navigation",
+          enforce: "pre",
+          resolveId(id: string) {
+            if (id === "next/navigation") return "\0virtual:mock-next-navigation";
+          },
+          load(id: string) {
+            if (id !== "\0virtual:mock-next-navigation") return;
+            return `
+export function useRouter() {
+  return {
+    push:    (url) => console.log("[Storybook] router.push:", url),
+    replace: (url) => console.log("[Storybook] router.replace:", url),
+    back:    ()    => console.log("[Storybook] router.back"),
+    forward: ()    => console.log("[Storybook] router.forward"),
+    refresh: ()    => console.log("[Storybook] router.refresh"),
+    prefetch: ()   => {},
+  };
+}
+export function usePathname()  { return "/"; }
+export function useSearchParams() { return new URLSearchParams(); }
+export function useParams()    { return {}; }
+export function redirect(url)  { throw new Error("[Storybook] redirect: " + url); }
+export function notFound()     { throw new Error("[Storybook] notFound called"); }
+`;
+          },
+        },
       ],
 
       // Alias explícito como respaldo (redundante con tsconfigPaths,
@@ -75,6 +106,8 @@ const config: StorybookConfig = {
 
       // Optimiza el bundle de Storybook en dev
       optimizeDeps: {
+        // next/* debe quedar fuera del pre-bundle para que resolve.alias lo intercepte
+        exclude: ["next/navigation", "next/image", "next/link"],
         include: [
           "react",
           "react-dom",
