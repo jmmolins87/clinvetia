@@ -31,7 +31,7 @@ export function TranslationSkeletonProvider({ children }: { children: React.Reac
 export function useTranslationSkeleton() {
   const ctx = useContext(TranslationSkeletonContext)
   if (!ctx) {
-    throw new Error("useTranslationSkeleton must be used within TranslationSkeletonProvider")
+    return { isTranslating: false, trigger: () => {} }
   }
   return ctx
 }
