@@ -46,6 +46,34 @@ export const Default: Story = {
     collapsible: true,
     className: "w-full max-w-xl",
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+
+<Accordion type="single" defaultValue="item-1" collapsible className="w-full max-w-xl">
+  <AccordionItem value="item-1">
+    <AccordionTrigger>¿Qué es ClinvetIA?</AccordionTrigger>
+    <AccordionContent>
+      ClinvetIA es un asistente de inteligencia artificial especializado para clínicas veterinarias.
+    </AccordionContent>
+  </AccordionItem>
+  <AccordionItem value="item-2">
+    <AccordionTrigger>¿Cuánto tiempo tarda en instalarse?</AccordionTrigger>
+    <AccordionContent>
+      La instalación es muy rápida. En menos de 24 horas tendrás el sistema funcionando.
+    </AccordionContent>
+  </AccordionItem>
+  <AccordionItem value="item-3">
+    <AccordionTrigger>¿Necesito conocimientos técnicos?</AccordionTrigger>
+    <AccordionContent>
+      No necesitas ningún conocimiento técnico.
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>`,
+      },
+    },
+  },
   render: (args) => (
     <Accordion {...args}>
       <AccordionItem value="item-1">
@@ -76,6 +104,34 @@ export const Multiple: Story = {
     type: "multiple",
     defaultValue: ["item-1", "item-2"],
     className: "w-full max-w-xl",
+  },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+
+<Accordion type="multiple" defaultValue={["item-1", "item-2"]} className="w-full max-w-xl">
+  <AccordionItem value="item-1">
+    <AccordionTrigger>¿Qué es ClinvetIA?</AccordionTrigger>
+    <AccordionContent>
+      ClinvetIA es un asistente de inteligencia artificial especializado para clínicas veterinarias.
+    </AccordionContent>
+  </AccordionItem>
+  <AccordionItem value="item-2">
+    <AccordionTrigger>¿Cuánto tiempo tarda en instalarse?</AccordionTrigger>
+    <AccordionContent>
+      La instalación es muy rápida. En menos de 24 horas tendrás el sistema funcionando.
+    </AccordionContent>
+  </AccordionItem>
+  <AccordionItem value="item-3">
+    <AccordionTrigger>¿Necesito conocimientos técnicos?</AccordionTrigger>
+    <AccordionContent>
+      No necesitas ningún conocimiento técnico.
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>`,
+      },
+    },
   },
   render: (args) => (
     <Accordion {...args}>
@@ -109,6 +165,28 @@ export const DarkAndLight: Story = {
     defaultValue: "item-1",
     collapsible: true,
     className: "w-full max-w-xl",
+  },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+
+<Accordion type="single" defaultValue="item-1" collapsible className="w-full max-w-xl">
+  <AccordionItem value="item-1">
+    <AccordionTrigger>¿Qué es ClinvetIA?</AccordionTrigger>
+    <AccordionContent>
+      ClinvetIA es un asistente de inteligencia artificial especializado para clínicas veterinarias.
+    </AccordionContent>
+  </AccordionItem>
+  <AccordionItem value="item-2">
+    <AccordionTrigger>¿Cuánto tiempo tarda en instalarse?</AccordionTrigger>
+    <AccordionContent>
+      La instalación es muy rápida. En menos de 24 horas tendrás el sistema funcionando.
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>`,
+      },
+    },
   },
   render: (args) => (
     <div className="flex flex-col gap-3 w-full max-w-xl">

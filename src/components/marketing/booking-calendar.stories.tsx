@@ -30,13 +30,16 @@ Componentes DS utilizados internamente: \`GlassCard\`, \`Button\`, \`Badge\`, \`
 export default meta
 type Story = StoryObj<typeof meta>
 
-// ── Stories ───────────────────────────────────────────────────────────────────
-
 export const Default: Story = {
   parameters: {
     docs: {
       description: {
         story: "Estado inicial — ningún día seleccionado. El panel de horarios muestra el placeholder.",
+      },
+      source: {
+        code: `import { BookingCalendar } from "@/components/marketing/booking-calendar"
+
+<BookingCalendar />`,
       },
     },
   },
@@ -53,6 +56,16 @@ export const WithCallback: Story = {
     docs: {
       description: {
         story: "Completa el flujo y observa el `onBooked` en el panel Actions de Storybook.",
+      },
+      source: {
+        code: `import { BookingCalendar } from "@/components/marketing/booking-calendar"
+
+<BookingCalendar
+  onBooked={(date, time, duration) => {
+    console.log("Demo reservada:", { date, time, duration })
+    // Redirigir o mostrar confirmación
+  }}
+/>`,
       },
     },
   },
@@ -74,6 +87,16 @@ export const AsSection: Story = {
       description: {
         story: "Versión completa con encabezado de sección, badge y descripción — lista para integrar en cualquier página.",
       },
+      source: {
+        code: `import { BookingSection } from "@/components/marketing/booking-calendar"
+
+// Integración directa en una página
+<BookingSection id="demo" />
+
+// Con ancla de navegación
+<a href="#demo">Reservar demo</a>
+<BookingSection id="demo" />`,
+      },
     },
   },
   render: () => (
@@ -86,6 +109,15 @@ export const AsSection: Story = {
 export const DarkAndLight: Story = {
   name: "Dark + Light",
   globals: { theme: "side-by-side" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { BookingCalendar } from "@/components/marketing/booking-calendar"
+
+<BookingCalendar />`,
+      },
+    },
+  },
   render: () => (
     <div className="min-h-screen bg-background p-8">
       <BookingCalendar />

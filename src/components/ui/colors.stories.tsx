@@ -311,6 +311,21 @@ export const DarkNeon: Story = {
       description: {
         story: "Paleta completa del tema **Dark Neon** — Primary = Neon Green `#43e97b`. Es el tema por defecto de la aplicación.",
       },
+      source: {
+        code: `// Uso de tokens de color — Dark Neon
+className="bg-primary text-primary-foreground"
+className="text-secondary"
+className="text-destructive"
+className="text-muted-foreground"
+className="bg-background"
+
+// Neon directos
+className="text-neon-green bg-neon-cyan"
+
+// RGB para transparencias con opacidad
+style={{ backgroundColor: \`rgba(var(--primary-rgb), 0.15)\` }}
+style={{ boxShadow: \`0 0 20px rgba(var(--primary-rgb), 0.4)\` }}`,
+      },
     },
   },
   render: () => <DarkPaletteContent />,
@@ -324,6 +339,20 @@ export const LightFrost: Story = {
       description: {
         story: "Paleta completa del tema **Light Frost** — Primary = Neon Cyan `#00f2fe`.",
       },
+      source: {
+        code: `// Uso de tokens de color — Light Frost
+// Los mismos tokens se resuelven automáticamente según el tema activo
+
+className="bg-primary text-primary-foreground"
+className="text-secondary"
+className="text-muted-foreground"
+className="bg-background"
+
+// Activar tema light en un contenedor
+<div className="light">
+  <Button variant="default">Primary Cyan</Button>
+</div>`,
+      },
     },
   },
   render: () => <LightPaletteContent />,
@@ -336,6 +365,18 @@ export const Comparacion: Story = {
     docs: {
       description: {
         story: "Comparación lado a lado de los colores clave que cambian entre temas.",
+      },
+      source: {
+        code: `// Tokens CSS que cambian entre temas:
+// --primary:    #43e97b (dark) → #00f2fe (light)
+// --secondary:  #f093fb (dark) → #e2e8f0 (light)
+// --background: #0a0a0f (dark) → #f0f4f8 (light)
+// --foreground: #ededed (dark) → #0d1117 (light)
+
+// Usar siempre tokens semánticos para adaptabilidad automática:
+className="bg-primary"        // verde (dark) / cyan (light)
+className="text-foreground"   // blanco (dark) / negro (light)
+className="bg-background"     // oscuro (dark) / claro (light)`,
       },
     },
   },

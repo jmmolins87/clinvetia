@@ -69,6 +69,20 @@ export const Glass: Story = {
       description: {
         story: "Variante **glass** con `GlassCard` y gradiente primary→secondary. Usada en `/solucion` y `/escenarios`.",
       },
+      source: {
+        code: `import { CtaSection } from "@/components/marketing/cta-section"
+import { CalendarDays, Calculator } from "lucide-react"
+
+<CtaSection
+  title="¿Listo para transformar la atención de tu clínica?"
+  description="Reserva una demo personalizada y descubre cómo Clinvetia puede aumentar tu capacidad de atención."
+  actions={[
+    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
+    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+  ]}
+  variant="glass"
+/>`,
+      },
     },
   },
 }
@@ -90,6 +104,21 @@ export const Glow: Story = {
       description: {
         story: "Variante **glow** con panel flotante y backdrop-blur. Usada en la home.",
       },
+      source: {
+        code: `import { CtaSection } from "@/components/marketing/cta-section"
+import { CalendarDays, MessageSquare } from "lucide-react"
+
+<CtaSection
+  badge="¿Hablamos?"
+  title="Prueba Clinvetia gratis"
+  description="Configuramos tu clínica en 30 minutos. Sin compromiso."
+  actions={[
+    { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: CalendarDays },
+    { label: "Chatear", href: "#", variant: "ghost", icon: MessageSquare },
+  ]}
+  variant="glow"
+/>`,
+      },
     },
   },
 }
@@ -108,6 +137,19 @@ export const SingleAction: Story = {
     docs: {
       description: {
         story: "CTA con un único botón de acción.",
+      },
+      source: {
+        code: `import { CtaSection } from "@/components/marketing/cta-section"
+import { CalendarDays } from "lucide-react"
+
+<CtaSection
+  title="¿Tu clínica vive alguna de estas situaciones?"
+  description="Descubre cómo Clinvetia puede transformar la atención de tu clínica."
+  actions={[
+    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
+  ]}
+  variant="glass"
+/>`,
       },
     },
   },
@@ -130,6 +172,21 @@ export const WithBadge: Story = {
       description: {
         story: "Variante glass con badge opcional sobre el título.",
       },
+      source: {
+        code: `import { CtaSection } from "@/components/marketing/cta-section"
+import { CalendarDays, Calculator } from "lucide-react"
+
+<CtaSection
+  badge="Nuevo"
+  title="¿Listo para transformar la atención de tu clínica?"
+  description="Reserva una demo personalizada."
+  actions={[
+    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
+    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+  ]}
+  variant="glass"
+/>`,
+      },
     },
   },
 }
@@ -141,6 +198,40 @@ export const DarkAndLight: Story = {
     title: "",
     description: "",
     actions: [{ label: "Reservar demo", href: "/contacto" }],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Comparación de ambas variantes en dark y light.",
+      },
+      source: {
+        code: `import { CtaSection } from "@/components/marketing/cta-section"
+import { CalendarDays, Calculator, MessageSquare } from "lucide-react"
+
+// Variante glass
+<CtaSection
+  title="¿Listo para transformar la atención de tu clínica?"
+  description="Reserva una demo personalizada."
+  actions={[
+    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
+    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+  ]}
+  variant="glass"
+/>
+
+// Variante glow
+<CtaSection
+  badge="¿Hablamos?"
+  title="Prueba Clinvetia gratis"
+  description="Configuramos tu clínica en 30 minutos. Sin compromiso."
+  actions={[
+    { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: CalendarDays },
+    { label: "Chatear", href: "#", variant: "ghost", icon: MessageSquare },
+  ]}
+  variant="glow"
+/>`,
+      },
+    },
   },
   render: () => (
     <div className="space-y-8">
@@ -165,11 +256,4 @@ export const DarkAndLight: Story = {
       />
     </div>
   ),
-  parameters: {
-    docs: {
-      description: {
-        story: "Comparación de ambas variantes en dark y light.",
-      },
-    },
-  },
 }

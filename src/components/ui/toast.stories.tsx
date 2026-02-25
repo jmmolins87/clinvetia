@@ -50,6 +50,36 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
+  parameters: {
+    docs: {
+      source: {
+        code: `import {
+  Toast, ToastTitle, ToastDescription,
+  ToastAction, ToastCloseButton,
+  ToastProvider, ToastViewport,
+} from "@/components/ui/toast"
+import { Icon } from "@/components/ui/icon"
+import { Info } from "lucide-react"
+
+<ToastProvider>
+  <Toast open>
+    <div className="grid gap-0.5">
+      <ToastTitle>
+        <span className="flex items-center gap-2">
+          <Icon icon={Info} size="xs" variant="primary" />
+          Scheduled: Catch up
+        </span>
+      </ToastTitle>
+      <ToastDescription>Friday, February 10, 2025 at 5:57 PM</ToastDescription>
+    </div>
+    <ToastAction altText="Undo">Undo</ToastAction>
+    <ToastCloseButton />
+  </Toast>
+  <ToastViewport />
+</ToastProvider>`,
+      },
+    },
+  },
   render: () => (
     <Toast open>
       <div className="grid gap-0.5">
@@ -68,6 +98,34 @@ export const Default: Story = {
 }
 
 export const Success: Story = {
+  parameters: {
+    docs: {
+      source: {
+        code: `import {
+  Toast, ToastTitle, ToastDescription, ToastCloseButton,
+  ToastProvider, ToastViewport,
+} from "@/components/ui/toast"
+import { Icon } from "@/components/ui/icon"
+import { CheckCircle } from "lucide-react"
+
+<ToastProvider>
+  <Toast open variant="success">
+    <div className="grid gap-0.5">
+      <ToastTitle>
+        <span className="flex items-center gap-2">
+          <Icon icon={CheckCircle} size="xs" variant="primary" className="text-success" />
+          Deployment successful
+        </span>
+      </ToastTitle>
+      <ToastDescription>v2.4.1 is now live on production.</ToastDescription>
+    </div>
+    <ToastCloseButton />
+  </Toast>
+  <ToastViewport />
+</ToastProvider>`,
+      },
+    },
+  },
   render: () => (
     <Toast open variant="success">
       <div className="grid gap-0.5">
@@ -85,6 +143,36 @@ export const Success: Story = {
 }
 
 export const Destructive: Story = {
+  parameters: {
+    docs: {
+      source: {
+        code: `import {
+  Toast, ToastTitle, ToastDescription,
+  ToastAction, ToastCloseButton,
+  ToastProvider, ToastViewport,
+} from "@/components/ui/toast"
+import { Icon } from "@/components/ui/icon"
+import { AlertTriangle } from "lucide-react"
+
+<ToastProvider>
+  <Toast open variant="destructive">
+    <div className="grid gap-0.5">
+      <ToastTitle>
+        <span className="flex items-center gap-2">
+          <Icon icon={AlertTriangle} size="xs" variant="destructive" />
+          Connection error
+        </span>
+      </ToastTitle>
+      <ToastDescription>Failed to connect to the database. Retrying…</ToastDescription>
+    </div>
+    <ToastAction altText="Retry">Retry</ToastAction>
+    <ToastCloseButton />
+  </Toast>
+  <ToastViewport />
+</ToastProvider>`,
+      },
+    },
+  },
   render: () => (
     <Toast open variant="destructive">
       <div className="grid gap-0.5">
@@ -104,6 +192,29 @@ export const Destructive: Story = {
 
 export const WithAction: Story = {
   name: "With Action Button",
+  parameters: {
+    docs: {
+      source: {
+        code: `import {
+  Toast, ToastTitle, ToastDescription,
+  ToastAction, ToastCloseButton,
+  ToastProvider, ToastViewport,
+} from "@/components/ui/toast"
+
+<ToastProvider>
+  <Toast open>
+    <div className="grid gap-0.5">
+      <ToastTitle>File deleted</ToastTitle>
+      <ToastDescription>report-2025-q1.pdf has been removed.</ToastDescription>
+    </div>
+    <ToastAction altText="Undo delete">Undo</ToastAction>
+    <ToastCloseButton />
+  </Toast>
+  <ToastViewport />
+</ToastProvider>`,
+      },
+    },
+  },
   render: () => (
     <Toast open>
       <div className="grid gap-0.5">
@@ -126,6 +237,55 @@ export const AllVariants: Story = {
       </ToastProvider>
     ),
   ],
+  parameters: {
+    docs: {
+      source: {
+        code: `import {
+  Toast, ToastTitle, ToastDescription,
+  ToastAction, ToastCloseButton,
+  ToastProvider, ToastViewport,
+} from "@/components/ui/toast"
+import { Icon } from "@/components/ui/icon"
+import { Info, CheckCircle, AlertTriangle } from "lucide-react"
+
+<ToastProvider>
+  <div className="flex flex-col gap-3 w-[380px]">
+    <Toast open>
+      <div className="grid gap-0.5">
+        <ToastTitle className="flex items-center gap-2">
+          <Icon icon={Info} size="xs" variant="primary" />Default Toast
+        </ToastTitle>
+        <ToastDescription>Información general del sistema.</ToastDescription>
+      </div>
+      <ToastCloseButton />
+    </Toast>
+
+    <Toast open variant="success">
+      <div className="grid gap-0.5">
+        <ToastTitle className="flex items-center gap-2">
+          <Icon icon={CheckCircle} size="xs" variant="primary" className="text-success" />Success Toast
+        </ToastTitle>
+        <ToastDescription>Operación completada con éxito.</ToastDescription>
+      </div>
+      <ToastCloseButton />
+    </Toast>
+
+    <Toast open variant="destructive">
+      <div className="grid gap-0.5">
+        <ToastTitle className="flex items-center gap-2">
+          <Icon icon={AlertTriangle} size="xs" variant="destructive" />Destructive Toast
+        </ToastTitle>
+        <ToastDescription>Error crítico en el sistema.</ToastDescription>
+      </div>
+      <ToastAction altText="Retry">Retry</ToastAction>
+      <ToastCloseButton />
+    </Toast>
+  </div>
+  <ToastViewport />
+</ToastProvider>`,
+      },
+    },
+  },
   render: () => (
     <div className="flex flex-col gap-3 w-[380px]">
       <Toast open>
@@ -213,6 +373,36 @@ export const LiveDemo: Story = {
       </ToastProvider>
     ),
   ],
+  parameters: {
+    docs: {
+      source: {
+        code: `import { useToast } from "@/components/ui/use-toast"
+import { ToastProvider, ToastViewport } from "@/components/ui/toast"
+import { Button } from "@/components/ui/button"
+
+function ToastDemo() {
+  const { toast } = useToast()
+
+  return (
+    <ToastProvider>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => toast({ title: "Notificación", description: "Mensaje de prueba." })}>
+          Default Toast
+        </Button>
+        <Button variant="accent" onClick={() => toast({ variant: "success", title: "Operación exitosa" })}>
+          Success Toast
+        </Button>
+        <Button variant="destructive" onClick={() => toast({ variant: "destructive", title: "Error" })}>
+          Destructive Toast
+        </Button>
+      </div>
+      <ToastViewport />
+    </ToastProvider>
+  )
+}`,
+      },
+    },
+  },
   render: () => <LiveDemoComponent />,
 }
 
@@ -267,6 +457,36 @@ export const Positions: Story = {
       </ToastProvider>
     ),
   ],
+  parameters: {
+    docs: {
+      source: {
+        code: `import { useToast } from "@/components/ui/use-toast"
+import { ToastProvider, ToastViewport } from "@/components/ui/toast"
+import { Button } from "@/components/ui/button"
+
+// Posiciones disponibles:
+// "bottom-right" | "bottom-left" | "top-right" | "top-left" | "top-center" | "bottom-center"
+
+function PositionDemo() {
+  const { toast, setPosition } = useToast()
+
+  return (
+    <ToastProvider>
+      <Button
+        onClick={() => {
+          setPosition("top-center")
+          toast({ title: "Toast en top-center" })
+        }}
+      >
+        Top Center
+      </Button>
+      <ToastViewport />
+    </ToastProvider>
+  )
+}`,
+      },
+    },
+  },
   render: () => <PositionDemoComponent />,
 }
 
@@ -281,6 +501,36 @@ export const DarkAndLight: Story = {
       </ToastProvider>
     ),
   ],
+  parameters: {
+    docs: {
+      source: {
+        code: `import {
+  Toast, ToastTitle, ToastDescription, ToastCloseButton,
+  ToastProvider, ToastViewport,
+} from "@/components/ui/toast"
+
+<ToastProvider>
+  <div className="flex flex-col gap-3 w-[340px]">
+    <Toast open>
+      <div className="grid gap-0.5">
+        <ToastTitle>Default toast</ToastTitle>
+        <ToastDescription>Liquid glass en ambos temas.</ToastDescription>
+      </div>
+      <ToastCloseButton />
+    </Toast>
+    <Toast open variant="destructive">
+      <div className="grid gap-0.5">
+        <ToastTitle>Error toast</ToastTitle>
+        <ToastDescription>Variante destructiva adaptiva.</ToastDescription>
+      </div>
+      <ToastCloseButton />
+    </Toast>
+  </div>
+  <ToastViewport />
+</ToastProvider>`,
+      },
+    },
+  },
   render: () => (
     <div className="flex flex-col gap-3 w-[340px]">
       <Toast open>

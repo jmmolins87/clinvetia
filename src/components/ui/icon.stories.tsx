@@ -64,51 +64,111 @@ Todos los iconos de la aplicación deben consumirse desde este componente.
 
 export default meta
 
-export const Default: { args: IconProps } = {
+export const Default: { args: IconProps; parameters: object } = {
   args: {
     icon: Zap,
     variant: "default",
     size: "default",
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Icon } from "@/components/ui/icon"
+import { Zap } from "lucide-react"
+
+<Icon icon={Zap} variant="default" size="default" />`,
+      },
+    },
+  },
 }
 
-export const Primary: { args: IconProps } = {
+export const Primary: { args: IconProps; parameters: object } = {
   args: {
     icon: Zap,
     variant: "primary",
     size: "lg",
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Icon } from "@/components/ui/icon"
+import { Zap } from "lucide-react"
+
+<Icon icon={Zap} variant="primary" size="lg" />`,
+      },
+    },
+  },
 }
 
-export const Secondary: { args: IconProps } = {
+export const Secondary: { args: IconProps; parameters: object } = {
   args: {
     icon: Heart,
     variant: "secondary",
     size: "lg",
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Icon } from "@/components/ui/icon"
+import { Heart } from "lucide-react"
+
+<Icon icon={Heart} variant="secondary" size="lg" />`,
+      },
+    },
+  },
 }
 
-export const Destructive: { args: IconProps } = {
+export const Destructive: { args: IconProps; parameters: object } = {
   args: {
     icon: Trash2,
     variant: "destructive",
     size: "lg",
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Icon } from "@/components/ui/icon"
+import { Trash2 } from "lucide-react"
+
+<Icon icon={Trash2} variant="destructive" size="lg" />`,
+      },
+    },
+  },
 }
 
-export const Accent: { args: IconProps } = {
+export const Accent: { args: IconProps; parameters: object } = {
   args: {
     icon: Star,
     variant: "accent",
     size: "lg",
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Icon } from "@/components/ui/icon"
+import { Star } from "lucide-react"
+
+<Icon icon={Star} variant="accent" size="lg" />`,
+      },
+    },
+  },
 }
 
-export const Muted: { args: IconProps } = {
+export const Muted: { args: IconProps; parameters: object } = {
   args: {
     icon: Info,
     variant: "muted",
     size: "lg",
+  },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Icon } from "@/components/ui/icon"
+import { Info } from "lucide-react"
+
+<Icon icon={Info} variant="muted" size="lg" />`,
+      },
+    },
   },
 }
 
@@ -127,6 +187,24 @@ export function AllSizes() {
   )
 }
 
+AllSizes.parameters = {
+  docs: {
+    source: {
+      code: `import { Icon } from "@/components/ui/icon"
+import { Zap } from "lucide-react"
+
+<div className="flex flex-wrap items-end gap-4">
+  <Icon icon={Zap} variant="primary" size="xs" />
+  <Icon icon={Zap} variant="primary" size="sm" />
+  <Icon icon={Zap} variant="primary" size="default" />
+  <Icon icon={Zap} variant="primary" size="lg" />
+  <Icon icon={Zap} variant="primary" size="xl" />
+  <Icon icon={Zap} variant="primary" size="2xl" />
+</div>`,
+    },
+  },
+}
+
 const variants = ["default", "primary", "secondary", "destructive", "accent", "muted"] as const
 
 export function AllVariants() {
@@ -140,6 +218,24 @@ export function AllVariants() {
       ))}
     </div>
   )
+}
+
+AllVariants.parameters = {
+  docs: {
+    source: {
+      code: `import { Icon } from "@/components/ui/icon"
+import { Star } from "lucide-react"
+
+<div className="flex flex-wrap gap-6">
+  <Icon icon={Star} variant="default" size="xl" />
+  <Icon icon={Star} variant="primary" size="xl" />
+  <Icon icon={Star} variant="secondary" size="xl" />
+  <Icon icon={Star} variant="destructive" size="xl" />
+  <Icon icon={Star} variant="accent" size="xl" />
+  <Icon icon={Star} variant="muted" size="xl" />
+</div>`,
+    },
+  },
 }
 
 const commonIcons = [
@@ -183,6 +279,21 @@ export function IconGallery() {
   )
 }
 
+IconGallery.parameters = {
+  docs: {
+    source: {
+      code: `import { Icon } from "@/components/ui/icon"
+import { Zap, Heart, Star, Settings, Bell, Trash2 } from "lucide-react"
+
+// Usa cualquier icono de lucide-react con el componente Icon
+<Icon icon={Zap} variant="primary" size="xl" />
+<Icon icon={Heart} variant="secondary" size="xl" />
+<Icon icon={Star} variant="accent" size="xl" />
+<Icon icon={Trash2} variant="destructive" size="xl" />`,
+    },
+  },
+}
+
 export function DarkAndLight() {
   return (
     <div className="flex flex-wrap gap-4">
@@ -195,4 +306,17 @@ export function DarkAndLight() {
 
 DarkAndLight.parameters = {
   globals: { theme: "side-by-side" },
+  docs: {
+    source: {
+      code: `import { Icon } from "@/components/ui/icon"
+import { Star } from "lucide-react"
+
+<div className="flex flex-wrap gap-4">
+  <Icon icon={Star} variant="primary" size="xl" />
+  <Icon icon={Star} variant="secondary" size="xl" />
+  <Icon icon={Star} variant="destructive" size="xl" />
+  <Icon icon={Star} variant="accent" size="xl" />
+</div>`,
+    },
+  },
 }

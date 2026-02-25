@@ -35,8 +35,6 @@ Control deslizante con estilo **Liquid Glass** basado en Radix UI Slider.
 export default meta
 type Story = StoryObj<typeof meta>
 
-// ── Stories base ──────────────────────────────────────────────────────────────
-
 export const Default: Story = {
   args: {
     defaultValue: [50],
@@ -47,6 +45,11 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: { story: "Slider básico con valor inicial en 50." },
+      source: {
+        code: `import { Slider } from "@/components/ui/slider"
+
+<Slider defaultValue={[50]} min={0} max={100} step={1} />`,
+      },
     },
   },
 }
@@ -61,6 +64,11 @@ export const Disabled: Story = {
   parameters: {
     docs: {
       description: { story: "Estado deshabilitado — no interactivo, opacidad reducida." },
+      source: {
+        code: `import { Slider } from "@/components/ui/slider"
+
+<Slider defaultValue={[40]} min={0} max={100} disabled />`,
+      },
     },
   },
 }
@@ -142,6 +150,41 @@ export const PacientesMes: Story = {
       description: {
         story: "Control de pacientes mensuales. Color primary (verde dark / cyan light).",
       },
+      source: {
+        code: `import { useState } from "react"
+import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
+import { Users } from "lucide-react"
+
+function SliderField() {
+  const [value, setValue] = useState(300)
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium flex items-center gap-2 text-primary">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+          <span className="text-foreground/80">Pacientes / mes</span>
+          <Users className="w-4 h-4" />
+        </Label>
+        <span className="text-base font-bold tabular-nums text-primary">{value}</span>
+      </div>
+      <Slider
+        value={[value]}
+        onValueChange={([v]) => setValue(v)}
+        min={50}
+        max={1000}
+        step={10}
+        className="py-1"
+      />
+      <div className="flex items-center justify-between text-base text-muted-foreground">
+        <span>50</span>
+        <span className="text-sm opacity-60">Número total de consultas al mes</span>
+        <span>1.000</span>
+      </div>
+    </div>
+  )
+}`,
+      },
     },
   },
   render: () => (
@@ -168,6 +211,41 @@ export const TicketMedio: Story = {
     docs: {
       description: {
         story: "Control de ticket medio en euros. Color secondary (pink-magenta).",
+      },
+      source: {
+        code: `import { useState } from "react"
+import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
+import { ReceiptText } from "lucide-react"
+
+function TicketMedioField() {
+  const [value, setValue] = useState(50)
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium flex items-center gap-2 text-neon-pink">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-neon-pink" />
+          <span className="text-foreground/80">Ticket Medio</span>
+          <ReceiptText className="w-4 h-4" />
+        </Label>
+        <span className="text-base font-bold tabular-nums text-neon-pink">{value}€</span>
+      </div>
+      <Slider
+        value={[value]}
+        onValueChange={([v]) => setValue(v)}
+        min={20}
+        max={200}
+        step={5}
+        className="py-1"
+      />
+      <div className="flex items-center justify-between text-base text-muted-foreground">
+        <span>20€</span>
+        <span className="text-sm opacity-60">Ingreso medio por visita</span>
+        <span>200€</span>
+      </div>
+    </div>
+  )
+}`,
       },
     },
   },
@@ -197,6 +275,41 @@ export const PerdidaConversion: Story = {
       description: {
         story: "Control del porcentaje de pérdida de conversión. Color destructive (rojo) para señalar impacto negativo.",
       },
+      source: {
+        code: `import { useState } from "react"
+import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
+import { PercentCircle } from "lucide-react"
+
+function PerdidaField() {
+  const [value, setValue] = useState(20)
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium flex items-center gap-2 text-destructive">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-destructive" />
+          <span className="text-foreground/80">% Pérdida de conversión</span>
+          <PercentCircle className="w-4 h-4" />
+        </Label>
+        <span className="text-base font-bold tabular-nums text-destructive">{value}%</span>
+      </div>
+      <Slider
+        value={[value]}
+        onValueChange={([v]) => setValue(v)}
+        min={0}
+        max={60}
+        step={1}
+        className="py-1"
+      />
+      <div className="flex items-center justify-between text-base text-muted-foreground">
+        <span>0%</span>
+        <span className="text-sm opacity-60">Porcentaje que no convierte</span>
+        <span>60%</span>
+      </div>
+    </div>
+  )
+}`,
+      },
     },
   },
   render: () => (
@@ -224,6 +337,18 @@ export const CalculadoraCompleta: Story = {
     docs: {
       description: {
         story: "Los tres controles de la Calculadora ROI combinados, tal como aparecen en `/calculadora`.",
+      },
+      source: {
+        code: `import { Slider } from "@/components/ui/slider"
+
+// Ver stories individuales de cada SliderField para el código completo.
+// Úsalos juntos dentro de un contenedor glass:
+
+<div className="w-full max-w-md p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl space-y-8">
+  <SliderField label="Pacientes / mes" color="primary" min={50} max={1000} step={10} defaultValue={300} />
+  <SliderField label="Ticket Medio" color="secondary" min={20} max={200} step={5} defaultValue={50} formatValue={(v) => \`\${v}€\`} />
+  <SliderField label="% Pérdida de conversión" color="destructive" min={0} max={60} step={1} defaultValue={20} formatValue={(v) => \`\${v}%\`} />
+</div>`,
       },
     },
   },
@@ -274,6 +399,15 @@ export const CalculadoraCompleta: Story = {
 export const DarkAndLight: Story = {
   name: "Dark + Light",
   globals: { theme: "side-by-side" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Slider } from "@/components/ui/slider"
+
+<Slider defaultValue={[50]} min={0} max={100} step={1} />`,
+      },
+    },
+  },
   render: () => (
     <GlassWrap>
       <SliderField

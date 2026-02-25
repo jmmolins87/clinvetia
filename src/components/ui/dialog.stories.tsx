@@ -43,6 +43,44 @@ export const Default: Story = {
       description: {
         story: "Diálogo estándar para edición de perfil. Usa DialogCancel para el botón de cancelar.",
       },
+      source: {
+        code: `import {
+  Dialog, DialogTrigger, DialogContent,
+  DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  DialogCancel,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+
+<Dialog>
+  <DialogTrigger asChild>
+    <Button>Open Dialog</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Edit profile</DialogTitle>
+      <DialogDescription>
+        Make changes to your profile here. Click save when done.
+      </DialogDescription>
+    </DialogHeader>
+    <div className="flex flex-col gap-3 py-2">
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-base text-muted-foreground">Display name</Label>
+        <Input defaultValue="John Doe" />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-base text-muted-foreground">Email</Label>
+        <Input defaultValue="john@example.com" type="email" />
+      </div>
+    </div>
+    <DialogFooter>
+      <DialogCancel size="sm">Cancel</DialogCancel>
+      <Button size="sm">Save changes</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`,
+      },
     },
   },
   render: () => (
@@ -83,6 +121,38 @@ export const Destructive: Story = {
       description: {
         story: "Diálogo de confirmación destructiva. El botón principal usa variante destructive.",
       },
+      source: {
+        code: `import {
+  Dialog, DialogTrigger, DialogContent,
+  DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  DialogCancel,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
+import { Trash2 } from "lucide-react"
+
+<Dialog>
+  <DialogTrigger asChild>
+    <Button variant="destructive" className="gap-2">
+      <Icon icon={Trash2} size="xs" />Delete account
+    </Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Delete account</DialogTitle>
+      <DialogDescription>
+        This action is permanent and cannot be undone. All your data will be erased.
+      </DialogDescription>
+    </DialogHeader>
+    <DialogFooter>
+      <DialogCancel size="sm">Cancel</DialogCancel>
+      <Button variant="destructive" size="sm" className="gap-2">
+        <Icon icon={Trash2} size="xs" />Delete permanently
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`,
+      },
     },
   },
   render: () => (
@@ -116,6 +186,38 @@ export const SignOut: Story = {
     docs: {
       description: {
         story: "Diálogo de confirmación para cerrar sesión. Usa DialogCancel para el botón Stay.",
+      },
+      source: {
+        code: `import {
+  Dialog, DialogTrigger, DialogContent,
+  DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  DialogCancel,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
+import { LogOut } from "lucide-react"
+
+<Dialog>
+  <DialogTrigger asChild>
+    <Button variant="ghost" className="gap-2">
+      <Icon icon={LogOut} size="xs" />Sign out
+    </Button>
+  </DialogTrigger>
+  <DialogContent className="max-w-sm">
+    <DialogHeader>
+      <DialogTitle>Sign out</DialogTitle>
+      <DialogDescription>
+        You will be redirected to the login page.
+      </DialogDescription>
+    </DialogHeader>
+    <DialogFooter>
+      <DialogCancel size="sm">Stay</DialogCancel>
+      <Button size="sm" className="gap-2">
+        <Icon icon={LogOut} size="xs" />Sign out
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`,
       },
     },
   },
@@ -153,6 +255,30 @@ export const DarkAndLight: Story = {
       description: {
         story: "Vista comparativa del diálogo en ambos temas.",
       },
+      source: {
+        code: `import {
+  Dialog, DialogTrigger, DialogContent,
+  DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  DialogCancel,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+
+<Dialog>
+  <DialogTrigger asChild>
+    <Button>Open Dialog</Button>
+  </DialogTrigger>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Glass Dialog</DialogTitle>
+      <DialogDescription>Liquid glass modal en ambos temas.</DialogDescription>
+    </DialogHeader>
+    <DialogFooter>
+      <DialogCancel size="sm">Cancel</DialogCancel>
+      <Button size="sm">Confirm</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`,
+      },
     },
   },
   render: () => (
@@ -180,6 +306,28 @@ export const FullLayout: Story = {
     docs: {
       description: {
         story: "Diálogo abierto con el layout completo de la página (navbar + footer) para ver cómo el backdrop cubre toda la pantalla.",
+      },
+      source: {
+        code: `import {
+  Dialog, DialogContent,
+  DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+
+<Dialog open>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>¿Enviar estos datos a ClinvetIA?</DialogTitle>
+      <DialogDescription>
+        Te mostraremos a nuestro equipo con los datos que has calculado.
+      </DialogDescription>
+    </DialogHeader>
+    <DialogFooter className="flex-row justify-between gap-2">
+      <Button variant="destructive">Cancelar</Button>
+      <Button>Enviar</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>`,
       },
     },
   },

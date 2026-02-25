@@ -39,7 +39,7 @@ El color Primary es **Green** en dark mode y **Cyan** en light mode.
         defaultValue: { summary: "default" },
       },
     },
-    disabled: { 
+    disabled: {
       control: "boolean",
       description: "Deshabilita el botón",
     },
@@ -60,6 +60,11 @@ export const Default: Story = {
       description: {
         story: "Variante primary con glow verde (dark) / cyan (light). Úsala para acciones principales.",
       },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+
+<Button variant="default">Start project</Button>`,
+      },
     },
   },
 }
@@ -70,6 +75,11 @@ export const Secondary: Story = {
     docs: {
       description: {
         story: "Variante pink-magenta para acciones secundarias o destacadas.",
+      },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+
+<Button variant="secondary">Secondary</Button>`,
       },
     },
   },
@@ -82,6 +92,11 @@ export const Destructive: Story = {
       description: {
         story: "Variante roja para acciones destructivas (eliminar, remover).",
       },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+
+<Button variant="destructive">Delete</Button>`,
+      },
     },
   },
 }
@@ -92,6 +107,11 @@ export const Accent: Story = {
     docs: {
       description: {
         story: "Variante cyan para acentos o acciones especiales.",
+      },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+
+<Button variant="accent">Add collaborator</Button>`,
       },
     },
   },
@@ -104,6 +124,11 @@ export const Ghost: Story = {
       description: {
         story: "Variante neutra sin glow, ideal para acciones sutiles.",
       },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+
+<Button variant="ghost">Ghost</Button>`,
+      },
     },
   },
 }
@@ -115,6 +140,11 @@ export const Outline: Story = {
       description: {
         story: "Solo borde neon sin fondo, muestra glow en hover.",
       },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+
+<Button variant="outline">Outline Neon</Button>`,
+      },
     },
   },
 }
@@ -125,6 +155,18 @@ export const Sizes: Story = {
     docs: {
       description: {
         story: "Tamaños disponibles: `sm`, `default`, `lg`, `icon`.",
+      },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
+import { Zap } from "lucide-react"
+
+<div className="flex flex-wrap items-center gap-4">
+  <Button size="sm">Small</Button>
+  <Button size="default">Default</Button>
+  <Button size="lg">Large</Button>
+  <Button size="icon"><Icon icon={Zap} /></Button>
+</div>`,
       },
     },
   },
@@ -145,6 +187,18 @@ export const WithIcons: Story = {
       description: {
         story: "Combina iconos de `lucide-react` con texto para botones más expresivos.",
       },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
+import { Zap, Plus, ArrowRight, Trash2 } from "lucide-react"
+
+<div className="flex flex-wrap gap-4">
+  <Button className="gap-2"><Icon icon={Zap} size="sm" />Launch</Button>
+  <Button variant="accent" className="gap-2"><Icon icon={Plus} size="sm" />Add collaborator</Button>
+  <Button variant="outline" className="gap-2"><Icon icon={ArrowRight} size="sm" />Continue</Button>
+  <Button variant="destructive" className="gap-2"><Icon icon={Trash2} size="sm" />Delete</Button>
+</div>`,
+      },
     },
   },
   render: () => (
@@ -163,6 +217,16 @@ export const Loading: Story = {
       description: {
         story: "Estado de carga usando `Loader2` con animación `spin` y `disabled`.",
       },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
+import { Loader2 } from "lucide-react"
+
+<Button disabled className="gap-2">
+  <Icon icon={Loader2} className="animate-spin" size="sm" />
+  Processing...
+</Button>`,
+      },
     },
   },
   render: () => (
@@ -180,6 +244,19 @@ export const AllVariants: Story = {
       description: {
         story: "Comparativa de todas las variantes disponibles.",
       },
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+
+<div className="flex flex-col gap-3 p-6">
+  <Button variant="default" className="w-52 justify-start">default</Button>
+  <Button variant="secondary" className="w-52 justify-start">secondary</Button>
+  <Button variant="accent" className="w-52 justify-start">accent</Button>
+  <Button variant="ghost" className="w-52 justify-start">ghost</Button>
+  <Button variant="outline" className="w-52 justify-start">outline</Button>
+  <Button variant="destructive" className="w-52 justify-start">destructive</Button>
+  <Button variant="link" className="w-52 justify-start">link</Button>
+</div>`,
+      },
     },
   },
   render: () => (
@@ -192,11 +269,23 @@ export const AllVariants: Story = {
 }
 
 // ── Dark + Light side-by-side ────────────────────────────────────────────────
-// Usa el toolbar "Theme → Dark + Light" para verla correctamente,
-// o abre esta story con el global theme = "side-by-side".
 export const DarkAndLight: Story = {
   name: "Dark + Light",
   globals: { theme: "side-by-side" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Button } from "@/components/ui/button"
+
+<Button variant="default">default</Button>
+<Button variant="secondary">secondary</Button>
+<Button variant="accent">accent</Button>
+<Button variant="destructive">destructive</Button>
+<Button variant="ghost">ghost</Button>
+<Button variant="outline">outline</Button>`,
+      },
+    },
+  },
   render: () => (
     <div className="flex flex-col gap-3">
       {(["default", "secondary", "accent", "destructive", "ghost", "outline"] as const).map(
@@ -205,4 +294,3 @@ export const DarkAndLight: Story = {
     </div>
   ),
 }
-

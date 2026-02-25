@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 const meta = {
   title: "Design System/SkeletonLoader",
@@ -44,25 +45,58 @@ El contenido se mostrará durante \`duration\` (por defecto 2000ms = 2 segundos)
 export default meta
 type Story = StoryObj<typeof meta>
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SKELETON LOADER
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const Default: Story = {
   name: "SkeletonLoader · Default",
   args: {
     duration: 2000,
     skeletonVariants: ["default", "glass"],
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { useState } from "react"
+import { SkeletonLoader } from "@/components/ui/skeleton-loader"
+import { Skeleton } from "@/components/ui/skeleton"
+import { GlassCard } from "@/components/ui/GlassCard"
+import { Button } from "@/components/ui/button"
+
+function LoaderDemo() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  return (
+    <div className="space-y-4 w-full max-w-md">
+      <Button onClick={() => setIsLoading(true)} disabled={isLoading}>
+        {isLoading ? "Cargando..." : "Simular carga (2s)"}
+      </Button>
+
+      <SkeletonLoader isLoading={isLoading} duration={2000} skeletonVariants={["default", "glass"]}>
+        <GlassCard className="p-6 space-y-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-12 w-12 rounded-xl" variant="glass" />
+            <div>
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24 mt-2" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </GlassCard>
+      </SkeletonLoader>
+    </div>
+  )
+}`,
+      },
+    },
+  },
   render: (args) => {
     const [isLoading, setIsLoading] = useState(false)
-    
+
     return (
       <div className="space-y-4 w-full max-w-md">
         <Button onClick={() => setIsLoading(true)} disabled={isLoading}>
           {isLoading ? "Cargando..." : "Simular carga (2s)"}
         </Button>
-        
+
         <SkeletonLoader isLoading={isLoading} duration={args.duration} skeletonVariants={args.skeletonVariants}>
           <GlassCard className="p-6 space-y-4">
             <div className="flex items-center gap-4">
@@ -87,15 +121,45 @@ export const WithPrimaryGradient: Story = {
     duration: 2000,
     skeletonVariants: ["primary"],
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { useState } from "react"
+import { SkeletonLoader } from "@/components/ui/skeleton-loader"
+import { Skeleton } from "@/components/ui/skeleton"
+import { GlassCard } from "@/components/ui/GlassCard"
+import { Button } from "@/components/ui/button"
+
+function LoaderPrimaryDemo() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  return (
+    <div className="space-y-4 w-full max-w-md">
+      <Button onClick={() => setIsLoading(true)} disabled={isLoading}>
+        {isLoading ? "Cargando..." : "Simular carga (2s)"}
+      </Button>
+
+      <SkeletonLoader isLoading={isLoading} duration={2000} skeletonVariants={["primary"]}>
+        <GlassCard className="p-6 space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </GlassCard>
+      </SkeletonLoader>
+    </div>
+  )
+}`,
+      },
+    },
+  },
   render: (args) => {
     const [isLoading, setIsLoading] = useState(false)
-    
+
     return (
       <div className="space-y-4 w-full max-w-md">
         <Button onClick={() => setIsLoading(true)} disabled={isLoading}>
           {isLoading ? "Cargando..." : "Simular carga (2s)"}
         </Button>
-        
+
         <SkeletonLoader isLoading={isLoading} duration={args.duration} skeletonVariants={args.skeletonVariants}>
           <GlassCard className="p-6 space-y-4">
             <div className="flex items-center gap-4">
@@ -114,24 +178,62 @@ export const WithPrimaryGradient: Story = {
   },
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SKELETON OVERLAY
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const Overlay: Story = {
   name: "SkeletonOverlay",
   args: {
     duration: 2000,
   },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { useState } from "react"
+import { SkeletonOverlay } from "@/components/ui/skeleton-loader"
+import { GlassCard } from "@/components/ui/GlassCard"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+
+function OverlayDemo() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  return (
+    <div className="space-y-4 w-full max-w-md">
+      <Button onClick={() => setIsLoading(true)} disabled={isLoading}>
+        {isLoading ? "Cargando..." : "Simular carga (2s)"}
+      </Button>
+
+      <SkeletonOverlay isLoading={isLoading} duration={2000}>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Badge variant="default">Etiqueta</Badge>
+            <Badge variant="secondary">Secundaria</Badge>
+          </div>
+          <GlassCard className="p-6">
+            <h3 className="text-lg font-bold mb-2">Título del contenido</h3>
+            <p className="text-muted-foreground">
+              Este contenido se reemplazará con skeletons durante la carga.
+            </p>
+          </GlassCard>
+          <div className="flex gap-2">
+            <Button variant="secondary">Cancelar</Button>
+            <Button>Confirmar</Button>
+          </div>
+        </div>
+      </SkeletonOverlay>
+    </div>
+  )
+}`,
+      },
+    },
+  },
   render: (args) => {
     const [isLoading, setIsLoading] = useState(false)
-    
+
     return (
       <div className="space-y-4 w-full max-w-md">
         <Button onClick={() => setIsLoading(true)} disabled={isLoading}>
           {isLoading ? "Cargando..." : "Simular carga (2s)"}
         </Button>
-        
+
         <SkeletonOverlay isLoading={isLoading} duration={args.duration}>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -155,10 +257,6 @@ export const Overlay: Story = {
   },
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// USE CASE: LANGUAGE SWITCH
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const LanguageSwitch: Story = {
   name: "Use Case · Language Switch",
   parameters: {
@@ -166,18 +264,54 @@ export const LanguageSwitch: Story = {
       description: {
         story: "Caso de uso: cambiar idioma en el menú. Al togglear el switch, se muestran skeletons durante 2 segundos.",
       },
+      source: {
+        code: `import { useState } from "react"
+import { SkeletonLoader } from "@/components/ui/skeleton-loader"
+import { Skeleton } from "@/components/ui/skeleton"
+import { GlassCard } from "@/components/ui/GlassCard"
+import { Button } from "@/components/ui/button"
+
+function LanguageSwitchDemo() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [language, setLanguage] = useState("ES")
+
+  const handleLanguageChange = () => {
+    setIsLoading(true)
+    setLanguage(language === "ES" ? "EN" : "ES")
+    setTimeout(() => setIsLoading(false), 2000)
+  }
+
+  return (
+    <div className="space-y-6 w-full max-w-lg">
+      <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+        <span className="text-sm font-medium">Cambiar idioma</span>
+        <Button onClick={handleLanguageChange} disabled={isLoading} variant="ghost" size="sm">
+          {language}
+        </Button>
+      </div>
+
+      <SkeletonLoader isLoading={isLoading} duration={2000}>
+        <GlassCard className="p-6 space-y-4">
+          <h3 className="text-lg font-bold">Bienvenido / Welcome</h3>
+          <p className="text-muted-foreground">Contenido traducido aquí.</p>
+        </GlassCard>
+      </SkeletonLoader>
+    </div>
+  )
+}`,
+      },
     },
   },
   render: () => {
     const [isLoading, setIsLoading] = useState(false)
     const [language, setLanguage] = useState("ES")
-    
+
     const handleLanguageChange = () => {
       setIsLoading(true)
       setLanguage(language === "ES" ? "EN" : "ES")
       setTimeout(() => setIsLoading(false), 2000)
     }
-    
+
     return (
       <div className="space-y-6 w-full max-w-lg">
         <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
@@ -195,7 +329,7 @@ export const LanguageSwitch: Story = {
             {language}
           </Button>
         </div>
-        
+
         <SkeletonLoader isLoading={isLoading} duration={2000}>
           <GlassCard className="p-6 space-y-4">
             <div className="flex items-center gap-3">
@@ -221,24 +355,49 @@ export const LanguageSwitch: Story = {
   },
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DARK + LIGHT
-// ═══════════════════════════════════════════════════════════════════════════════
-
-import { cn } from "@/lib/utils"
-
 export const DarkAndLight: Story = {
   name: "Dark + Light",
   globals: { theme: "side-by-side" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { useState } from "react"
+import { SkeletonLoader } from "@/components/ui/skeleton-loader"
+import { Skeleton } from "@/components/ui/skeleton"
+import { GlassCard } from "@/components/ui/GlassCard"
+import { Button } from "@/components/ui/button"
+
+function DarkLightDemo() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  return (
+    <div className="space-y-4 w-full max-w-md">
+      <Button onClick={() => setIsLoading(true)} disabled={isLoading}>
+        {isLoading ? "Cargando..." : "Simular carga"}
+      </Button>
+
+      <SkeletonLoader isLoading={isLoading} duration={2000}>
+        <GlassCard className="p-6 space-y-4">
+          <Skeleton className="h-12 w-12 rounded-xl" variant="glass" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </GlassCard>
+      </SkeletonLoader>
+    </div>
+  )
+}`,
+      },
+    },
+  },
   render: () => {
     const [isLoading, setIsLoading] = useState(false)
-    
+
     return (
       <div className="flex flex-col gap-8 w-full max-w-md">
         <Button onClick={() => setIsLoading(true)} disabled={isLoading}>
           {isLoading ? "Cargando..." : "Simular carga"}
         </Button>
-        
+
         <SkeletonLoader isLoading={isLoading} duration={2000}>
           <GlassCard className="p-6 space-y-4">
             <div className="flex items-center gap-4">

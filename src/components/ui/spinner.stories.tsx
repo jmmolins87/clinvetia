@@ -45,13 +45,18 @@ Variantes de color disponibles: \`default\`, \`primary\`, \`secondary\`, \`accen
 export default meta
 type Story = StoryObj<typeof meta>
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SPINNER
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const SpinnerDefault: Story = {
   name: "Spinner · Default",
   args: { size: "default", variant: "default" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Spinner } from "@/components/ui/spinner"
+
+<Spinner size="default" variant="default" />`,
+      },
+    },
+  },
 }
 
 export const SpinnerPrimary: Story = {
@@ -62,6 +67,11 @@ export const SpinnerPrimary: Story = {
       description: {
         story: "Variante primary con glow verde (dark) / cyan (light).",
       },
+      source: {
+        code: `import { Spinner } from "@/components/ui/spinner"
+
+<Spinner size="default" variant="primary" />`,
+      },
     },
   },
 }
@@ -69,6 +79,15 @@ export const SpinnerPrimary: Story = {
 export const SpinnerSecondary: Story = {
   name: "Spinner · Secondary",
   args: { size: "default", variant: "secondary" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Spinner } from "@/components/ui/spinner"
+
+<Spinner size="default" variant="secondary" />`,
+      },
+    },
+  },
 }
 
 export const SpinnerSizes: Story = {
@@ -77,6 +96,16 @@ export const SpinnerSizes: Story = {
     docs: {
       description: {
         story: "Tamaños disponibles: sm, default, lg, xl.",
+      },
+      source: {
+        code: `import { Spinner } from "@/components/ui/spinner"
+
+<div className="flex items-center gap-8">
+  <Spinner size="sm" variant="primary" />
+  <Spinner size="default" variant="primary" />
+  <Spinner size="lg" variant="primary" />
+  <Spinner size="xl" variant="primary" />
+</div>`,
       },
     },
   },
@@ -90,10 +119,6 @@ export const SpinnerSizes: Story = {
   ),
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// LOADING OVERLAY
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const OverlayDefault: Story = {
   name: "LoadingOverlay · Premium",
   parameters: {
@@ -101,16 +126,30 @@ export const OverlayDefault: Story = {
       description: {
         story: "Nueva versión premium con branding, glow y desenfoque profundo para transiciones de página.",
       },
+      layout: "fullscreen",
+      source: {
+        code: `import { LoadingOverlay } from "@/components/ui/spinner"
+
+// Overlay relativo a un contenedor
+<div className="relative h-96 w-full overflow-hidden rounded-2xl">
+  {/* Contenido de fondo */}
+  <div className="absolute inset-0 p-8">
+    <h2 className="text-xl font-bold mb-4">Contenido de fondo</h2>
+  </div>
+  <LoadingOverlay message="Clinvetia" variant="primary" className="absolute" />
+</div>
+
+// Overlay de página completa
+<LoadingOverlay message="Cargando..." variant="primary" />`,
+      },
     },
-    layout: "fullscreen",
   },
   render: () => (
     <div className="relative h-96 w-full overflow-hidden rounded-2xl border border-white/5 bg-background">
       <div className="absolute inset-0 p-8">
         <h2 className="text-xl font-bold mb-4">Contenido de fondo</h2>
         <p className="text-muted-foreground">
-          Este contenido se desenfoca cuando el overlay está activo. 
-          El overlay utiliza un backdrop-filter de 40px para un efecto de cristal puro.
+          Este contenido se desenfoca cuando el overlay está activo.
         </p>
       </div>
       <LoadingOverlay message="Clinvetia" variant="primary" className="absolute" />
@@ -122,6 +161,15 @@ export const OverlaySecondary: Story = {
   name: "LoadingOverlay · Secondary",
   parameters: {
     layout: "fullscreen",
+    docs: {
+      source: {
+        code: `import { LoadingOverlay } from "@/components/ui/spinner"
+
+<div className="relative h-96 w-full overflow-hidden rounded-2xl">
+  <LoadingOverlay message="Preparando..." variant="secondary" className="absolute" />
+</div>`,
+      },
+    },
   },
   render: () => (
     <div className="relative h-96 w-full overflow-hidden rounded-2xl border border-white/5 bg-background">
@@ -130,18 +178,32 @@ export const OverlaySecondary: Story = {
   ),
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// LOADING DOTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const DotsDefault: Story = {
   name: "LoadingDots",
   args: { size: "default", variant: "primary" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { LoadingDots } from "@/components/ui/spinner"
+
+<LoadingDots size="default" variant="primary" />`,
+      },
+    },
+  },
 }
 
 export const DotsSecondary: Story = {
   name: "LoadingDots · Secondary",
   args: { size: "default", variant: "secondary" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { LoadingDots } from "@/components/ui/spinner"
+
+<LoadingDots size="default" variant="secondary" />`,
+      },
+    },
+  },
 }
 
 export const DotsSizes: Story = {
@@ -150,6 +212,15 @@ export const DotsSizes: Story = {
     docs: {
       description: {
         story: "Tamaños disponibles: sm, default, lg.",
+      },
+      source: {
+        code: `import { LoadingDots } from "@/components/ui/spinner"
+
+<div className="flex items-center gap-8">
+  <LoadingDots size="sm" variant="primary" />
+  <LoadingDots size="default" variant="primary" />
+  <LoadingDots size="lg" variant="primary" />
+</div>`,
       },
     },
   },
@@ -162,18 +233,32 @@ export const DotsSizes: Story = {
   ),
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// LOADING RING
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const RingDefault: Story = {
   name: "LoadingRing",
   args: { size: "default", variant: "primary" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { LoadingRing } from "@/components/ui/spinner"
+
+<LoadingRing size="default" variant="primary" />`,
+      },
+    },
+  },
 }
 
 export const RingSecondary: Story = {
   name: "LoadingRing · Secondary",
   args: { size: "default", variant: "secondary" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { LoadingRing } from "@/components/ui/spinner"
+
+<LoadingRing size="default" variant="secondary" />`,
+      },
+    },
+  },
 }
 
 export const RingSizes: Story = {
@@ -182,6 +267,16 @@ export const RingSizes: Story = {
     docs: {
       description: {
         story: "Tamaños disponibles: sm, default, lg, xl.",
+      },
+      source: {
+        code: `import { LoadingRing } from "@/components/ui/spinner"
+
+<div className="flex items-center gap-8">
+  <LoadingRing size="sm" variant="primary" />
+  <LoadingRing size="default" variant="primary" />
+  <LoadingRing size="lg" variant="primary" />
+  <LoadingRing size="xl" variant="primary" />
+</div>`,
       },
     },
   },
@@ -195,16 +290,30 @@ export const RingSizes: Story = {
   ),
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// COMPARATIVA
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const AllVariants: Story = {
   name: "All Loading Variants",
   parameters: {
     docs: {
       description: {
         story: "Comparativa de todos los componentes de carga.",
+      },
+      source: {
+        code: `import { Spinner, LoadingRing, LoadingDots } from "@/components/ui/spinner"
+
+<div className="flex flex-wrap items-center justify-center gap-12">
+  <div className="flex flex-col items-center gap-2">
+    <Spinner size="lg" variant="primary" />
+    <span className="text-sm text-muted-foreground">Spinner</span>
+  </div>
+  <div className="flex flex-col items-center gap-2">
+    <LoadingRing size="lg" variant="primary" />
+    <span className="text-sm text-muted-foreground">Ring</span>
+  </div>
+  <div className="flex flex-col items-center gap-2">
+    <LoadingDots size="lg" variant="primary" />
+    <span className="text-sm text-muted-foreground">Dots</span>
+  </div>
+</div>`,
       },
     },
   },
@@ -226,13 +335,34 @@ export const AllVariants: Story = {
   ),
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DARK + LIGHT
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export const DarkAndLight: Story = {
   name: "Dark + Light",
   globals: { theme: "side-by-side" },
+  parameters: {
+    docs: {
+      source: {
+        code: `import { Spinner, LoadingRing, LoadingDots } from "@/components/ui/spinner"
+
+<div className="flex flex-col gap-8">
+  <div className="flex gap-4">
+    <Spinner variant="primary" />
+    <LoadingRing variant="primary" />
+    <LoadingDots variant="primary" />
+  </div>
+  <div className="flex gap-4">
+    <Spinner variant="secondary" />
+    <LoadingRing variant="secondary" />
+    <LoadingDots variant="secondary" />
+  </div>
+  <div className="flex gap-4">
+    <Spinner variant="accent" />
+    <LoadingRing variant="accent" />
+    <LoadingDots variant="accent" />
+  </div>
+</div>`,
+      },
+    },
+  },
   render: () => (
     <div className="flex flex-col gap-8">
       <div className="space-y-2">
