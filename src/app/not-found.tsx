@@ -34,7 +34,7 @@ export default function NotFound() {
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 w-full max-w-md"
+        className="relative z-10 w-full md:max-w-md"
       >
         <GlassCard className="p-10 md:p-12 text-left border-primary/20 bg-background/10 backdrop-blur-lg min-h-[600px] flex flex-col justify-between">
           <div>

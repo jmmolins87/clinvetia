@@ -1,22 +1,25 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { SkeletonWrapper } from "./skeleton-wrapper"
 
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-2xl border border-white/10",
-      "bg-card/40 backdrop-blur-xl",
-      "shadow-lg",
-      "transition-all duration-300",
-      className
-    )}
-    {...props}
-  />
+  <SkeletonWrapper className={cn("rounded-2xl", className)}>
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-2xl border border-white/10",
+        "bg-card/40 backdrop-blur-xl",
+        "shadow-lg",
+        "transition-all duration-300",
+        className
+      )}
+      {...props}
+    />
+  </SkeletonWrapper>
 ))
 Card.displayName = "Card"
 

@@ -20,6 +20,7 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { Avatar, AvatarGroup } from "@/components/ui/avatar"
 import { BrandName } from "@/components/ui/brand-name"
 import { Icon } from "@/components/ui/icon"
+import { useROIStore } from "@/store/roi-store"
 
 // ── Datos ──────────────────────────────────────────────────────────────────────
 
@@ -233,7 +234,7 @@ function ConfirmationView({ date, time, duration, onBack, onConfirm }: Confirmat
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="space-y-5"
+      className="h-full flex flex-col justify-between space-y-5"
     >
       <div className="text-center">
         <p className="text-base font-semibold uppercase tracking-widest text-muted-foreground">
@@ -371,20 +372,34 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
     if (selectedDate && selectedTime) {
       onBooked?.(selectedDate, selectedTime, duration)
       
+      const store = useROIStore.getState()
+      
+      // Aseguramos que el usuario pueda acceder a contacto tras reservar
+      store.setHasAcceptedDialog(true)
+      
+      const expirationDate = new Date(selectedDate)
+      expirationDate.setHours(23, 59, 59, 999)
+      const expiresAt = expirationDate.toISOString()
+      
+      // Persistimos la expiración en el store global
+      store.setExpiration(expiresAt)
+      
       const bookingData = {
         date: selectedDate.toISOString(),
         time: selectedTime,
         duration: duration.toString(),
-        expiresAt: new Date(selectedDate.setHours(23, 59, 59, 999)).toISOString()
+        expiresAt: expiresAt,
+        token: store.token // Incluimos el token de sesión
       }
       
       localStorage.setItem("clinvetia_booking", JSON.stringify(bookingData))
       
-      // Construir params para la página de contacto
+      // Construir params para la página de contacto incluyendo el token
       const params = new URLSearchParams({
         booking_date: bookingData.date,
         booking_time: bookingData.time,
         booking_duration: bookingData.duration,
+        session_token: store.token || "",
       })
       
       router.push(`/contacto?${params.toString()}`)
@@ -394,10 +409,10 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
   const canProceed = selectedDate !== null && selectedTime !== null
 
   return (
-    <div className={cn("grid gap-6 lg:grid-cols-[1fr_360px]", className)}>
+    <div className={cn("grid gap-6 grid-cols-1 lg:grid-cols-[1fr_360px] lg:grid-rows-1", className)}>
 
       {/* ── Panel izquierdo: calendario + slots ──────────────────────────── */}
-      <GlassCard className="p-6 space-y-6">
+      <GlassCard className="p-6 space-y-6 lg:h-full">
 
         {/* Cabecera */}
         <div className="flex items-center justify-between">
@@ -431,7 +446,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                     : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground",
                 )}
               >
-                <p className="text-xs font-bold">Sesión de {opt.label}</p>
+                <p className="text-xs font-bold"><span className="hidden md:inline">Sesión de </span>{opt.label}</p>
               </Button>
             ))}
           </div>
@@ -465,14 +480,14 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
       </GlassCard>
 
       {/* ── Panel derecho: horarios + confirmación ────────────────────────── */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 h-full min-h-[400px]">
         <AnimatePresence mode="wait">
           {step === "success" && selectedDate && selectedTime ? (
-            <GlassCard key="success" className="flex-1 p-6">
+            <GlassCard key="success" className="flex-1 p-6 flex flex-col justify-center h-full">
               <SuccessView date={selectedDate} time={selectedTime} />
             </GlassCard>
           ) : step === "confirm" && selectedDate && selectedTime ? (
-            <GlassCard key="confirm" className="flex-1 p-6">
+            <GlassCard key="confirm" className="flex-1 p-6 h-full">
               <ConfirmationView
                 date={selectedDate}
                 time={selectedTime}

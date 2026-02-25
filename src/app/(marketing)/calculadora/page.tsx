@@ -55,11 +55,11 @@ export default function CalculadoraPage() {
     setMonthlyPatients,
     setAverageTicket,
     setConversionLoss,
+    setHasAcceptedDialog,
   } = useROIStore()
 
   const [mounted, setMounted] = useState(false)
   const [showSkipDialog, setShowSkipDialog] = useState(false)
-  const [showWarningDialog, setShowWarningDialog] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
@@ -163,14 +163,13 @@ export default function CalculadoraPage() {
                 <div className="border-t border-white/10 pt-4 text-center font-semibold text-success">Demo gratuita</div>
               </GlassCard>
 
-              <Button size="lg" className="w-full gap-2" onClick={() => (averageTicket > 0 ? setShowSkipDialog(true) : setShowWarningDialog(true))}>Hablar con el equipo<ChevronRight className="h-4 w-4" /></Button>
+              <Button size="lg" className="w-full gap-2" onClick={() => setShowSkipDialog(true)}>Hablar con el equipo<ChevronRight className="h-4 w-4" /></Button>
             </motion.div>
           </div>
         </div>
       </section>
 
-      <ResultDialog open={showSkipDialog} onOpenChange={setShowSkipDialog} data={{ monthlyPatients, averageTicket, conversionLoss, roi }} onConfirm={() => router.push("/contacto")} />
-      <WarningDialog open={showWarningDialog} onOpenChange={setShowWarningDialog} />
+      <ResultDialog open={showSkipDialog} onOpenChange={setShowSkipDialog} data={{ monthlyPatients, averageTicket, conversionLoss, roi }} onConfirm={() => { setHasAcceptedDialog(true); router.push("/contacto") }} />
     </div>
   );
 }
@@ -241,21 +240,6 @@ function ResultDialog({ open, onOpenChange, data, onConfirm }: { open: boolean; 
           <Button variant="destructive" className="bg-destructive/15 border-2 border-destructive/70 text-destructive shadow-[0_0_20px_rgba(var(--destructive-rgb),0.50)]" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button variant="default" onClick={() => { onOpenChange(false); onConfirm() }}>Continuar<ArrowRight className="ml-2 h-4 w-4" /></Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function WarningDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive"><Info className="h-7 w-7" /></div>
-          <DialogTitle className="text-center text-xl">Calculadora incompleta</DialogTitle>
-          <DialogDescription className="text-center text-base">Introduce los datos básicos de tu clínica para poder darte un feedback útil.</DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="sm:justify-center"><Button variant="default" onClick={() => onOpenChange(false)}>Entendido</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )

@@ -4,7 +4,7 @@ import { Icon } from "@/components/ui/icon"
 import {
   Dialog, DialogTrigger, DialogContent,
   DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-  DialogCancel,
+  DialogCancel, DialogClose,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -69,7 +69,9 @@ export const Default: Story = {
         </div>
         <DialogFooter>
           <DialogCancel size="sm">Cancel</DialogCancel>
-          <Button size="sm">Save changes</Button>
+          <DialogClose asChild>
+            <Button size="sm">Save changes</Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -101,9 +103,11 @@ export const Destructive: Story = {
         </DialogHeader>
         <DialogFooter>
           <DialogCancel size="sm">Cancel</DialogCancel>
-          <Button variant="destructive" size="sm" className="gap-2">
-            <Icon icon={Trash2} size="xs" />Delete permanently
-          </Button>
+          <DialogClose asChild>
+            <Button variant="destructive" size="sm" className="gap-2">
+              <Icon icon={Trash2} size="xs" />Delete permanently
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -135,9 +139,11 @@ export const SignOut: Story = {
         </DialogHeader>
         <DialogFooter>
           <DialogCancel size="sm">Stay</DialogCancel>
-          <Button size="sm" className="gap-2">
-            <Icon icon={LogOut} size="xs" />Sign out
-          </Button>
+          <DialogClose asChild>
+            <Button size="sm" className="gap-2">
+              <Icon icon={LogOut} size="xs" />Sign out
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -167,7 +173,9 @@ export const DarkAndLight: Story = {
         </DialogHeader>
         <DialogFooter>
           <DialogCancel size="sm">Cancel</DialogCancel>
-          <Button size="sm">Confirm</Button>
+          <DialogClose asChild>
+            <Button size="sm">Confirm</Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -187,7 +195,10 @@ export const FullLayout: Story = {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1 flex items-center justify-center p-8">
-        <Dialog open>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button size="lg">Abrir diálogo de confirmación</Button>
+          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>¿Enviar estos datos a ClinvetIA?</DialogTitle>
@@ -210,12 +221,13 @@ export const FullLayout: Story = {
               </div>
             </div>
             <DialogFooter className="flex-row justify-between gap-2">
-              <Button variant="destructive">Cancelar</Button>
-              <Button>Enviar</Button>
+              <DialogCancel>Cancelar</DialogCancel>
+              <DialogClose asChild>
+                <Button>Enviar datos</Button>
+              </DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <Button>Abrir diálogo</Button>
       </main>
       <Footer />
     </div>

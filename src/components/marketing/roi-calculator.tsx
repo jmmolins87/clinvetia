@@ -35,15 +35,17 @@ export function ROICalculator({ trigger }: ROICalculatorProps) {
     setMonthlyPatients,
     setAverageTicket,
     setConversionLoss,
+    setHasAcceptedDialog,
   } = useROIStore()
 
   const perdidaMensual = Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket)
   const recuperacionEstimada = Math.round(perdidaMensual * 0.7)
 
   const handleContactClick = useCallback(() => {
+    setHasAcceptedDialog(true)
     setIsOpen(false)
     router.push("/contacto")
-  }, [router])
+  }, [router, setHasAcceptedDialog])
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

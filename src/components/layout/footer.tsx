@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { BrandName } from "@/components/ui/brand-name"
+import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
 
 // ── Datos ─────────────────────────────────────────────────────────────────────
 
@@ -143,12 +144,16 @@ export function Footer() {
           "flex flex-col items-center justify-between gap-3 sm:flex-row",
         )}>
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} <BrandName />. Todos los derechos reservados.
+            <SkeletonWrapper as="span" wrapperClassName="inline-grid" className="h-[1.2em] w-[15em] rounded-md">
+              © {new Date().getFullYear()} <BrandName />. Todos los derechos reservados.
+            </SkeletonWrapper>
           </p>
           <p className="text-sm text-muted-foreground">
-            Hecho con{" "}
-            <span aria-label="amor" className="text-destructive">♥</span>
-            {" "}para veterinarias de habla hispana.
+            <SkeletonWrapper as="span" wrapperClassName="inline-grid" className="h-[1.2em] w-[12em] rounded-md">
+              Hecho con{" "}
+              <span aria-label="amor" className="text-destructive">♥</span>
+              {" "}para veterinarias de habla hispana.
+            </SkeletonWrapper>
           </p>
         </div>
 

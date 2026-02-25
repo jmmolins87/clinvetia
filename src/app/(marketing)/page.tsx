@@ -1,7 +1,8 @@
 "use client"
 
+import { useRef, useEffect, useState } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
+import { motion, useInView } from "framer-motion"
 import Image from "next/image"
 import {
   CalendarDays, ArrowRight, Sparkles, Moon, Phone, Clock,
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { BrandName } from "@/components/ui/brand-name"
 import { MarketingCard } from "@/components/ui/marketing-card"
+import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -66,6 +68,42 @@ const ROI_DATOS = [
   { value: "+35%", label: "aumento en consultas", color: "accent" as const }
 ] as const
 
+function AnimatedNumber({ value, className }: { value: string; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const [displayValue, setDisplayValue] = useState(value)
+
+  useEffect(() => {
+    if (!isInView) return
+
+    const isNegative = value.startsWith("+")
+    const numStr = value.replace(/[+%]/g, "")
+    const target = parseFloat(numStr)
+    const hasDecimal = numStr.includes(".")
+
+    let start: number | null = null
+    const duration = 1500
+
+    function animate(timestamp: number) {
+      if (!start) start = timestamp
+      const progress = Math.min((timestamp - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      const current = target * eased
+      const formatted = hasDecimal ? current.toFixed(1) : Math.round(current).toString()
+      const prefix = isNegative ? "+" : ""
+      setDisplayValue(`${prefix}${formatted}%`)
+
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      }
+    }
+
+    requestAnimationFrame(animate)
+  }, [isInView, value])
+
+  return <span ref={ref} className={className}>{displayValue}</span>
+}
+
 const SOLUCION_MOCK_STEPS = [
   { label: "Análisis", value: "Posible obstrucción - Urgencia media", color: "text-secondary" },
   { label: "Cita propuesta", value: "Hoy 16:30 - Dr. García", color: "text-success" },
@@ -113,8 +151,16 @@ export default function MarketingPage() {
                   </motion.div>
         
                   <motion.div variants={fadeUp}><Badge variant="default" className="mb-6 gap-2 px-4 py-1.5"><Sparkles className="hidden sm:block size-3" />Nueva Generación de IA Veterinaria</Badge></motion.div>
-                  <motion.h1 variants={fadeUp} className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl"><span className="text-foreground">Sistema de </span><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-neon-green">Atención Inteligente</span></motion.h1>
-          <motion.p variants={fadeUp} className="mt-6 text-lg text-muted-foreground sm:text-xl">No es un chatbot. Es un sistema que entiende consultas, clasifica urgencias, <br className="hidden sm:block" />verifica disponibilidad y agenda citas.</motion.p>
+                  <motion.h1 variants={fadeUp} className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+                    <SkeletonWrapper variant="primary">
+                      <span className="text-foreground">Sistema de </span><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-neon-green">Atención Inteligente</span>
+                    </SkeletonWrapper>
+                  </motion.h1>
+          <motion.p variants={fadeUp} className="mt-6 text-lg text-muted-foreground sm:text-xl">
+            <SkeletonWrapper shape="text" lines={2} variant="secondary">
+              No es un chatbot. Es un sistema que entiende consultas, clasifica urgencias, <br className="hidden sm:block" />verifica disponibilidad y agenda citas.
+            </SkeletonWrapper>
+          </motion.p>
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Button size="lg" asChild><Link href="/demo" className="flex items-center gap-2"><CalendarDays className="size-5" />Reservar Demo</Link></Button>
             <Button variant="secondary" size="lg" asChild><Link href="/calculadora" className="flex items-center gap-2">Ver ROI<ArrowRight className="size-4" /></Link></Button>
@@ -139,8 +185,16 @@ export default function MarketingPage() {
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
           <motion.div {...fadeUp}>
             <Badge variant="default" className="mb-4">La solución</Badge>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Sistema de Atención Inteligente</h2>
-            <p className="mt-4 text-lg text-muted-foreground"><BrandName /> no solo responde. Entiende el contexto, verifica tu disponibilidad y cierra la cita sin que nadie intervenga.</p>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <SkeletonWrapper>
+                Sistema de Atención Inteligente
+              </SkeletonWrapper>
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              <SkeletonWrapper shape="text" lines={2}>
+                <BrandName /> no solo responde. Entiende el contexto, verifica tu disponibilidad y cierra la cita sin que nadie intervenga.
+              </SkeletonWrapper>
+            </p>
             <ul className="mt-8 space-y-4">
               {SOLUCION_FEATURES.map((feat) => (
                 <li key={feat.title} className="flex items-start gap-3">
@@ -222,7 +276,7 @@ export default function MarketingPage() {
           <div className="mb-10 grid gap-6 sm:grid-cols-3">
             {ROI_DATOS.map((roi, idx) => (
               <motion.div key={roi.label} {...fadeUp} transition={{ delay: idx * 0.1 }} className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-8">
-                <div className={cn("mb-2 text-5xl font-bold", roi.color === "primary" && "text-primary", roi.color === "secondary" && "text-secondary", roi.color === "accent" && "text-success")}>{roi.value}</div>
+                <div className={cn("mb-2 text-5xl font-bold", roi.color === "primary" && "text-primary", roi.color === "secondary" && "text-secondary", roi.color === "accent" && "text-success")}><AnimatedNumber value={roi.value} /></div>
                 <div className="text-sm text-muted-foreground">{roi.label}</div>
               </motion.div>
             ))}

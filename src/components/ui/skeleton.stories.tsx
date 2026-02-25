@@ -6,18 +6,17 @@ const meta = {
   component: Skeleton,
   tags: ["autodocs"],
   parameters: {
-    backgrounds: { default: "dark-neon" },
     docs: {
       description: {
         component: `
-Componente **Skeleton** para estados de carga con estilo **Liquid Glass Neon**:
+Componente **Skeleton** para estados de carga optimizado para ambos temas:
 
-- **Default**: Fondo neutro que funciona en ambos temas
-- **Glass**: Variante con efecto cristal translúcido
-- **Primary**: Gradiente animado con color primario (verde/cyan)
-- **Secondary**: Gradiente animado con color secundario (magenta)
+- **Default**: Base neutra adaptativa (gris suave en light, blanco translúcido en dark)
+- **Glass**: Efecto cristal con backdrop-blur
+- **Primary**: Gradiente con el color de marca primario
+- **Secondary**: Gradiente con el color de marca secundario
 
-Usa la propiedad \`variant\` para elegir entre estilos.
+El componente utiliza \`animate-pulse\` para indicar actividad de carga.
         `,
       },
     },
@@ -31,11 +30,46 @@ Usa la propiedad \`variant\` para elegir entre estilos.
         defaultValue: { summary: "default" },
       },
     },
+    shape: {
+      control: "select",
+      options: ["rect", "circle", "text"],
+      description: "Forma del skeleton",
+      table: {
+        defaultValue: { summary: "rect" },
+      },
+    },
+    lines: {
+      control: "number",
+      description: "Número de líneas (solo para shape='text')",
+      table: {
+        defaultValue: { summary: "1" },
+      },
+    },
   },
 } satisfies Meta<typeof Skeleton>
 
 export default meta
 type Story = StoryObj<typeof meta>
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHAPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const Circle: Story = {
+  name: "Skeleton · Circle",
+  args: {
+    shape: "circle",
+    className: "h-12 w-12",
+  },
+}
+
+export const TextMultiline: Story = {
+  name: "Skeleton · Text Multiline",
+  args: {
+    shape: "text",
+    lines: 4,
+  },
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEFAULT

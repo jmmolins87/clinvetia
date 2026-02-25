@@ -185,7 +185,7 @@ export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-col gap-3 p-6">
       {(["default", "secondary", "accent", "ghost", "outline", "destructive", "link"] as const).map(
-        (v) => <Button key={v} variant={v} className="w-52 justify-start">{v}</Button>
+        (v) => <Button key={v} variant={v} className="justify-start">{v}</Button>
       )}
     </div>
   ),

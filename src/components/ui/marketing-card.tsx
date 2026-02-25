@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { LucideIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
 
 interface MarketingCardProps {
   icon?: LucideIcon
@@ -45,17 +46,23 @@ export function MarketingCard({
         <CardContent className="p-6 flex gap-4">
           {Icon && (
             <div className="shrink-0">
-              <div className={cn(
-                "flex items-center justify-center rounded-full bg-white/10 p-3 h-12 w-12",
-                iconClassName
-              )}>
-                <Icon className="size-6 text-primary" />
-              </div>
+              <SkeletonWrapper shape="circle" className="h-12 w-12">
+                <div className={cn(
+                  "flex items-center justify-center rounded-full bg-white/10 p-3 h-12 w-12",
+                  iconClassName
+                )}>
+                  <Icon className="size-6 text-primary" />
+                </div>
+              </SkeletonWrapper>
             </div>
           )}
-          <div>
-            <h3 className="mb-2 text-lg font-semibold text-foreground">{title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+          <div className="flex-1">
+            <SkeletonWrapper className="h-6 w-3/4 mb-2">
+              <h3 className="mb-2 text-lg font-semibold text-foreground">{title}</h3>
+            </SkeletonWrapper>
+            <SkeletonWrapper shape="text" lines={2}>
+              <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+            </SkeletonWrapper>
           </div>
         </CardContent>
       </Card>
