@@ -36,6 +36,7 @@ export function MarketingCard({
       whileInView="animate"
       viewport={{ once: true, margin: "-50px" }}
       transition={{ ...fadeUp.transition, delay: index * 0.1 }}
+      className="h-full"
     >
       <Card className={cn(
         "h-full border-white/10 bg-white/5 backdrop-blur-lg",

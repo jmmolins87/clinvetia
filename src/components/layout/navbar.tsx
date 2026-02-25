@@ -9,6 +9,8 @@ import { SwitchWithLabel } from "@/components/ui/switch"
 import { BrandName } from "@/components/ui/brand-name"
 import { ThemeSwitcher } from "@/components/layout/theme-switcher"
 import { MobileNav } from "@/components/layout/mobile-nav"
+import { Icon } from "@/components/ui/icon"
+import { useROIStore } from "@/store/roi-store"
 import { cn } from "@/lib/utils"
 
 // ── Datos ─────────────────────────────────────────────────────────────────────
@@ -51,6 +53,7 @@ function NavLinks() {
     >
       {NAV_LINKS.map(({ href, label }) => {
         const isActive = pathname === href
+        
         return (
           <Link
             key={href}
@@ -113,7 +116,7 @@ export function Navbar() {
               asChild
             >
               <Link href="/calculadora">
-                <Calculator className="size-4" aria-hidden />
+                <Icon icon={Calculator} size="sm" variant="secondary" aria-hidden />
                 <span>Calculadora ROI</span>
               </Link>
             </Button>
@@ -123,7 +126,7 @@ export function Navbar() {
           <div className="hidden md:flex">
             <Button size="sm" asChild>
               <Link href="/demo" className="flex items-center gap-2">
-                <CalendarDays className="size-4" aria-hidden />
+                <Icon icon={CalendarDays} size="sm" variant="primary" aria-hidden />
                 <span>Reservar demo</span>
               </Link>
             </Button>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Home, ArrowLeft, Ghost } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { BrandName } from "@/components/ui/brand-name"
 
@@ -47,7 +48,7 @@ export default function NotFound() {
                 transition={{ duration: 4, repeat: Infinity }}
                 className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30"
               >
-                <Ghost className="h-10 w-10 text-primary drop-shadow-[0_0_12px_rgba(var(--primary-rgb),0.8)]" />
+                <Icon icon={Ghost} size="xl" variant="primary" className="drop-shadow-[0_0_12px_rgba(var(--primary-rgb),0.8)]" />
               </motion.div>
               <h1 className="font-bold tracking-tighter leading-none">
                 <span className="text-7xl md:text-9xl text-gradient-primary block mb-2">404</span>
@@ -73,7 +74,7 @@ export default function NotFound() {
                 asChild
               >
                 <Link href="/">
-                  <Home className="h-5 w-5" />
+                  <Icon icon={Home} size="default" />
                   Ir al inicio
                 </Link>
               </Button>
@@ -84,7 +85,7 @@ export default function NotFound() {
                 className="w-full h-14 gap-2 cursor-pointer text-lg"
                 onClick={() => router.back()}
               >
-                <ArrowLeft className="h-5 w-5" />
+                <Icon icon={ArrowLeft} size="default" />
                 Volver atrás
               </Button>
             </div>

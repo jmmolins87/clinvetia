@@ -19,6 +19,7 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
+import { Icon } from "@/components/ui/icon"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { MarketingCard } from "@/components/ui/marketing-card"
@@ -142,7 +143,7 @@ export default function ComoFuncionaPage() {
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">El flujo en 4 pasos</h2>
           </motion.div>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2 max-w-5xl mx-auto">
             {steps.map((step, idx) => (
               <MarketingCard
                 key={step.title}
@@ -170,7 +171,7 @@ export default function ComoFuncionaPage() {
                 {dataNeeded.map((item) => (
                   <GlassCard key={item.title} className="p-5 space-y-2 border-white/10 hover:border-primary/20 transition-colors">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
-                      <item.icon className="h-5 w-5" />
+                      <Icon icon={item.icon} size="sm" variant="primary" />
                     </div>
                     <h4 className="font-bold text-foreground">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.text}</p>
@@ -183,7 +184,7 @@ export default function ComoFuncionaPage() {
               <GlassCard className="p-8 border-primary/30 bg-primary/5">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 border border-primary/40 text-primary">
-                    <ShieldCheck className="h-6 w-6" />
+                    <Icon icon={ShieldCheck} size="lg" variant="primary" />
                   </div>
                   <h3 className="text-2xl font-bold">Control y supervisión</h3>
                 </div>
@@ -195,7 +196,7 @@ export default function ComoFuncionaPage() {
                     "El tono se adapta a dueños preocupados, con empatía y profesionalidad.",
                   ].map((item, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <Icon icon={CheckCircle2} size="sm" variant="primary" className="mt-0.5" />
                       <p className="text-base text-muted-foreground">{item}</p>
                     </li>
                   ))}
@@ -204,7 +205,7 @@ export default function ComoFuncionaPage() {
 
               <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-6 backdrop-blur-md">
                 <div className="flex items-center gap-3 mb-2">
-                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  <Icon icon={AlertCircle} size="sm" variant="destructive" />
                   <p className="font-bold text-destructive uppercase tracking-wider text-sm">Aviso Importante</p>
                 </div>
                 <p className="text-lg font-medium text-foreground">Cada consulta sin responder es un cliente que se va a otra clínica.</p>
@@ -219,7 +220,7 @@ export default function ComoFuncionaPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl">
             <div className="flex items-center justify-center gap-3 mb-12">
-              <HelpCircle className="h-8 w-8 text-primary" />
+              <Icon icon={HelpCircle} size="lg" variant="primary" />
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Preguntas frecuentes</h2>
             </div>
             <GlassCard className="p-2">

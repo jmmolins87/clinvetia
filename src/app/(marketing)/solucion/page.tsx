@@ -22,6 +22,7 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { BrandName } from "@/components/ui/brand-name"
 import { MarketingCard } from "@/components/ui/marketing-card"
+import { Icon } from '@/components/ui/icon';
 
 const features = [
   {
@@ -60,17 +61,17 @@ const flujoPasos = [
   {
     numero: "02",
     titulo: "Clasificación IA",
-    description: "ClinvetIA analiza el mensaje y clasifica: urgencia, sintomatología o consulta general.",
+    descripcion: "ClinvetIA analiza el mensaje y clasifica: urgencia, sintomatología o consulta general.",
   },
   {
     numero: "03",
     titulo: "Propuesta de cita",
-    description: "El sistema propone la cita más adecuada según disponibilidad y tipo de atención.",
+    descripcion: "El sistema propone la cita más adecuada según disponibilidad y tipo de atención.",
   },
   {
     numero: "04",
     titulo: "Confirmación",
-    description: "El dueño confirma y la cita se registra automáticamente en el sistema.",
+    descripcion: "El dueño confirma y la cita se registra automáticamente en el sistema.",
   },
 ]
 
@@ -124,17 +125,17 @@ export default function SolucionPage() {
             <motion.div
               {...fadeUp}
               transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 md:mx-auto md:max-w-lg"
             >
               <Button size="lg" asChild>
                 <Link href="/contacto" className="gap-2">
-                  <CalendarDays className="size-5" />
+                  <Icon icon={CalendarDays} size="sm" variant="primary" />
                   Reservar demo
                 </Link>
               </Button>
               <Button variant="secondary" size="lg" asChild>
-                <Link href="/#roi" className="gap-2">
-                  <Calculator className="size-5" />
+                <Link href="/calculadora" className="gap-2">
+                  <Icon icon={Calculator} size="sm" variant="secondary" />
                   Ver ROI
                 </Link>
               </Button>
@@ -214,7 +215,7 @@ export default function SolucionPage() {
           </motion.div>
 
           <div className="relative">
-            <div className="grid gap-6 lg:grid-cols-4">
+            <div className="grid gap-6 md:max-w-6xl md:grid-cols-2 md:mx-auto">
               {flujoPasos.map((paso, index) => (
                 <motion.div
                   key={paso.numero}
@@ -258,7 +259,7 @@ export default function SolucionPage() {
           </motion.div>
 
           <div className="mx-auto max-w-3xl">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 mt-2">
               {seguridadItems.map((item, index) => (
                 <motion.div
                   key={item.text}
@@ -266,8 +267,8 @@ export default function SolucionPage() {
                   transition={{ delay: 0.1 + index * 0.1 }}
                 >
                   <GlassCard className="p-6 flex items-start gap-4 border-white/10 hover:border-primary/20 transition-colors">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 border border-primary/20 text-primary">
-                      <item.icon className="h-6 w-6" />
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 border border-primary/20 text-primary mb-2">
+                      <Icon icon={item.icon} size="lg" variant="primary" />
                     </div>
                     <span className="text-base font-semibold leading-tight pt-1">{item.text}</span>
                   </GlassCard>
@@ -286,7 +287,7 @@ export default function SolucionPage() {
         description="Reserva una demo personalizada y descubre cómo ClinvetIA puede aumentar tu capacidad de atención."
         actions={[
           { label: "Agendar Demo", href: "/contacto", icon: CalendarDays },
-          { label: "Calcular ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+          { label: "Ver ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
         ]}
       />
     </div>

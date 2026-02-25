@@ -124,22 +124,22 @@ import { Icon } from "@/components/ui/icon"
 import { Zap, Circle, AlertTriangle, CheckCircle } from "lucide-react"
 
 <div className="flex flex-wrap gap-3">
-  <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" />Powered</Badge>
-  <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" className="fill-current" />Online</Badge>
-  <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Critical</Badge>
-  <Badge variant="warning" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Caution</Badge>
-  <Badge variant="secondary" className="gap-1.5"><Icon icon={CheckCircle} size="xs" />Verified</Badge>
+  <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" variant="primary" />Powered</Badge>
+  <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" variant="success" className="fill-current" />Online</Badge>
+  <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" variant="destructive" />Critical</Badge>
+  <Badge variant="warning" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" variant="warning" />Caution</Badge>
+  <Badge variant="secondary" className="gap-1.5"><Icon icon={CheckCircle} size="xs" variant="secondary" />Verified</Badge>
 </div>`,
       },
     },
   },
   render: () => (
     <div className="flex flex-wrap gap-3">
-      <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" />Powered</Badge>
-      <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" className="fill-current" />Online</Badge>
-      <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Critical</Badge>
-      <Badge variant="warning" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Caution</Badge>
-      <Badge variant="secondary" className="gap-1.5"><Icon icon={CheckCircle} size="xs" />Verified</Badge>
+      <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" variant="primary" />Powered</Badge>
+      <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" variant="success" className="fill-current" />Online</Badge>
+      <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" variant="destructive" />Critical</Badge>
+      <Badge variant="warning" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" variant="warning" />Caution</Badge>
+      <Badge variant="secondary" className="gap-1.5"><Icon icon={CheckCircle} size="xs" variant="secondary" />Verified</Badge>
     </div>
   ),
 }
@@ -183,11 +183,11 @@ import { Circle, Zap, AlertTriangle } from "lucide-react"
 <div className="liquid-glass rounded-xl p-6 w-80 space-y-3">
   <div className="flex items-center justify-between">
     <span className="text-sm text-foreground">API Status</span>
-    <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" className="fill-current" />Operational</Badge>
+    <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" variant="success" className="fill-current" />Operational</Badge>
   </div>
   <div className="flex items-center justify-between">
     <span className="text-sm text-foreground">Deploy</span>
-    <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" />v2.4.1</Badge>
+    <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" variant="primary" />v2.4.1</Badge>
   </div>
   <div className="flex items-center justify-between">
     <span className="text-sm text-foreground">Database</span>
@@ -195,7 +195,7 @@ import { Circle, Zap, AlertTriangle } from "lucide-react"
   </div>
   <div className="flex items-center justify-between">
     <span className="text-sm text-foreground">Auth Service</span>
-    <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Degraded</Badge>
+    <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" variant="destructive" />Degraded</Badge>
   </div>
 </div>`,
       },
@@ -205,11 +205,11 @@ import { Circle, Zap, AlertTriangle } from "lucide-react"
     <div className="liquid-glass rounded-xl p-6 w-80 space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm text-foreground">API Status</span>
-        <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" className="fill-current" />Operational</Badge>
+        <Badge variant="accent" className="gap-1.5"><Icon icon={Circle} size="xs" variant="success" className="fill-current" />Operational</Badge>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-foreground">Deploy</span>
-        <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" />v2.4.1</Badge>
+        <Badge variant="default" className="gap-1.5"><Icon icon={Zap} size="xs" variant="primary" />v2.4.1</Badge>
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-foreground">Database</span>
@@ -217,7 +217,7 @@ import { Circle, Zap, AlertTriangle } from "lucide-react"
       </div>
       <div className="flex items-center justify-between">
         <span className="text-sm text-foreground">Auth Service</span>
-        <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" />Degraded</Badge>
+        <Badge variant="destructive" className="gap-1.5"><Icon icon={AlertTriangle} size="xs" variant="destructive" />Degraded</Badge>
       </div>
     </div>
   ),

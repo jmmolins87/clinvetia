@@ -15,6 +15,7 @@ import {
   PercentCircle,
   ChevronRight,
   Loader2,
+  type LucideIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -22,8 +23,10 @@ import { Slider } from "@/components/ui/slider"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Badge } from "@/components/ui/badge"
 import { BrandName } from "@/components/ui/brand-name"
+import { Icon } from "@/components/ui/icon"
 import { useROIStore } from "@/store/roi-store"
 import { cn } from "@/lib/utils"
+import { storage } from "@/lib/storage"
 import {
   Dialog,
   DialogContent,
@@ -56,13 +59,19 @@ export default function CalculadoraPage() {
     setAverageTicket,
     setConversionLoss,
     setHasAcceptedDialog,
+    setAccessToken,
   } = useROIStore()
 
   const [mounted, setMounted] = useState(false)
   const [showSkipDialog, setShowSkipDialog] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => { 
+    setMounted(true)
+    // Resetear permiso de acceso al entrar en la calculadora
+    setHasAcceptedDialog(false)
+    setAccessToken(null)
+  }, [setHasAcceptedDialog, setAccessToken])
 
   const calculatingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -116,7 +125,10 @@ export default function CalculadoraPage() {
 
               {mounted && (
                 <GlassCard className="p-5 space-y-4">
-                  <div className="flex items-center gap-2"><Info className="h-4 w-4 text-muted-foreground" /><p className="text-base font-medium text-muted-foreground">Cómo se calcula el ROI</p></div>
+                  <div className="flex items-center gap-2">
+                    <Icon icon={Info} size="sm" className="text-muted-foreground" />
+                    <p className="text-base font-medium text-muted-foreground">Cómo se calcula el ROI</p>
+                  </div>
                   <div className="space-y-3">
                     <FormulaRow label="Ingresos brutos" formula={`${monthlyPatients} pac × ${averageTicket}€`} result={formatEur(ingresosBrutos)} color="text-foreground" isCalculating={isCalculating} />
                     <FormulaRow label="Pérdida mensual" formula={`${monthlyPatients} × ${conversionLoss}% × ${averageTicket}€`} result={`-${formatEur(perdidaMensual)}`} color="text-destructive" isCalculating={isCalculating} />
@@ -163,13 +175,27 @@ export default function CalculadoraPage() {
                 <div className="border-t border-white/10 pt-4 text-center font-semibold text-success">Demo gratuita</div>
               </GlassCard>
 
-              <Button size="lg" className="w-full gap-2" onClick={() => setShowSkipDialog(true)}>Hablar con el equipo<ChevronRight className="h-4 w-4" /></Button>
+              <Button size="lg" className="w-full gap-2" onClick={() => setShowSkipDialog(true)}>
+                Hablar con el equipo
+                <Icon icon={ChevronRight} size="sm" />
+              </Button>
             </motion.div>
           </div>
         </div>
       </section>
 
-      <ResultDialog open={showSkipDialog} onOpenChange={setShowSkipDialog} data={{ monthlyPatients, averageTicket, conversionLoss, roi }} onConfirm={() => { setHasAcceptedDialog(true); router.push("/contacto") }} />
+      <ResultDialog 
+        open={showSkipDialog} 
+        onOpenChange={setShowSkipDialog} 
+        data={{ monthlyPatients, averageTicket, conversionLoss, roi }} 
+        onConfirm={() => { 
+          const accessToken = crypto.randomUUID()
+          setHasAcceptedDialog(true); 
+          setAccessToken(accessToken)
+          storage.set("local", "access_token", accessToken)
+          router.push("/contacto") 
+        }} 
+      />
     </div>
   );
 }
@@ -178,13 +204,17 @@ export default function CalculadoraPage() {
 
 type SliderColor = "primary" | "secondary" | "destructive"
 
-function SliderField({ label, icon: Icon, value, onChange, min, max, step, display, color, hint }: { label: string, icon: React.ComponentType<{ className?: string }>, value: number, onChange: (v: number) => void, min: number, max: number, step: number, display: string, color: SliderColor, hint?: string }) {
+function SliderField({ label, icon: IconComponent, value, onChange, min, max, step, display, color, hint }: { label: string, icon: LucideIcon, value: number, onChange: (v: number) => void, min: number, max: number, step: number, display: string, color: SliderColor, hint?: string }) {
   const colorMap = { primary: "text-primary", secondary: "text-neon-pink", destructive: "text-destructive" }
   const dotMap = { primary: "bg-primary", secondary: "bg-neon-pink", destructive: "bg-destructive" }
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className={`text-base font-medium flex items-center gap-2 ${colorMap[color]}`}><span className={`h-2 w-2 rounded-full ${dotMap[color]}`} /><span className="text-foreground/80">{label}</span><Icon className="w-5 h-5" /></label>
+        <label className={`text-base font-medium flex items-center gap-2 ${colorMap[color]}`}>
+          <span className={`h-2 w-2 rounded-full ${dotMap[color]}`} />
+          <span className="text-foreground/80">{label}</span>
+          <Icon icon={IconComponent} size="sm" />
+        </label>
         <span className={`text-base font-bold tabular-nums ${colorMap[color]}`}>{display}</span>
       </div>
       <Slider value={[value]} onValueChange={([v]) => onChange(v)} min={min} max={max} step={step} className="py-1" />
@@ -204,11 +234,15 @@ function FormulaRow({ label, formula, result, color, isCalculating }: { label: s
 
 type MetricVariant = "primary" | "destructive" | "success" | "muted"
 
-function MetricCard({ label, value, icon: Icon, variant, isCalculating }: { label: string; value: string; icon: React.ComponentType<{ className?: string }>; variant: MetricVariant; isCalculating?: boolean }) {
+function MetricCard({ label, value, icon: IconComponent, variant, isCalculating }: { label: string; value: string; icon: LucideIcon; variant: MetricVariant; isCalculating?: boolean }) {
   const styles: Record<MetricVariant, string> = { primary: "border-primary/30 bg-primary/5 text-primary", destructive: "border-destructive/30 bg-destructive/5 text-destructive", success: "border-success/30 bg-success/5 text-success", muted: "border-white/10 bg-white/5 text-muted-foreground" }
+  const iconVariantMap: Record<MetricVariant, "primary" | "destructive" | "muted"> = { primary: "primary", destructive: "destructive", success: "primary", muted: "muted" }
   return (
     <div className={`rounded-xl border p-3 space-y-1 ${styles[variant]}`}>
-      <div className="flex items-center gap-1.5 opacity-70"><Icon className="h-4 w-4" /><span className="text-base font-medium">{label}</span></div>
+      <div className="flex items-center gap-1.5 opacity-70">
+        <Icon icon={IconComponent} size="sm" variant={iconVariantMap[variant]} />
+        <span className="text-base font-medium">{label}</span>
+      </div>
       {isCalculating ? <div className="flex items-center justify-center h-7"><Loader2 className="h-5 w-5 animate-spin" /></div> : <p className="text-lg font-bold tabular-nums">{value}</p>}
     </div>
   )
@@ -226,7 +260,9 @@ function ResultDialog({ open, onOpenChange, data, onConfirm }: { open: boolean; 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30 text-primary"><Calculator className="h-7 w-7" /></div>
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30 text-primary">
+            <Icon icon={Calculator} size="lg" variant="primary" />
+          </div>
           <DialogTitle className="text-center text-xl">¿Enviar estos datos a <BrandName />?</DialogTitle>
           <DialogDescription className="text-center text-base">Obtendrás un feedback personalizado mucho más exacto.</DialogDescription>
         </DialogHeader>
@@ -236,9 +272,12 @@ function ResultDialog({ open, onOpenChange, data, onConfirm }: { open: boolean; 
           ))}
           <div className="border-t border-primary/20 pt-2 mt-2 flex justify-between"><span>ROI proyectado:</span><span className="font-bold text-success">{data.roi}%</span></div>
         </div>
-        <DialogFooter className="flex-row justify-between gap-2 mt-4">
-          <Button variant="destructive" className="bg-destructive/15 border-2 border-destructive/70 text-destructive shadow-[0_0_20px_rgba(var(--destructive-rgb),0.50)]" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button variant="default" onClick={() => { onOpenChange(false); onConfirm() }}>Continuar<ArrowRight className="ml-2 h-4 w-4" /></Button>
+        <DialogFooter className="mt-4 gap-2">
+          <Button variant="destructive" className="w-full bg-destructive/15 border-2 border-destructive/70 text-destructive shadow-[0_0_20px_rgba(var(--destructive-rgb),0.50)]" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="default" className="w-full" onClick={() => { onOpenChange(false); onConfirm() }}>
+            Continuar
+            <Icon icon={ArrowRight} size="sm" className="ml-2" />
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

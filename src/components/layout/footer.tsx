@@ -1,3 +1,6 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { BrandName } from "@/components/ui/brand-name"
@@ -118,6 +121,12 @@ function FooterColumn({
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 export function Footer() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <footer
       aria-label="Pie de página de Clinvetia"
@@ -145,7 +154,7 @@ export function Footer() {
         )}>
           <p className="text-sm text-muted-foreground">
             <SkeletonWrapper as="span" wrapperClassName="inline-grid" className="h-[1.2em] w-[15em] rounded-md">
-              © {new Date().getFullYear()} <BrandName />. Todos los derechos reservados.
+              © {mounted ? new Date().getFullYear() : "2026"} <BrandName />. Todos los derechos reservados.
             </SkeletonWrapper>
           </p>
           <p className="text-sm text-muted-foreground">

@@ -8,9 +8,11 @@ import {
   CalendarDays, ArrowRight, Sparkles, Moon, Phone, Clock,
   Bell, Brain, Heart,
   CheckCircle2, MessageSquare, Calculator, AlertCircle,
+  type LucideIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Icon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { BrandName } from "@/components/ui/brand-name"
@@ -105,9 +107,9 @@ function AnimatedNumber({ value, className }: { value: string; className?: strin
 }
 
 const SOLUCION_MOCK_STEPS = [
-  { label: "Análisis", value: "Posible obstrucción - Urgencia media", color: "text-secondary" },
-  { label: "Cita propuesta", value: "Hoy 16:30 - Dr. García", color: "text-success" },
-  { label: "", value: "✓ Cita confirmada", color: "text-primary font-bold" }
+  { label: "Triaje IA", value: "Síntomas de dolor abdominal y anorexia. Posible obstrucción. Prioridad: Alta.", color: "text-secondary" },
+  { label: "Agenda", value: "Hueco de urgencia con el Dr. García a las 16:30. ¿Te va bien?", color: "text-success" },
+  { label: "", value: "✓ Cita confirmada para las 16:30. ¡Toby ya está en agenda!", color: "text-primary font-bold" }
 ] as const
 
 function Section({ id, children, className }: { id: string; children: React.ReactNode; className?: string }) {
@@ -150,7 +152,7 @@ export default function MarketingPage() {
                     </div>
                   </motion.div>
         
-                  <motion.div variants={fadeUp}><Badge variant="default" className="mb-6 gap-2 px-4 py-1.5"><Sparkles className="hidden sm:block size-3" />Nueva Generación de IA Veterinaria</Badge></motion.div>
+                  <motion.div variants={fadeUp}><Badge variant="default" className="mb-6 gap-2 px-4 py-1.5"><Icon icon={Sparkles} size="sm" variant="primary" className="hidden sm:block" />Nueva Generación de IA Veterinaria</Badge></motion.div>
                   <motion.h1 variants={fadeUp} className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
                     <SkeletonWrapper variant="primary">
                       <span className="text-foreground">Sistema de </span><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-neon-green">Atención Inteligente</span>
@@ -161,9 +163,9 @@ export default function MarketingPage() {
               No es un chatbot. Es un sistema que entiende consultas, clasifica urgencias, <br className="hidden sm:block" />verifica disponibilidad y agenda citas.
             </SkeletonWrapper>
           </motion.p>
-          <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Button size="lg" asChild><Link href="/demo" className="flex items-center gap-2"><CalendarDays className="size-5" />Reservar Demo</Link></Button>
-            <Button variant="secondary" size="lg" asChild><Link href="/calculadora" className="flex items-center gap-2">Ver ROI<ArrowRight className="size-4" /></Link></Button>
+          <motion.div variants={fadeUp} className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto">
+            <Button size="lg" asChild><Link href="/demo" className="flex items-center gap-2"><Icon icon={CalendarDays} size="sm" variant="primary" />Reservar Demo</Link></Button>
+            <Button variant="secondary" size="lg" asChild><Link href="/calculadora" className="flex items-center gap-2"><Icon icon={Calculator} size="sm" variant="secondary" />Ver ROI</Link></Button>
           </motion.div>
         </motion.div>
       </Section>
@@ -198,22 +200,40 @@ export default function MarketingPage() {
             <ul className="mt-8 space-y-4">
               {SOLUCION_FEATURES.map((feat) => (
                 <li key={feat.title} className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
+                  <Icon icon={CheckCircle2} size="sm" variant="primary" className="mt-0.5" />
                   <div><span className="font-medium">{feat.title}</span><p className="text-sm text-muted-foreground">{feat.description}</p></div>
                 </li>
               ))}
             </ul>
             <div className="mt-8 rounded-2xl border border-primary/30 bg-primary/5 p-5 backdrop-blur-lg">
-              <div className="flex items-center gap-3"><AlertCircle className="size-5 text-primary shrink-0" /><p className="text-sm"><span className="font-bold text-primary">40%</span> de las consultas llegan fuera de horario. <BrandName /> las atiende <span className="font-bold text-foreground">inmediatamente</span>.</p></div>
+              <div className="flex items-center gap-3"><Icon icon={AlertCircle} size="sm" variant="primary" /><p className="text-sm"><span className="font-bold text-primary">40%</span> de las consultas llegan fuera de horario. <BrandName /> las atiende <span className="font-bold text-foreground">inmediatamente</span>.</p></div>
             </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }} className="relative aspect-square rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-primary/10 p-8 backdrop-blur-xl">
-            <div className="absolute inset-8 flex flex-col items-center justify-center text-center">
-              <div className="mb-8 flex items-center gap-3 justify-center"><MessageSquare className="size-6 text-primary" /><span className="text-lg font-medium">&ldquo;Mi perro no come desde ayer, tiene la tripa dura&rdquo;</span></div>
-              <div className="w-full max-w-xs space-y-3 mx-auto">
+          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }} className="relative aspect-square rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-primary/10 p-8 backdrop-blur-xl overflow-hidden">
+            {/* Background Decorator Icon */}
+            <div className="absolute -top-10 -right-10 opacity-15 blur-3xl pointer-events-none">
+              <Icon icon={MessageSquare} variant="primary" className="size-64" />
+            </div>
+
+            <div className="relative z-10 flex h-full flex-col items-center justify-center text-center">
+              <div className="mb-10">
+                <p className="text-xl font-medium italic leading-relaxed text-foreground/90">
+                  &ldquo;Hola, Toby no quiere comer desde ayer y noto que tiene la tripa muy hinchada y dura al tacto. Me preocupa.&rdquo;
+                </p>
+              </div>
+              <div className="w-full max-w-sm space-y-4">
                 {SOLUCION_MOCK_STEPS.map((item, i) => (
-                  <div key={i} className="rounded-xl bg-white/10 border border-white/10 p-3 text-sm">{item.label && <span className="text-muted-foreground">{item.label}: </span>}<span className={item.color}>{item.value}</span></div>
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + (i * 0.1) }}
+                    className="rounded-2xl bg-white/5 border border-white/10 p-4 shadow-sm backdrop-blur-md"
+                  >
+                    {item.label && <span className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">{item.label}</span>}
+                    <span className={cn("text-base", item.color)}>{item.value}</span>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -243,10 +263,12 @@ export default function MarketingPage() {
       <Section id="beneficios">
         <div className="mx-auto max-w-6xl text-center">
           <SectionHeader badge="Beneficios" title="Beneficios operativos" subtitle="Más tiempo para lo que importa: tus pacientes." />
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-3 md:mx-auto md:max-w-3xl">
             {BENEFICIOS.map((ben, idx) => (
               <motion.div key={ben.title} {...fadeUp} transition={{ delay: idx * 0.1 }}>
-                <div className={cn("mx-auto mb-4 inline-flex rounded-full bg-white/10 p-4", ben.color === "secondary" ? "bg-secondary/10" : "")}><ben.icon className={cn("size-8", ben.color === "secondary" ? "text-secondary" : "text-primary")} /></div>
+                <div className={cn("mx-auto mb-4 inline-flex rounded-full bg-white/10 p-4", ben.color === "secondary" ? "bg-secondary/10" : "")}>
+                  <Icon icon={ben.icon as LucideIcon} size="xl" variant={ben.color as "primary" | "secondary"} />
+                </div>
                 <h3 className="mb-2 text-lg font-semibold">{ben.title}</h3>
                 <p className="text-sm text-muted-foreground">{ben.description}</p>
               </motion.div>
@@ -262,7 +284,7 @@ export default function MarketingPage() {
           <div className="flex flex-wrap justify-center gap-3">
             {ESCENARIOS.map((esc, idx) => (
               <motion.div key={esc.label} {...fadeUp} transition={{ delay: idx * 0.05 }}>
-                <div className={cn("cursor-pointer rounded-full border px-5 py-2.5 text-sm font-medium backdrop-blur-lg transition-all duration-300", esc.color === "secondary" ? "border-secondary/40 bg-secondary/10 text-secondary hover:bg-secondary/20" : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20")}>{esc.label}</div>
+                <div className={cn("rounded-full border px-5 py-2.5 text-sm font-medium backdrop-blur-lg transition-all duration-300", esc.color === "secondary" ? "border-secondary/40 bg-secondary/10 text-secondary hover:bg-secondary/20" : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20")}>{esc.label}</div>
               </motion.div>
             ))}
           </div>
@@ -282,7 +304,14 @@ export default function MarketingPage() {
             ))}
           </div>
           <motion.p {...fadeUp} className="mb-8 text-lg text-foreground">Tu equipo se enfoca en las mascotas, no en el teléfono.</motion.p>
-          <Button size="lg" variant="secondary" asChild><Link href="/calculadora" className="flex items-center gap-2"><Calculator className="size-5" />Calcular mi ROI</Link></Button>
+          <div className="w-full mx-auto md:max-w-md">
+            <Button size="lg" variant="secondary" asChild>
+              <Link href="/calculadora" className="flex items-center gap-2">
+                <Icon icon={Calculator} size="sm" variant="secondary" />
+                Calcular mi ROI
+              </Link>
+            </Button>
+          </div>
         </div>
       </Section>
 

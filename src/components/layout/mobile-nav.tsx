@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button"
 import { BrandName } from "@/components/ui/brand-name"
 import { ThemeSwitcher } from "@/components/layout/theme-switcher"
 import { SwitchWithLabel } from "@/components/ui/switch"
+import { Icon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
+
+import { useROIStore } from "@/store/roi-store"
 
 const NAV_LINKS = [
   { href: "/solucion",       label: "Solución"        },
@@ -21,6 +24,7 @@ const NAV_LINKS = [
 
 export function MobileNav() {
   const pathname = usePathname()
+  const { hasAcceptedDialog } = useROIStore()
   const [isOpen, setIsOpen] = useState(false)
 
   // Bloquear scroll cuando el menú está abierto
@@ -54,7 +58,7 @@ export function MobileNav() {
         onClick={() => setIsOpen(true)}
         aria-label="Abrir menú"
       >
-        <Menu className="h-6 w-6" />
+        <Icon icon={Menu} size="sm" />
       </Button>
 
       {/* Menú Cortina */}
@@ -70,7 +74,7 @@ export function MobileNav() {
             {/* Cabecera del menú */}
             <div className="flex h-16 items-center justify-between px-6 border-b border-white/5">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                <Icon icon={Sparkles} size="sm" variant="primary" className="animate-pulse" />
                 <BrandName className="text-xl font-bold" />
               </div>
             </div>
@@ -79,6 +83,7 @@ export function MobileNav() {
             <nav className="flex-1 flex flex-col justify-center px-8 space-y-8">
               {NAV_LINKS.map((link, idx) => {
                 const isActive = pathname === link.href
+                
                 return (
                   <motion.div
                     key={link.href}
@@ -150,7 +155,7 @@ export function MobileNav() {
                   className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors cursor-pointer group shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]"
                   aria-label="Cerrar menú"
                 >
-                  <X className="h-10 w-10 transition-transform group-hover:rotate-90 duration-300" />
+                  <Icon icon={X} size="xl" className="transition-transform group-hover:rotate-90 duration-300" />
                 </motion.button>
               </div>
             </div>

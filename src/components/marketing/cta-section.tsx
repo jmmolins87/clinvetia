@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
+import { Icon } from "@/components/ui/icon"
+import { type LucideIcon } from "lucide-react"
 
 export interface CtaAction {
   label: string
   href: string
   variant?: "default" | "secondary" | "ghost" | "accent" | "outline" | "destructive"
-  icon?: React.ComponentType<{ className?: string }>
+  icon?: LucideIcon
 }
 
 export interface CtaSectionProps {
@@ -52,7 +54,6 @@ export function CtaSection({
 
       <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
         {actions.map((action) => {
-          const Icon = action.icon
           return (
             <Button
               key={action.href}
@@ -62,7 +63,7 @@ export function CtaSection({
               asChild
             >
               <Link href={action.href} className="gap-2">
-                {Icon && <Icon className="size-5" />}
+                {action.icon && <Icon icon={action.icon} size="sm" />}
                 {action.label}
               </Link>
             </Button>

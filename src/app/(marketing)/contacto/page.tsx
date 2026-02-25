@@ -13,6 +13,7 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { useROIStore } from "@/store/roi-store"
 import { Badge } from "@/components/ui/badge"
 import { BrandName } from "@/components/ui/brand-name"
+import { Icon } from "@/components/ui/icon"
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { sanitizeInput } from "@/lib/security"
+import { storage } from "@/lib/storage"
 
 interface FormData {
   nombre: string
@@ -41,12 +44,7 @@ const initialFormData: FormData = {
   token: "",
 }
 
-interface ValidationRule {
-  min?: number
-  max: number
-}
-
-const VALIDATION_RULES: Record<string, ValidationRule> = {
+const VALIDATION_RULES: Record<string, { min?: number, max: number }> = {
   nombre:   { min: 3, max: 50 },
   email:    { max: 100 },
   telefono: { min: 9, max: 15 },
@@ -54,20 +52,17 @@ const VALIDATION_RULES: Record<string, ValidationRule> = {
   mensaje:  { min: 10, max: 500 },
 }
 
-interface ContactField {
-  id: keyof FormData
-  label: string
-  placeholder: string
-  required: boolean
-  type?: string
-}
-
-const CONTACT_FIELDS: ContactField[] = [
+const CONTACT_FIELDS: { id: keyof FormData, label: string, placeholder: string, required: boolean, type?: string }[] = [
   { id: "nombre",   label: "Nombre completo *",     placeholder: "Dr. Juan García", required: true },
   { id: "email",    label: "Email profesional *",   placeholder: "juan@clinica.com", required: true, type: "email" },
   { id: "telefono", label: "Teléfono *",            placeholder: "+34 612 345 678", required: true, type: "tel" },
   { id: "clinica",  label: "Nombre de la clínica *", placeholder: "Clínica Veterinaria Central", required: true },
 ]
+
+const isValidAccessToken = (token: string | null) => {
+  if (!token) return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)
+}
 
 function ContactFormWithROI() {
   const router = useRouter()
@@ -79,52 +74,83 @@ function ContactFormWithROI() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showAccessDialog, setShowAccessDialog] = useState(false)
+  const [localAccessToken, setLocalAccessToken] = useState<string | null>(null)
   
   const [storedBooking, setStoredBooking] = useState<{
     date: string;
     time: string;
     duration: string;
+    formExpiresAt?: string;
   } | null>(null)
 
   const {
     token,
+    accessToken,
     monthlyPatients,
     averageTicket,
     conversionLoss,
     isCalculated,
     hasAcceptedDialog,
+    formExpiresAt,
+    setAccessToken,
     reset: resetROI
   } = useROIStore()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (mounted) {
-      const currentToken = searchParams.get("session_token") || token || ""
-      setFormData(prev => ({ ...prev, token: currentToken }))
+    const storedAccessToken = storage.get<string | null>("local", "access_token", null)
+    const validAccessToken = isValidAccessToken(storedAccessToken) ? storedAccessToken : null
+    if (!validAccessToken && storedAccessToken) {
+      storage.remove("local", "access_token")
+      if (accessToken) setAccessToken(null)
     }
-  }, [mounted, token, searchParams])
-
-  useEffect(() => {
-    if (mounted && !hasAcceptedDialog) {
-      setShowAccessDialog(true)
+    setLocalAccessToken(validAccessToken)
+    if (validAccessToken && !accessToken) {
+      setAccessToken(validAccessToken)
     }
-  }, [mounted, hasAcceptedDialog])
+  }, [accessToken, setAccessToken])
 
-  useEffect(() => {
-    const savedBooking = localStorage.getItem("clinvetia_booking")
-    if (savedBooking) {
-      try {
-        const parsed = JSON.parse(savedBooking)
-        if (new Date() < new Date(parsed.expiresAt)) {
-          setStoredBooking(parsed)
-        }
-      } catch (e) { console.error(e) }
-    }
-  }, [])
+  // Si no hay acceso, mostramos el diálogo bloqueante sobre una estructura vacía
+  if (mounted && !localAccessToken) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Dialog open={true} onOpenChange={() => {}}>
+          <DialogContent 
+            className="sm:max-w-md [&>button]:hidden" 
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onEscapeKeyDown={(e) => e.preventDefault()}
+          >
+            <DialogHeader className="space-y-3">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/30">
+                <Icon icon={Calculator} size="lg" variant="destructive" />
+              </div>
+              <DialogTitle className="text-center text-xl">Para seguir, hagamos tu cálculo de ROI</DialogTitle>
+              <DialogDescription className="text-center text-base leading-relaxed">
+                En <BrandName /> queremos darte una atención cercana y útil. Con los datos de la calculadora de ROI podremos evaluar tu clínica con más claridad y darte recomendaciones personalizadas.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-2">
+              <p className="text-base font-medium text-foreground text-center">¿Por qué lo pedimos?</p>
+              <p className="text-sm text-muted-foreground text-center">
+                Queremos que el tiempo de tu llamada sea súper aprovechado, con cifras reales y una evaluación hecha a tu medida.
+              </p>
+            </div>
+            <DialogFooter className="flex flex-col sm:flex-row justify-center gap-3">
+              <Button variant="ghost" className="w-full" onClick={() => router.push("/")}>
+                Volver al inicio
+              </Button>
+              <Button variant="default" className="w-full" onClick={() => router.push("/calculadora")}>
+                Ir a la calculadora
+                <Icon icon={Calculator} size="sm" variant="primary" className="ml-2" />
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    )
+  }
 
+  const isExpired = !!storedBooking && !formExpiresAt
   const bookingDateStr = searchParams.get("booking_date") || storedBooking?.date
   const bookingTime = searchParams.get("booking_time") || storedBooking?.time
   const bookingDuration = searchParams.get("booking_duration") || storedBooking?.duration
@@ -138,44 +164,19 @@ function ContactFormWithROI() {
   const validateField = (name: keyof FormData, value: string) => {
     const rules = VALIDATION_RULES[name]
     if (!rules) return ""
-
-    if (!value.trim()) {
-      return "Este campo es obligatorio"
-    }
-
-    if (rules.min && value.length < rules.min) {
-      return `Mínimo ${rules.min} caracteres`
-    }
-
-    if (value.length > rules.max) {
-      return `Máximo ${rules.max} caracteres`
-    }
-
-    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      return "Email no válido"
-    }
-
+    if (!value.trim()) return "Este campo es obligatorio"
+    if (rules.min && value.length < rules.min) return `Mínimo ${rules.min} caracteres`
+    if (value.length > rules.max) return `Máximo ${rules.max} caracteres`
+    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Email no válido"
     return ""
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target as { name: keyof FormData, value: string }
-    const rules = VALIDATION_RULES[name]
-
-    // Bloquear escritura si supera el máximo
-    if (rules && value.length > rules.max) {
-      setErrors(prev => ({ ...prev, [name]: `Máximo ${rules.max} caracteres` }))
-      return
-    }
-
-    setFormData(prev => ({ ...prev, [name]: value }))
-    
-    // Si ya estaba tocado, validar en tiempo real
+    const sanitizedValue = sanitizeInput(value)
+    setFormData(prev => ({ ...prev, [name]: sanitizedValue }))
     if (touched[name]) {
-      setErrors(prev => ({ ...prev, [name]: validateField(name, value) }))
-    } else {
-      // Limpiar error de "máximo" si se borra
-      setErrors(prev => ({ ...prev, [name]: "" }))
+      setErrors(prev => ({ ...prev, [name]: validateField(name, sanitizedValue) }))
     }
   }
 
@@ -187,25 +188,14 @@ function ContactFormWithROI() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Validar todos los campos antes de enviar
     const newErrors: Partial<Record<keyof FormData, string>> = {}
     let hasErrors = false
-
     ;(Object.keys(formData) as Array<keyof FormData>).forEach(key => {
       const error = validateField(key, formData[key])
-      if (error) {
-        newErrors[key] = error
-        hasErrors = true
-      }
+      if (error) { newErrors[key] = error; hasErrors = true }
     })
-
-    if (hasErrors) {
-      setErrors(newErrors)
-      setTouched({ nombre: true, email: true, telefono: true, clinica: true, mensaje: true })
-      return
-    }
-
+    if (hasErrors) { setErrors(newErrors); setTouched({ nombre: true, email: true, telefono: true, clinica: true, mensaje: true }); return }
+    if (isExpired) { alert("Tu reserva ha expirado."); router.push("/demo"); return }
     setIsSubmitting(true)
     await new Promise((resolve) => setTimeout(resolve, 1500))
     if (!hasBooking) resetROI()
@@ -219,53 +209,72 @@ function ContactFormWithROI() {
         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/20"><CheckCircle2 className="h-10 w-10 text-primary" /></div>
         <h2 className="mb-2 text-2xl font-bold">¡Mensaje enviado!</h2>
         <p className="text-muted-foreground">Nuestro equipo te contactará en menos de 24 horas.</p>
+        <Button className="mt-8" variant="ghost" asChild><Link href="/">Volver al inicio</Link></Button>
       </motion.div>
     )
   }
 
   const summaries = (
     <div className="space-y-4">
-      {mounted && (hasBooking ? (
+      {localAccessToken && (
+        <GlassCard className="p-0 overflow-hidden border-primary/40 bg-primary/10 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)]">
+          <div className="bg-primary/20 px-4 py-3 border-b border-primary/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon icon={Calculator} size="xs" variant="primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">Resumen ROI</span>
+            </div>
+            <Badge variant="primary" className="h-5 px-1.5 text-[10px]">Listo</Badge>
+          </div>
+          <div className="p-4 space-y-3 text-sm">
+            <div className="flex justify-between"><span>Pacientes/mes</span><span className="font-semibold">{monthlyPatients}</span></div>
+            <div className="flex justify-between"><span>Ticket medio</span><span className="font-semibold">{averageTicket}€</span></div>
+            <div className="flex justify-between"><span>Pérdida de conversión</span><span className="font-semibold">{conversionLoss}%</span></div>
+            <div className="border-t border-white/10 pt-2 flex justify-between"><span>Pérdida mensual</span><span className="font-semibold text-destructive">-{perdidaMensual.toLocaleString("es-ES")}€</span></div>
+            <div className="flex justify-between"><span>Recuperable (70%)</span><span className="font-semibold text-success">+{recuperacionEstimada.toLocaleString("es-ES")}€</span></div>
+            <div className="border-t border-white/10 pt-2 flex justify-between"><span>ROI proyectado</span><span className="font-bold text-success">{roi}%</span></div>
+          </div>
+        </GlassCard>
+      )}
+      {hasBooking ? (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
           <GlassCard className="p-0 overflow-hidden border-primary/40 bg-primary/10 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)]">
             <div className="bg-primary/20 px-4 py-3 border-b border-primary/30 flex items-center justify-between">
-              <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-primary" /><span className="text-xs font-bold text-primary uppercase tracking-wider">Tu Reserva Demo</span></div>
+              <div className="flex items-center gap-2"><Icon icon={CalendarDays} size="xs" variant="primary" /><span className="text-xs font-bold text-primary uppercase tracking-wider">Tu Reserva Demo</span></div>
               <Badge variant="primary" className="h-5 px-1.5 text-[10px]">Confirmada</Badge>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-4 space-y-4">
               <div className="space-y-1">
                 <p className="text-[10px] uppercase text-muted-foreground font-semibold">Fecha y hora</p>
-                <p className="text-sm font-bold capitalize">{bookingDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</p>
+                <p className="text-sm font-bold capitalize">{bookingDate?.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</p>
                 <p className="text-base font-bold text-primary">{bookingTime} ({bookingDuration} min)</p>
               </div>
-              <div className="flex items-center gap-2 pt-2 border-t border-white/5"><Sparkles className="h-3.5 w-3.5 text-primary" /><p className="text-xs text-muted-foreground">Demo personalizada con experto</p></div>
+              <div className="flex items-center gap-2 pt-2 border-t border-white/5"><Icon icon={Sparkles} size="sm" variant="primary" /><p className="text-xs text-muted-foreground">Demo personalizada con experto</p></div>
               <Button variant="ghost" size="sm" className="w-full h-8 mt-2 text-xs border-primary/20 hover:bg-primary/10 hover:text-primary" asChild>
-                <Link href="/demo"><Clock className="mr-2 h-3 w-3" />Reagendar cita</Link>
+                <Link href="/demo"><Icon icon={Clock} size="xs" className="mr-2" />Reagendar cita</Link>
               </Button>
             </div>
-            <div className="bg-primary/5 px-4 py-2 text-[10px] text-muted-foreground italic border-t border-white/10">Completa el formulario para recibir el enlace</div>
           </GlassCard>
         </motion.div>
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <GlassCard className="p-0 overflow-hidden border-warning/30 bg-warning/5">
-            <div className="bg-warning/10 px-4 py-3 border-b border-warning/20 flex items-center gap-2"><Info className="h-4 w-4 text-warning" /><span className="text-xs font-bold text-warning uppercase tracking-wider">Sin reserva previa</span></div>
+            <div className="bg-warning/10 px-4 py-3 border-b border-warning/20 flex items-center gap-2"><Icon icon={Info} size="xs" variant="warning" /><span className="text-xs font-bold text-warning uppercase tracking-wider">Sin reserva previa</span></div>
             <div className="p-4 space-y-3">
               <p className="text-sm text-muted-foreground leading-relaxed">No hemos detectado una reserva de demo activa para tu sesión.</p>
               <Button variant="ghost" size="sm" className="w-full h-8 text-xs border-warning/20 hover:bg-warning/10 hover:text-warning" asChild>
-                <Link href="/demo">Reservar demo ahora<ArrowRight className="ml-2 h-3 w-3" /></Link>
+                <Link href="/demo">Reservar demo ahora<Icon icon={ArrowRight} size="xs" className="ml-2" /></Link>
               </Button>
             </div>
           </GlassCard>
         </motion.div>
-      ))}
+      )}
 
-      {mounted && isCalculated && (
+      {isCalculated && (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
           <GlassCard className="p-0 overflow-hidden border-primary/30 bg-primary/5">
             <div className="bg-primary/10 px-4 py-3 border-b border-primary/30 flex items-center justify-between">
-              <div className="flex items-center gap-2"><Calculator className="h-4 w-4 text-primary" /><span className="text-xs font-bold text-primary uppercase tracking-wider">Tu ROI Proyectado</span></div>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary/60 hover:text-primary" asChild><Link href="/calculadora" title="Recalcular"><ArrowRight className="h-3 w-3" /></Link></Button>
+              <div className="flex items-center gap-2"><Icon icon={Calculator} size="xs" variant="primary" /><span className="text-xs font-bold text-primary uppercase tracking-wider">Tu ROI Proyectado</span></div>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary/60 hover:text-primary" asChild><Link href="/calculadora" title="Recalcular"><Icon icon={ArrowRight} size="xs" /></Link></Button>
             </div>
             <div className="p-4 space-y-4">
               <div className="flex justify-between items-end"><span className="text-xs text-muted-foreground">Pérdida mensual</span><span className="text-base font-bold text-destructive">-{perdidaMensual}€</span></div>
@@ -274,9 +283,7 @@ function ContactFormWithROI() {
                 <div className="space-y-0.5"><p className="text-[10px] uppercase text-muted-foreground">Pacientes</p><p className="text-sm font-semibold">{monthlyPatients}</p></div>
                 <div className="space-y-0.5"><p className="text-[10px] uppercase text-muted-foreground">Ticket</p><p className="text-sm font-semibold">{averageTicket}€</p></div>
               </div>
-              <Button variant="ghost" size="sm" className="w-full h-8 text-xs border-primary/20 hover:bg-primary/10 hover:text-primary" asChild><Link href="/calculadora"><Calculator className="mr-2 h-3 w-3" />Recalcular ROI</Link></Button>
             </div>
-            <div className="bg-primary/5 px-4 py-2 text-[10px] text-muted-foreground italic border-t border-white/5">Datos adjuntos a tu solicitud</div>
           </GlassCard>
         </motion.div>
       )}
@@ -284,154 +291,48 @@ function ContactFormWithROI() {
   )
 
   const submitButton = (
-    <Button 
-      type="submit" 
-      size="lg" 
-      className="w-full gap-2 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] h-14 text-lg" 
-      disabled={isSubmitting}
-    >
+    <Button type="submit" size="lg" className="w-full gap-2 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] h-14 text-lg" disabled={isSubmitting}>
       {isSubmitting ? "Enviando..." : <><Send className="size-5" />Enviar solicitud</>}
     </Button>
   )
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className="no-validate" noValidate>
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-8">
-          {/* Mobile: Summaries (First in mobile order) */}
-          <div className="md:hidden">
-            {summaries}
-          </div>
-
-          {/* Form Fields Column */}
-          <div className="space-y-8">
-            <GlassCard className="p-6 md:p-8">
-              <div className="space-y-6">
-                {CONTACT_FIELDS.map((field) => (
-                  <div key={field.id} className="space-y-3">
-                    <div className="flex justify-between items-end">
-                      <label htmlFor={field.id} className="text-sm font-medium">{field.label}</label>
-                      <AnimatePresence>
-                        {errors[field.id as keyof FormData] && (
-                          <motion.span 
-                            initial={{ opacity: 0, y: 5 }} 
-                            animate={{ opacity: 1, y: 0 }} 
-                            exit={{ opacity: 0 }}
-                            className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"
-                          >
-                            <AlertCircle className="h-4 w-4" />
-                            {errors[field.id as keyof FormData]}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    <Input
-                      id={field.id}
-                      name={field.id}
-                      type={field.type || "text"}
-                      placeholder={field.placeholder}
-                      value={formData[field.id as keyof FormData]}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      required={field.required}
-                      className={cn(
-                        "glass transition-all duration-200",
-                        errors[field.id as keyof FormData] ? "border-destructive/50 ring-destructive/20 focus-visible:ring-destructive" : ""
-                      )}
-                    />
-                  </div>
-                ))}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-end">
-                    <label htmlFor="mensaje" className="text-sm font-medium">Mensaje *</label>
-                    <AnimatePresence>
-                      {errors.mensaje && (
-                        <motion.span 
-                          initial={{ opacity: 0, y: 5 }} 
-                          animate={{ opacity: 1, y: 0 }} 
-                          exit={{ opacity: 0 }}
-                          className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"
-                        >
-                          <AlertCircle className="h-4 w-4" />
-                          {errors.mensaje}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  <Textarea
-                    id="mensaje"
-                    name="mensaje"
-                    placeholder="Cuéntanos sobre tu clínica y cómo podemos ayudarte..."
-                    value={formData.mensaje}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    required
-                    rows={5}
-                    className={cn(
-                      "glass resize-none transition-all duration-200",
-                      errors.mensaje ? "border-destructive/50 ring-destructive/20 focus-visible:ring-destructive" : ""
+    <form onSubmit={handleSubmit} className="no-validate" noValidate>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-8">
+        <div className="md:hidden">{summaries}</div>
+        <div className="space-y-8">
+          <GlassCard className="p-6 md:p-8 space-y-6">
+            {CONTACT_FIELDS.map((field) => (
+              <div key={field.id} className="space-y-3">
+                <div className="flex justify-between items-end">
+                  <label htmlFor={field.id} className="text-sm font-medium">{field.label}</label>
+                  <AnimatePresence>
+                    {errors[field.id] && (
+                      <motion.span initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="hidden md:inline">{errors[field.id]}</span>
+                      </motion.span>
                     )}
-                  />
-                  <div className="flex justify-end">
-                    <span className={cn(
-                      "text-[10px] tabular-nums font-medium",
-                      formData.mensaje.length >= 500 ? "text-destructive" : "text-muted-foreground"
-                    )}>
-                      {formData.mensaje.length} / 500
-                    </span>
-                  </div>
+                  </AnimatePresence>
                 </div>
+                <Input id={field.id} name={field.id} type={field.type || "text"} placeholder={field.placeholder} value={formData[field.id]} onChange={handleChange} onBlur={handleBlur} required className={cn("glass transition-all duration-200", errors[field.id] ? "border-destructive/50 ring-destructive/20 focus-visible:ring-destructive" : "")} />
               </div>
-            </GlassCard>
-
-            {/* Mobile: Button (After form in mobile order) */}
-            <div className="md:hidden">
-              {submitButton}
+            ))}
+            <div className="space-y-3">
+              <div className="flex justify-between items-end">
+                <label htmlFor="mensaje" className="text-sm font-medium">Mensaje *</label>
+                {errors.mensaje && <span className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"><AlertCircle className="h-4 w-4" />{errors.mensaje}</span>}
+              </div>
+              <Textarea id="mensaje" name="mensaje" placeholder="Cuéntanos sobre tu clínica..." value={formData.mensaje} onChange={handleChange} onBlur={handleBlur} required rows={5} className={cn("glass resize-none transition-all duration-200", errors.mensaje ? "border-destructive/50 ring-destructive/20 focus-visible:ring-destructive" : "")} />
             </div>
-          </div>
-
-          {/* Desktop Sidebar (Hidden on Mobile) */}
-          <div className="hidden md:block space-y-6">
-            {summaries}
-            {submitButton}
-          </div>
+          </GlassCard>
+          <div className="md:hidden">{submitButton}</div>
         </div>
-      </form>
-
-      <Dialog open={showAccessDialog} onOpenChange={() => {}}>
-                <DialogContent 
-                  className="sm:max-w-md [&>button]:hidden" 
-                  onPointerDownOutside={(e) => e.preventDefault()}
-                  onEscapeKeyDown={(e) => e.preventDefault()}
-                >
-                  <DialogHeader className="space-y-3">
-                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/30">
-                                  <Calculator className="h-7 w-7 text-destructive" />
-                                </div>
-                                <DialogTitle className="text-center text-xl">Antes de continuar...</DialogTitle>
-                                <DialogDescription className="text-center text-base leading-relaxed">                      Para poder ofrecerte una atención personalizada, primero necesitamos que proyectes el ROI de tu clínica o reserves una demo.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-2">
-                    <p className="text-base font-medium text-foreground text-center">¿Por qué es necesario?</p>
-                    <p className="text-sm text-muted-foreground text-center">
-                      Queremos asegurarnos de que <BrandName /> es la solución adecuada para tu volumen de pacientes y modelo de negocio.
-                    </p>
-                  </div>
-                  <DialogFooter className="flex flex-col sm:flex-row justify-center gap-3">
-                    <Button variant="ghost" className="w-full sm:w-auto" onClick={() => router.push("/")}>
-                      Volver al inicio
-                    </Button>
-                    <Button variant="default" className="w-full sm:w-auto" onClick={() => router.push("/calculadora")}>
-                      Ir a la calculadora
-                      <Calculator className="ml-2 h-4 w-4" />
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
-          );
-        }
+        <div className="hidden md:block space-y-6">{summaries}{submitButton}</div>
+      </div>
+    </form>
+  )
+}
 
 export default function ContactoPage() {
   return (

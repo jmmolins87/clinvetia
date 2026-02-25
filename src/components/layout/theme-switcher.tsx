@@ -1,8 +1,10 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { Sun, Moon, Monitor } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +19,15 @@ const THEMES = [
 ] as const
 
 export function ThemeSwitcher() {
+  const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const current = THEMES.find((t) => t.value === theme) ?? THEMES[0]
-  const Icon = current.icon
+  const CurrentIcon = current.icon
 
   return (
     <DropdownMenu>
@@ -31,7 +38,11 @@ export function ThemeSwitcher() {
           aria-label="Cambiar tema"
           className="h-9 w-9"
         >
-          <Icon className="size-4" aria-hidden />
+          {mounted ? (
+            <Icon icon={CurrentIcon} size="sm" aria-hidden />
+          ) : (
+            <div className="size-4" aria-hidden />
+          )}
         </Button>
       </DropdownMenuTrigger>
 
@@ -47,7 +58,7 @@ export function ThemeSwitcher() {
             className="gap-2.5 cursor-pointer"
             data-active={theme === value}
           >
-            <ItemIcon className="size-4 shrink-0" aria-hidden />
+            <Icon icon={ItemIcon} size="sm" className="shrink-0" aria-hidden />
             <span>{label}</span>
             {theme === value && (
               <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />

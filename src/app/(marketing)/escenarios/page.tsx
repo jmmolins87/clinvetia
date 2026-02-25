@@ -21,6 +21,7 @@ import {
 
 import { CtaSection } from "@/components/marketing/cta-section"
 import { Badge } from "@/components/ui/badge"
+import { Icon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 import {
   Dialog,
@@ -127,7 +128,7 @@ const fadeUp = {
 
 // ── Sub-componentes Reutilizables ─────────────────────────────────────────────
 
-function DetailBox({ label, text, icon: Icon, className, fullWidth }: { 
+function DetailBox({ label, text, icon: IconComponent, className, fullWidth }: { 
   label?: string, 
   text: string, 
   icon?: LucideIcon, 
@@ -142,7 +143,7 @@ function DetailBox({ label, text, icon: Icon, className, fullWidth }: {
     )}>
       {label && (
         <div className="flex items-center gap-2 mb-1">
-          {Icon && <Icon className="h-4 w-4" />}
+          {IconComponent && <Icon icon={IconComponent} size="xs" />}
           <p className="text-xs font-bold uppercase tracking-wider">{label}</p>
         </div>
       )}
@@ -162,7 +163,7 @@ export default function EscenariosPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/15 border border-primary/30 text-primary">
-                  <selectedCaso.icono className="h-6 w-6" />
+                  <Icon icon={selectedCaso.icono} size="lg" variant="primary" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-foreground">{selectedCaso.titulo}</h3>
@@ -200,7 +201,7 @@ export default function EscenariosPage() {
                 {/* Cabecera Tarjeta */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/15 border border-primary/30 text-primary">
-                    <caso.icono className="h-6 w-6" />
+                    <Icon icon={caso.icono} size="lg" variant="primary" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-foreground">{caso.titulo}</h3>

@@ -9,10 +9,13 @@ const iconVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-foreground",
+        default: "",
+        foreground: "text-foreground",
         primary: "text-primary drop-shadow-[0_0_8px_rgba(var(--primary-rgb),0.50)]",
         secondary: "icon-glow-secondary",
         destructive: "text-destructive drop-shadow-[0_0_8px_rgba(var(--destructive-rgb),0.50)]",
+        warning: "text-warning drop-shadow-[0_0_8px_rgba(var(--warning-rgb),0.50)]",
+        success: "text-success drop-shadow-[0_0_8px_rgba(var(--success-rgb),0.50)]",
         accent: "icon-glow-accent",
         muted: "text-muted-foreground",
       },

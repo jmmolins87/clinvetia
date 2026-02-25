@@ -21,6 +21,7 @@ import { Avatar, AvatarGroup } from "@/components/ui/avatar"
 import { BrandName } from "@/components/ui/brand-name"
 import { Icon } from "@/components/ui/icon"
 import { useROIStore } from "@/store/roi-store"
+import { storage } from "@/lib/storage"
 
 // ── Datos ──────────────────────────────────────────────────────────────────────
 
@@ -178,15 +179,27 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
 
 
 interface TimeSlotPickerProps {
+  date: Date | null
   selected: string | null
   onSelect: (slot: string) => void
 }
 
-function TimeSlotPicker({ selected, onSelect }: TimeSlotPickerProps) {
+function TimeSlotPicker({ date, selected, onSelect }: TimeSlotPickerProps) {
+  const isPastTime = (slot: string) => {
+    if (!date) return false
+    const today = new Date()
+    const isSameDate = date.toDateString() === today.toDateString()
+    if (!isSameDate) return false
+    const [hour, min] = slot.split(":").map(Number)
+    const slotTime = new Date(date)
+    slotTime.setHours(hour, min, 0, 0)
+    return slotTime <= today
+  }
+
   return (
     <div className="grid grid-cols-2 gap-2">
       {TIME_SLOTS.map((slot) => {
-        const unavailable = UNAVAILABLE_SLOTS.has(slot)
+        const unavailable = UNAVAILABLE_SLOTS.has(slot) || isPastTime(slot)
         const isSelected = selected === slot
 
         return (
@@ -373,36 +386,56 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
       onBooked?.(selectedDate, selectedTime, duration)
       
       const store = useROIStore.getState()
-      
-      // Aseguramos que el usuario pueda acceder a contacto tras reservar
-      store.setHasAcceptedDialog(true)
+      const demoToken = crypto.randomUUID()
       
       const expirationDate = new Date(selectedDate)
       expirationDate.setHours(23, 59, 59, 999)
       const expiresAt = expirationDate.toISOString()
+
+      const [hour, min] = selectedTime.split(":").map(Number)
+      const demoDateTime = new Date(selectedDate)
+      demoDateTime.setHours(hour, min, 0, 0)
+      const demoExpiresAt = demoDateTime.toISOString()
       
       // Persistimos la expiración en el store global
       store.setExpiration(expiresAt)
+      
+      const formExpiration = new Date()
+      formExpiration.setMinutes(formExpiration.getMinutes() + 10)
+      const formExpiresAt = formExpiration.toISOString()
+      
+      // Persistimos las expiraciones en el store global
+      store.setExpiration(expiresAt)
+      store.setFormExpiration(formExpiresAt)
       
       const bookingData = {
         date: selectedDate.toISOString(),
         time: selectedTime,
         duration: duration.toString(),
         expiresAt: expiresAt,
-        token: store.token // Incluimos el token de sesión
+        formExpiresAt: formExpiresAt, // Límite de 10 min para el formulario
+        token: store.token, // Incluimos el token de sesión
+        demoToken: demoToken,
+        demoExpiresAt: demoExpiresAt,
       }
       
       localStorage.setItem("clinvetia_booking", JSON.stringify(bookingData))
+      storage.set("local", "demo_access_token", demoToken)
       
-      // Construir params para la página de contacto incluyendo el token
-      const params = new URLSearchParams({
-        booking_date: bookingData.date,
-        booking_time: bookingData.time,
-        booking_duration: bookingData.duration,
-        session_token: store.token || "",
-      })
+      // Mostramos vista de éxito antes de redirigir
+      setStep("success")
       
-      router.push(`/contacto?${params.toString()}`)
+      // Redirigir tras 2.5 segundos para que vean el mensaje de éxito
+      setTimeout(() => {
+        // Construir params para la página de contacto incluyendo el token
+        const params = new URLSearchParams({
+          booking_date: bookingData.date,
+          booking_time: bookingData.time,
+          booking_duration: bookingData.duration,
+          session_token: store.token || "",
+        })
+        router.push(`/contacto?${params.toString()}`)
+      }, 2500)
     }
   }
 
@@ -516,6 +549,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                       </p>
                     </div>
                     <TimeSlotPicker
+                      date={selectedDate}
                       selected={selectedTime}
                       onSelect={setSelectedTime}
                     />
