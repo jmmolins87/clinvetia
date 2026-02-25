@@ -18,7 +18,7 @@ import { storage } from "@/lib/storage"
 
 export function ExitIntentGuard() {
   const pathname = usePathname()
-  const { hasAcceptedDialog } = useROIStore()
+  const { hasAcceptedDialog, accessToken } = useROIStore()
   const [showExitDialog, setShowExitDialog] = useState(false)
   const [pendingUrl, setPendingUrl] = useState<string | null>(null)
   const [hasLocalAccessToken, setHasLocalAccessToken] = useState(false)
@@ -34,7 +34,7 @@ export function ExitIntentGuard() {
   useEffect(() => {
     const storedAccessToken = storage.get<string | null>("local", "access_token", null)
     setHasLocalAccessToken(!!storedAccessToken)
-  }, [hasAcceptedDialog])
+  }, [hasAcceptedDialog, accessToken, pathname])
 
   const handleCloseDialog = useCallback(() => {
     setShowExitDialog(false)
