@@ -5,7 +5,7 @@ import Link from "next/link"
 import { motion, useInView } from "framer-motion"
 import Image from "next/image"
 import {
-  CalendarDays, ArrowRight, Sparkles, Moon, Phone, Clock,
+  CalendarDays, Sparkles, Moon, Phone, Clock,
   Bell, Brain, Heart,
   CheckCircle2, MessageSquare, Calculator, AlertCircle,
   type LucideIcon,
@@ -15,9 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Icon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 import { CtaSection } from "@/components/marketing/cta-section"
-import { BrandName } from "@/components/ui/brand-name"
 import { MarketingCard } from "@/components/ui/marketing-card"
-import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
 import { TranslatableText } from "@/components/providers/translation-skeleton"
 
 const fadeUp = {

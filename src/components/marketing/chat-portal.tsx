@@ -45,7 +45,7 @@ export function ChatPortal() {
 
       <div className="flex-1 space-y-4 px-6 py-5">
         <div className="flex items-start gap-3">
-          <div className="h-9 w-9 overflow-hidden rounded-full border border-primary/40 bg-primary/15">
+          <div className="h-[72px] w-[72px] overflow-hidden rounded-full border border-primary/40 bg-primary/15">
             <video
               className="h-full w-full object-cover"
               autoPlay
@@ -89,7 +89,7 @@ export function ChatPortal() {
       <Sheet open={open} onOpenChange={setOpen}>
         <div
           className={cn(
-            "fixed bottom-6 right-6 z-[180] hidden lg:block transition-opacity duration-200",
+            "fixed bottom-6 right-6 z-[40] hidden lg:block transition-opacity duration-200",
             open && "pointer-events-none opacity-0"
           )}
         >
@@ -140,7 +140,7 @@ export function ChatPortal() {
         </SheetContent>
       </Sheet>
 
-      <div className="fixed bottom-5 right-5 z-[180] lg:hidden">
+      <div className="fixed bottom-5 right-5 z-[40] lg:hidden">
         <Button
           size="icon"
           className="h-14 w-14 rounded-full shadow-[0_0_25px_rgba(var(--primary-rgb),0.45)]"
@@ -163,7 +163,7 @@ export function ChatPortal() {
             </DialogHeader>
             <div className="flex-1 space-y-4 px-6 py-5">
               <div className="flex items-start gap-3">
-                <div className="h-9 w-9 overflow-hidden rounded-full border border-primary/40 bg-primary/15">
+                <div className="h-[72px] w-[72px] overflow-hidden rounded-full border border-primary/40 bg-primary/15">
                   <video
                     className="h-full w-full object-cover"
                     autoPlay

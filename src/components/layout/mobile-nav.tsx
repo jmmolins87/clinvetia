@@ -13,7 +13,6 @@ import { SwitchWithLabel } from "@/components/ui/switch"
 import { Icon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 
-import { useROIStore } from "@/store/roi-store"
 import { TranslatableText, useTranslationSkeleton } from "@/components/providers/translation-skeleton"
 
 const NAV_LINKS = [
@@ -25,7 +24,6 @@ const NAV_LINKS = [
 
 export function MobileNav() {
   const pathname = usePathname()
-  const { hasAcceptedDialog } = useROIStore()
   const [isOpen, setIsOpen] = useState(false)
   const { trigger } = useTranslationSkeleton()
   const [langChecked, setLangChecked] = useState(false)

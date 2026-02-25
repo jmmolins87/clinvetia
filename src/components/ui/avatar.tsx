@@ -114,7 +114,7 @@ export function AvatarGroup({ max, size = "default", children, className, ...pro
           style={{ zIndex: visible.length - i }}
         >
           {React.isValidElement(child)
-            ? React.cloneElement(child as React.ReactElement<any>, { size })
+            ? React.cloneElement(child as React.ReactElement<{ size?: AvatarGroupProps["size"] }>, { size })
             : child}
         </div>
       ))}

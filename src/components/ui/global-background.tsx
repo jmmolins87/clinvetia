@@ -1,10 +1,6 @@
 "use client"
 
-import { usePathname } from "next/navigation"
-
 export function GlobalBackground() {
-  const pathname = usePathname()
-
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-background w-screen max-w-full">
       {/* Orbe 1: Primario - Arriba Izquierda */}

@@ -10,6 +10,12 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  {
+    files: [".agents/skills/shadcn-ui/examples/data-table.tsx"],
+    rules: {
+      "react-hooks/incompatible-library": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

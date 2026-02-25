@@ -73,7 +73,6 @@ function ContactFormWithROI() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [showAccessDialog, setShowAccessDialog] = useState(false)
   const [localAccessToken, setLocalAccessToken] = useState<string | null>(null)
   
   const [storedBooking, setStoredBooking] = useState<{
@@ -84,13 +83,11 @@ function ContactFormWithROI() {
   } | null>(null)
 
   const {
-    token,
     accessToken,
     monthlyPatients,
     averageTicket,
     conversionLoss,
     isCalculated,
-    hasAcceptedDialog,
     formExpiresAt,
     setAccessToken,
     reset: resetROI

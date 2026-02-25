@@ -36,6 +36,11 @@ export const SecondaryIcon: Story = {
 }
 
 export const Grid: Story = {
+  args: {
+    icon: Moon,
+    title: "Urgencias nocturnas",
+    description: "Un dueño escribe a las 23h. Si tú no estás, alguien más la atiende.",
+  },
   render: () => (
     <div className="grid gap-6 sm:grid-cols-2 max-w-4xl">
       <MarketingCard
