@@ -1,6 +1,7 @@
 import React from "react"
 import type { Preview, Decorator } from "@storybook/react"
 import "../src/app/globals.css"
+import { TranslationSkeletonProvider } from "../src/components/providers/translation-skeleton"
 
 // ── Constantes de tema ────────────────────────────────────────────────────────
 const DARK_BG  = "#0a0a0f"
@@ -91,9 +92,13 @@ const withTheme: Decorator = (Story, context) => {
   )
 }
 
+const withTranslationSkeleton: Decorator = (Story) => (
+  React.createElement(TranslationSkeletonProvider, null, React.createElement(Story))
+)
+
 // ── Preview config ────────────────────────────────────────────────────────────
 const preview: Preview = {
-  decorators: [withTheme],
+  decorators: [withTheme, withTranslationSkeleton],
 
   tags: ["autodocs"],
 

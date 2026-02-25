@@ -5,6 +5,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { BrandName } from "@/components/ui/brand-name"
 import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
+import { TranslatableText } from "@/components/providers/translation-skeleton"
 
 // ── Datos ─────────────────────────────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ function FooterLogo() {
       </Link>
 
       <p className="max-w-[200px] text-sm leading-relaxed text-muted-foreground">
-        Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.
+        <TranslatableText text="Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo." />
       </p>
 
       {/* Social */}
@@ -95,8 +96,8 @@ function FooterColumn({
 }) {
   return (
     <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold uppercase tracking-widest text-foreground/60">
-        {heading}
+      <h3 className="text-sm font-semibold uppercase tracking-widest text-foreground/60">
+        <TranslatableText text={heading} />
       </h3>
       <ul className="flex flex-col gap-2.5">
         {links.map(({ href, label }) => (
@@ -110,7 +111,7 @@ function FooterColumn({
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded",
               )}
             >
-              {label}
+              <TranslatableText text={label} />
             </Link>
           </li>
         ))}
@@ -132,7 +133,7 @@ export function Footer() {
       aria-label="Pie de página de Clinvetia"
       className={cn(
         "border-t border-white/10",
-        "bg-white/40 dark:bg-black/40 backdrop-blur-sm",
+        "bg-white dark:bg-black/40 backdrop-blur-sm",
         "py-14",
       )}
     >
@@ -154,14 +155,15 @@ export function Footer() {
         )}>
           <p className="text-sm text-muted-foreground">
             <SkeletonWrapper as="span" wrapperClassName="inline-grid" className="h-[1.2em] w-[15em] rounded-md">
-              © {mounted ? new Date().getFullYear() : "2026"} <BrandName />. Todos los derechos reservados.
+              © {mounted ? new Date().getFullYear() : "2026"} <BrandName />.{" "}
+              <TranslatableText text="Todos los derechos reservados." />
             </SkeletonWrapper>
           </p>
           <p className="text-sm text-muted-foreground">
             <SkeletonWrapper as="span" wrapperClassName="inline-grid" className="h-[1.2em] w-[12em] rounded-md">
-              Hecho con{" "}
-              <span aria-label="amor" className="text-destructive">♥</span>
-              {" "}para veterinarias de habla hispana.
+              <TranslatableText text="Hecho con" />{" "}
+              <span aria-label="amor" className="text-destructive">♥</span>{" "}
+              <TranslatableText text="para veterinarias de habla hispana." />
             </SkeletonWrapper>
           </p>
         </div>

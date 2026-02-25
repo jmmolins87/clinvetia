@@ -8,8 +8,8 @@ import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
 
 interface MarketingCardProps {
   icon?: LucideIcon
-  title: string
-  description: string
+  title: React.ReactNode
+  description: React.ReactNode
   className?: string
   iconClassName?: string
   index?: number

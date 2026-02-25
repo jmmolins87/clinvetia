@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Icon } from "@/components/ui/icon"
 import { type LucideIcon } from "lucide-react"
+import { TranslatableText } from "@/components/providers/translation-skeleton"
 
 export interface CtaAction {
   label: string
@@ -40,16 +41,16 @@ export function CtaSection({
     <div className="text-center">
       {badge && (
         <Badge variant="default" className="mb-6">
-          {badge}
+          <TranslatableText text={badge} />
         </Badge>
       )}
 
       <h2 className="mb-4 text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
-        {title}
+        <TranslatableText text={title} />
       </h2>
 
       <p className="mx-auto mb-8 max-w-xl text-muted-foreground md:text-lg">
-        {description}
+        <TranslatableText text={description} lines={2} />
       </p>
 
       <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -64,7 +65,7 @@ export function CtaSection({
             >
               <Link href={action.href} className="gap-2">
                 {action.icon && <Icon icon={action.icon} size="sm" />}
-                {action.label}
+                <TranslatableText text={action.label} />
               </Link>
             </Button>
           )

@@ -108,6 +108,26 @@ function ContactFormWithROI() {
     if (validAccessToken && !accessToken) {
       setAccessToken(validAccessToken)
     }
+
+    const storedBookingRaw = localStorage.getItem("clinvetia_booking")
+    if (storedBookingRaw) {
+      try {
+        const parsed = JSON.parse(storedBookingRaw) as {
+          date: string
+          time: string
+          duration: string
+          formExpiresAt?: string
+        }
+        setStoredBooking({
+          date: parsed.date,
+          time: parsed.time,
+          duration: parsed.duration,
+          formExpiresAt: parsed.formExpiresAt,
+        })
+      } catch {
+        // Ignorar datos corruptos
+      }
+    }
   }, [accessToken, setAccessToken])
 
   // Si no hay acceso, mostramos el diálogo bloqueante sobre una estructura vacía
@@ -304,7 +324,7 @@ function ContactFormWithROI() {
           <GlassCard className="p-6 md:p-8 space-y-6">
             {CONTACT_FIELDS.map((field) => (
               <div key={field.id} className="space-y-3">
-                <div className="flex justify-between items-end">
+                <div className="mt-4 flex justify-between items-center">
                   <label htmlFor={field.id} className="text-sm font-medium">{field.label}</label>
                   <AnimatePresence>
                     {errors[field.id] && (
@@ -319,7 +339,7 @@ function ContactFormWithROI() {
               </div>
             ))}
             <div className="space-y-3">
-              <div className="flex justify-between items-end">
+              <div className="mt-4 flex justify-between items-center">
                 <label htmlFor="mensaje" className="text-sm font-medium">Mensaje *</label>
                 {errors.mensaje && <span className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"><AlertCircle className="h-4 w-4" />{errors.mensaje}</span>}
               </div>

@@ -14,6 +14,7 @@ import { Icon } from "@/components/ui/icon"
 import { cn } from "@/lib/utils"
 
 import { useROIStore } from "@/store/roi-store"
+import { TranslatableText, useTranslationSkeleton } from "@/components/providers/translation-skeleton"
 
 const NAV_LINKS = [
   { href: "/solucion",       label: "Solución"        },
@@ -26,6 +27,8 @@ export function MobileNav() {
   const pathname = usePathname()
   const { hasAcceptedDialog } = useROIStore()
   const [isOpen, setIsOpen] = useState(false)
+  const { trigger } = useTranslationSkeleton()
+  const [langChecked, setLangChecked] = useState(false)
 
   // Bloquear scroll cuando el menú está abierto
   useEffect(() => {
@@ -73,14 +76,14 @@ export function MobileNav() {
           >
             {/* Cabecera del menú */}
             <div className="flex h-16 items-center justify-between px-6 border-b border-white/5">
-              <div className="flex items-center gap-2">
+              <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
                 <Icon icon={Sparkles} size="sm" variant="primary" className="animate-pulse" />
                 <BrandName className="text-xl font-bold" />
-              </div>
+              </Link>
             </div>
 
             {/* Links de navegación */}
-            <nav className="flex-1 flex flex-col justify-center px-8 space-y-8">
+            <nav className="flex-1 flex flex-col justify-center px-8 space-y-8 pt-6">
               {NAV_LINKS.map((link, idx) => {
                 const isActive = pathname === link.href
                 
@@ -98,7 +101,7 @@ export function MobileNav() {
                         isActive ? "text-primary" : "text-foreground/60 hover:text-primary"
                       )}
                     >
-                      {link.label}
+                      <TranslatableText text={link.label} className="block" />
                       {isActive && (
                         <motion.div 
                           layoutId="active-indicator" 
@@ -120,9 +123,17 @@ export function MobileNav() {
                   <div className="bg-background/50 p-1.5 rounded-lg border border-white/10">
                     <ThemeSwitcher />
                   </div>
-                  <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Tema</span>
+                  <TranslatableText text="Tema" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground" />
                 </div>
-                <SwitchWithLabel labelLeft="ES" labelRight="EN" />
+                <SwitchWithLabel
+                  labelLeft="ES"
+                  labelRight="EN"
+                  checked={langChecked}
+                  onCheckedChange={(checked) => {
+                    setLangChecked(checked)
+                    trigger()
+                  }}
+                />
               </div>
 
               {/* Botones de Acción */}
@@ -134,13 +145,13 @@ export function MobileNav() {
               >
                 <Button variant="secondary" size="lg" className="w-full h-14 text-lg" asChild>
                   <Link href="/calculadora">
-                    Calcular ROI
+                    <TranslatableText text="Calcular ROI" className="text-lg" />
                   </Link>
                 </Button>
 
                 <Button size="lg" className="w-full h-16 text-xl shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]" asChild>
                   <Link href="/demo">
-                    Reservar Demo
+                    <TranslatableText text="Reservar Demo" className="text-xl" />
                   </Link>
                 </Button>
               </motion.div>

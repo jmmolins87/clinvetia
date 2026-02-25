@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { CalendarDays, Calculator } from "lucide-react"
@@ -10,8 +11,8 @@ import { BrandName } from "@/components/ui/brand-name"
 import { ThemeSwitcher } from "@/components/layout/theme-switcher"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { Icon } from "@/components/ui/icon"
-import { useROIStore } from "@/store/roi-store"
 import { cn } from "@/lib/utils"
+import { TranslatableText, useTranslationSkeleton } from "@/components/providers/translation-skeleton"
 
 // ── Datos ─────────────────────────────────────────────────────────────────────
 
@@ -68,7 +69,7 @@ function NavLinks() {
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             )}
           >
-            {label}
+            <TranslatableText text={label} className="block" />
           </Link>
         )
       })}
@@ -78,6 +79,9 @@ function NavLinks() {
 
 // ── Navbar ────────────────────────────────────────────────────────────────────
 export function Navbar() {
+  const { trigger } = useTranslationSkeleton()
+  const [langChecked, setLangChecked] = useState(false)
+
   return (
     <header
       className={cn(
@@ -99,7 +103,15 @@ export function Navbar() {
 
           {/* Selector de idioma — Oculto en mobile */}
           <div className="hidden md:flex">
-            <SwitchWithLabel labelLeft="ES" labelRight="EN" />
+            <SwitchWithLabel
+              labelLeft="ES"
+              labelRight="EN"
+              checked={langChecked}
+              onCheckedChange={(checked) => {
+                setLangChecked(checked)
+                trigger()
+              }}
+            />
           </div>
 
           {/* ThemeSwitcher — Oculto en mobile */}
@@ -117,7 +129,7 @@ export function Navbar() {
             >
               <Link href="/calculadora">
                 <Icon icon={Calculator} size="sm" variant="secondary" aria-hidden />
-                <span>Calculadora ROI</span>
+                <TranslatableText text="Calculadora ROI" className="inline-flex" />
               </Link>
             </Button>
           </div>
@@ -127,7 +139,7 @@ export function Navbar() {
             <Button size="sm" asChild>
               <Link href="/demo" className="flex items-center gap-2">
                 <Icon icon={CalendarDays} size="sm" variant="primary" aria-hidden />
-                <span>Reservar demo</span>
+                <TranslatableText text="Reservar demo" className="inline-flex" />
               </Link>
             </Button>
           </div>

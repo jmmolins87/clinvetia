@@ -3,9 +3,11 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { PageLoader } from "@/components/providers/page-loader";
 import { LoadingProvider } from "@/components/providers/loading-provider";
+import { TranslationSkeletonProvider } from "@/components/providers/translation-skeleton";
 import { GlobalBackground } from "@/components/ui/global-background";
 import { GlobalBookingTimer } from "@/components/marketing/global-booking-timer";
 import { ExitIntentGuard } from "@/components/marketing/exit-intent-guard";
+import { ChatPortal } from "@/components/marketing/chat-portal";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,11 +42,14 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <LoadingProvider>
-            <GlobalBackground />
-            <PageLoader />
-            <GlobalBookingTimer />
-            <ExitIntentGuard />
-            {children}
+            <TranslationSkeletonProvider>
+              <GlobalBackground />
+              <PageLoader />
+              <GlobalBookingTimer />
+              <ExitIntentGuard />
+              <ChatPortal />
+              {children}
+            </TranslationSkeletonProvider>
           </LoadingProvider>
         </ThemeProvider>
       </body>

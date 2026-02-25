@@ -71,7 +71,7 @@ export function ContactForm() {
       <GlassCard className="p-6 md:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label htmlFor="nombre" className="text-sm font-medium">
                 Nombre completo *
               </label>
@@ -82,10 +82,10 @@ export function ContactForm() {
                 value={formData.nombre}
                 onChange={handleChange}
                 required
-                className="glass mt-2"
+                className="glass"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label htmlFor="email" className="text-sm font-medium">
                 Email profesional *
               </label>
@@ -97,13 +97,13 @@ export function ContactForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="glass mt-2"
+                className="glass"
               />
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label htmlFor="telefono" className="text-sm font-medium">
                 Teléfono
               </label>
@@ -114,10 +114,10 @@ export function ContactForm() {
                 placeholder="+34 612 345 678"
                 value={formData.telefono}
                 onChange={handleChange}
-                className="glass mt-2"
+                className="glass"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label htmlFor="clinica" className="text-sm font-medium">
                 Nombre de la clínica
               </label>
@@ -127,12 +127,12 @@ export function ContactForm() {
                 placeholder="Clínica Veterinaria Central"
                 value={formData.clinica}
                 onChange={handleChange}
-                className="glass mt-2"
+                className="glass"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <label htmlFor="mensaje" className="text-sm font-medium">
               Mensaje *
             </label>
@@ -144,7 +144,7 @@ export function ContactForm() {
               onChange={handleChange}
               required
               rows={5}
-              className="glass mt-2 resize-none"
+              className="glass resize-none"
             />
           </div>
 

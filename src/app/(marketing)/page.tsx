@@ -18,6 +18,7 @@ import { CtaSection } from "@/components/marketing/cta-section"
 import { BrandName } from "@/components/ui/brand-name"
 import { MarketingCard } from "@/components/ui/marketing-card"
 import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
+import { TranslatableText } from "@/components/providers/translation-skeleton"
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -123,9 +124,19 @@ function Section({ id, children, className }: { id: string; children: React.Reac
 function SectionHeader({ badge, title, subtitle }: { badge?: string; title: string; subtitle?: string }) {
   return (
     <div className="mb-12 max-w-2xl mx-auto text-center">
-      {badge && <Badge variant="secondary" className="mb-4">{badge}</Badge>}
-      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
-      {subtitle && <p className="mt-4 text-lg text-muted-foreground">{subtitle}</p>}
+      {badge && (
+        <Badge variant="secondary" className="mb-4">
+          <TranslatableText text={badge} />
+        </Badge>
+      )}
+      <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <TranslatableText text={title} />
+      </h2>
+      {subtitle && (
+        <p className="mt-4 text-lg text-muted-foreground">
+          <TranslatableText text={subtitle} lines={2} />
+        </p>
+      )}
     </div>
   )
 }
@@ -152,20 +163,38 @@ export default function MarketingPage() {
                     </div>
                   </motion.div>
         
-                  <motion.div variants={fadeUp}><Badge variant="default" className="mb-6 gap-2 px-4 py-1.5"><Icon icon={Sparkles} size="sm" variant="primary" className="hidden sm:block" />Nueva Generación de IA Veterinaria</Badge></motion.div>
+                  <motion.div variants={fadeUp}>
+                    <Badge variant="default" className="mb-6 gap-2 px-4 py-1.5">
+                      <Icon icon={Sparkles} size="sm" variant="primary" className="hidden sm:block" />
+                      <TranslatableText text="Nueva Generación de IA Veterinaria" />
+                    </Badge>
+                  </motion.div>
                   <motion.h1 variants={fadeUp} className="text-4xl font-bold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
-                    <SkeletonWrapper variant="primary">
-                      <span className="text-foreground">Sistema de </span><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-neon-green">Atención Inteligente</span>
-                    </SkeletonWrapper>
+                    <span className="text-foreground">
+                      <TranslatableText text="Sistema de " />
+                    </span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-neon-green">
+                      <TranslatableText text="Atención Inteligente" />
+                    </span>
                   </motion.h1>
           <motion.p variants={fadeUp} className="mt-6 text-lg text-muted-foreground sm:text-xl">
-            <SkeletonWrapper shape="text" lines={2} variant="secondary">
-              No es un chatbot. Es un sistema que entiende consultas, clasifica urgencias, <br className="hidden sm:block" />verifica disponibilidad y agenda citas.
-            </SkeletonWrapper>
+            <TranslatableText text="No es un chatbot. Es un sistema que entiende consultas, clasifica urgencias," />
+            <br className="hidden sm:block" />
+            <TranslatableText text="verifica disponibilidad y agenda citas." />
           </motion.p>
           <motion.div variants={fadeUp} className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto">
-            <Button size="lg" asChild><Link href="/demo" className="flex items-center gap-2"><Icon icon={CalendarDays} size="sm" variant="primary" />Reservar Demo</Link></Button>
-            <Button variant="secondary" size="lg" asChild><Link href="/calculadora" className="flex items-center gap-2"><Icon icon={Calculator} size="sm" variant="secondary" />Ver ROI</Link></Button>
+            <Button size="lg" asChild>
+              <Link href="/demo" className="flex items-center gap-2">
+                <Icon icon={CalendarDays} size="sm" variant="primary" />
+                <TranslatableText text="Reservar Demo" />
+              </Link>
+            </Button>
+            <Button variant="secondary" size="lg" asChild>
+              <Link href="/calculadora" className="flex items-center gap-2">
+                <Icon icon={Calculator} size="sm" variant="secondary" />
+                <TranslatableText text="Ver ROI" />
+              </Link>
+            </Button>
           </motion.div>
         </motion.div>
       </Section>
@@ -176,7 +205,14 @@ export default function MarketingPage() {
           <SectionHeader badge="El problema" title="¿Te resulta familiar?" subtitle="Estas situaciones ocurren cada día en clínicas veterinarias." />
           <div className="grid gap-6 sm:grid-cols-2">
             {PROBLEMA_CARDS.map((card, idx) => (
-              <MarketingCard key={card.title} icon={card.icon} title={card.title} description={card.description} index={idx} iconClassName={idx % 2 === 0 ? "bg-secondary/10" : ""} />
+              <MarketingCard
+                key={card.title}
+                icon={card.icon}
+                title={<TranslatableText text={card.title} />}
+                description={<TranslatableText text={card.description} lines={2} />}
+                index={idx}
+                iconClassName={idx % 2 === 0 ? "bg-secondary/10" : ""}
+              />
             ))}
           </div>
         </div>
@@ -186,27 +222,35 @@ export default function MarketingPage() {
       <Section id="solucion">
         <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
           <motion.div {...fadeUp}>
-            <Badge variant="default" className="mb-4">La solución</Badge>
+            <Badge variant="default" className="mb-4">
+              <TranslatableText text="La solución" />
+            </Badge>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              <SkeletonWrapper>
-                Sistema de Atención Inteligente
-              </SkeletonWrapper>
+              <TranslatableText text="Sistema de Atención Inteligente" />
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              <SkeletonWrapper shape="text" lines={2}>
-                <BrandName /> no solo responde. Entiende el contexto, verifica tu disponibilidad y cierra la cita sin que nadie intervenga.
-              </SkeletonWrapper>
+              <TranslatableText text="ClinvetIA no solo responde. Entiende el contexto, verifica tu disponibilidad y cierra la cita sin que nadie intervenga." lines={2} />
             </p>
             <ul className="mt-8 space-y-4">
               {SOLUCION_FEATURES.map((feat) => (
                 <li key={feat.title} className="flex items-start gap-3">
                   <Icon icon={CheckCircle2} size="sm" variant="primary" className="mt-0.5" />
-                  <div><span className="font-medium">{feat.title}</span><p className="text-sm text-muted-foreground">{feat.description}</p></div>
+                  <div>
+                    <span className="font-medium"><TranslatableText text={feat.title} /></span>
+                    <p className="text-sm text-muted-foreground"><TranslatableText text={feat.description} lines={2} /></p>
+                  </div>
                 </li>
               ))}
             </ul>
             <div className="mt-8 rounded-2xl border border-primary/30 bg-primary/5 p-5 backdrop-blur-lg">
-              <div className="flex items-center gap-3"><Icon icon={AlertCircle} size="sm" variant="primary" /><p className="text-sm"><span className="font-bold text-primary">40%</span> de las consultas llegan fuera de horario. <BrandName /> las atiende <span className="font-bold text-foreground">inmediatamente</span>.</p></div>
+              <div className="flex items-center gap-3">
+                <Icon icon={AlertCircle} size="sm" variant="primary" />
+                <p className="text-sm">
+                  <span className="font-bold text-primary">40%</span>{" "}
+                  <TranslatableText text="de las consultas llegan fuera de horario. ClinvetIA las atiende" />{" "}
+                  <span className="font-bold text-foreground"><TranslatableText text="inmediatamente" /></span>.
+                </p>
+              </div>
             </div>
           </motion.div>
 
@@ -219,7 +263,7 @@ export default function MarketingPage() {
             <div className="relative z-10 flex h-full flex-col items-center justify-center text-center">
               <div className="mb-10">
                 <p className="text-xl font-medium italic leading-relaxed text-foreground/90">
-                  &ldquo;Hola, Toby no quiere comer desde ayer y noto que tiene la tripa muy hinchada y dura al tacto. Me preocupa.&rdquo;
+                  <TranslatableText text="“Hola, Toby no quiere comer desde ayer y noto que tiene la tripa muy hinchada y dura al tacto. Me preocupa.”" />
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-4">
@@ -231,8 +275,14 @@ export default function MarketingPage() {
                     transition={{ delay: 0.4 + (i * 0.1) }}
                     className="rounded-2xl bg-white/5 border border-white/10 p-4 shadow-sm backdrop-blur-md"
                   >
-                    {item.label && <span className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">{item.label}</span>}
-                    <span className={cn("text-base", item.color)}>{item.value}</span>
+                    {item.label && (
+                      <span className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">
+                        <TranslatableText text={item.label} />
+                      </span>
+                    )}
+                    <span className={cn("text-base", item.color)}>
+                      <TranslatableText text={item.value} />
+                    </span>
                   </motion.div>
                 ))}
               </div>
@@ -250,8 +300,8 @@ export default function MarketingPage() {
               <motion.div key={step.n} {...fadeUp} transition={{ delay: idx * 0.1 }} className="relative">
                 <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-6 hover:border-white/20 transition-colors h-full">
                   <span className={cn("mb-4 block text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br", idx % 2 === 0 ? "from-primary to-neon-cyan" : "from-secondary to-destructive")}>{step.n}</span>
-                  <h3 className="mb-1 text-lg font-semibold">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
+                  <h3 className="mb-1 text-lg font-semibold"><TranslatableText text={step.title} /></h3>
+                  <p className="text-sm text-muted-foreground"><TranslatableText text={step.description} lines={2} /></p>
                 </div>
               </motion.div>
             ))}
@@ -269,8 +319,8 @@ export default function MarketingPage() {
                 <div className={cn("mx-auto mb-4 inline-flex rounded-full bg-white/10 p-4", ben.color === "secondary" ? "bg-secondary/10" : "")}>
                   <Icon icon={ben.icon as LucideIcon} size="xl" variant={ben.color as "primary" | "secondary"} />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold">{ben.title}</h3>
-                <p className="text-sm text-muted-foreground">{ben.description}</p>
+                <h3 className="mb-2 text-lg font-semibold"><TranslatableText text={ben.title} /></h3>
+                <p className="text-sm text-muted-foreground"><TranslatableText text={ben.description} lines={2} /></p>
               </motion.div>
             ))}
           </div>
@@ -281,10 +331,12 @@ export default function MarketingPage() {
       <Section id="escenarios">
         <div className="mx-auto max-w-4xl text-center">
           <SectionHeader badge="Casos reales" title="Escenarios de uso" subtitle="ClinvetIA se adapta a todo tipo de clínicas y necesidades." />
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex w-full flex-col gap-3 md:grid md:grid-cols-2 md:mx-auto md:max-w-2xl">
             {ESCENARIOS.map((esc, idx) => (
               <motion.div key={esc.label} {...fadeUp} transition={{ delay: idx * 0.05 }}>
-                <div className={cn("rounded-full border px-5 py-2.5 text-sm font-medium backdrop-blur-lg transition-all duration-300", esc.color === "secondary" ? "border-secondary/40 bg-secondary/10 text-secondary hover:bg-secondary/20" : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20")}>{esc.label}</div>
+                <div className={cn("w-full rounded-full border px-5 py-2.5 text-sm font-medium backdrop-blur-lg transition-all duration-300", esc.color === "secondary" ? "border-secondary/40 bg-secondary/10 text-secondary hover:bg-secondary/20" : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20")}>
+                  <TranslatableText text={esc.label} />
+                </div>
               </motion.div>
             ))}
           </div>
@@ -299,23 +351,35 @@ export default function MarketingPage() {
             {ROI_DATOS.map((roi, idx) => (
               <motion.div key={roi.label} {...fadeUp} transition={{ delay: idx * 0.1 }} className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-8">
                 <div className={cn("mb-2 text-5xl font-bold", roi.color === "primary" && "text-primary", roi.color === "secondary" && "text-secondary", roi.color === "accent" && "text-success")}><AnimatedNumber value={roi.value} /></div>
-                <div className="text-sm text-muted-foreground">{roi.label}</div>
+                <div className="text-sm text-muted-foreground"><TranslatableText text={roi.label} /></div>
               </motion.div>
             ))}
           </div>
-          <motion.p {...fadeUp} className="mb-8 text-lg text-foreground">Tu equipo se enfoca en las mascotas, no en el teléfono.</motion.p>
+          <motion.p {...fadeUp} className="mb-8 text-lg text-foreground">
+            <TranslatableText text="Tu equipo se enfoca en las mascotas, no en el teléfono." />
+          </motion.p>
           <div className="w-full mx-auto md:max-w-md">
             <Button size="lg" variant="secondary" asChild>
               <Link href="/calculadora" className="flex items-center gap-2">
                 <Icon icon={Calculator} size="sm" variant="secondary" />
-                Calcular mi ROI
+                <TranslatableText text="Calcular mi ROI" />
               </Link>
             </Button>
           </div>
         </div>
       </Section>
 
-      <CtaSection id="demo" badge="¿Hablamos?" title="Prueba ClinvetIA gratis" description="Configuramos tu clínica en 30 minutos. Sin compromiso." variant="glow" actions={[ { label: "Agendar Demo", href: "/demo", icon: CalendarDays }, { label: "Chatear", href: "#", variant: "ghost", icon: MessageSquare } ]} />
+      {/* ═══════════════════════════════════════════════════════════════════════
+          CTA FINAL
+      ═══════════════════════════════════════════════════════════════════════ */}
+      <CtaSection
+        title="¿Listo para transformar la atención de tu clínica?"
+        description="Reserva una demo personalizada y descubre cómo ClinvetIA puede aumentar tu capacidad de atención."
+        actions={[
+          { label: "Agendar Demo", href: "/contacto", icon: CalendarDays },
+          { label: "Ver ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
+        ]}
+      />
     </>
   )
 }
