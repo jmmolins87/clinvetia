@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Calculator, Clock, CheckCircle2, Send, ArrowRight, Info, CalendarDays, Sparkles, AlertCircle } from "lucide-react"
+import { Calculator, CheckCircle2, Send, ArrowRight, Info, CalendarDays, Sparkles, AlertCircle, MessageCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils"
 import { sanitizeInput } from "@/lib/security"
 import { storage } from "@/lib/storage"
+import { getActiveBookingBySession, getBooking, getSession, submitContact } from "@/lib/api"
 
 interface FormData {
   nombre: string
@@ -32,7 +33,6 @@ interface FormData {
   telefono: string
   clinica: string
   mensaje: string
-  token: string
 }
 
 const initialFormData: FormData = {
@@ -41,7 +41,6 @@ const initialFormData: FormData = {
   telefono: "",
   clinica: "",
   mensaje: "",
-  token: "",
 }
 
 const VALIDATION_RULES: Record<string, { min?: number, max: number }> = {
@@ -73,13 +72,25 @@ function ContactFormWithROI() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [localAccessToken, setLocalAccessToken] = useState<string | null>(null)
+  const [bookingAccessToken, setBookingAccessToken] = useState<string | null>(null)
+  const [sessionAccessToken, setSessionAccessToken] = useState<string | null>(null)
+  const [bookingId, setBookingId] = useState<string | null>(null)
   
   const [storedBooking, setStoredBooking] = useState<{
     date: string;
     time: string;
     duration: string;
     formExpiresAt?: string;
+    demoExpiresAt?: string;
+    contactSubmitted?: boolean;
+    contact?: {
+      nombre: string;
+      email: string;
+      telefono: string;
+      clinica: string;
+      mensaje: string;
+      createdAt?: string | null;
+    } | null;
   } | null>(null)
 
   const {
@@ -88,47 +99,152 @@ function ContactFormWithROI() {
     averageTicket,
     conversionLoss,
     isCalculated,
-    formExpiresAt,
     setAccessToken,
+    setClinicData,
+    setFormExpiration,
     reset: resetROI
   } = useROIStore()
 
   useEffect(() => {
     setMounted(true)
-    const storedAccessToken = storage.get<string | null>("local", "access_token", null)
-    const validAccessToken = isValidAccessToken(storedAccessToken) ? storedAccessToken : null
-    if (!validAccessToken && storedAccessToken) {
-      storage.remove("local", "access_token")
+    const storedBookingToken = storage.get<string | null>("local", "booking_access_token", null)
+    const storedSessionToken = storage.get<string | null>("local", "roi_access_token", null)
+    const queryBookingToken = searchParams.get("booking_token")
+    const querySessionToken = searchParams.get("session_token")
+
+    const validBookingToken = isValidAccessToken(queryBookingToken)
+      ? queryBookingToken
+      : isValidAccessToken(storedBookingToken)
+        ? storedBookingToken
+        : null
+    const validSessionToken = isValidAccessToken(querySessionToken)
+      ? querySessionToken
+      : isValidAccessToken(storedSessionToken)
+        ? storedSessionToken
+        : null
+
+    if (!validBookingToken && storedBookingToken) {
+      storage.remove("local", "booking_access_token")
+    }
+
+    if (!validSessionToken && storedSessionToken) {
+      storage.remove("local", "roi_access_token")
       if (accessToken) setAccessToken(null)
     }
-    setLocalAccessToken(validAccessToken)
-    if (validAccessToken && !accessToken) {
-      setAccessToken(validAccessToken)
+
+    setBookingAccessToken(validBookingToken)
+    setSessionAccessToken(validSessionToken)
+    if (validBookingToken) {
+      storage.set("local", "booking_access_token", validBookingToken)
+    }
+    if (validSessionToken) {
+      storage.set("local", "roi_access_token", validSessionToken)
     }
 
-    const storedBookingRaw = localStorage.getItem("clinvetia_booking")
-    if (storedBookingRaw) {
+    if (validSessionToken && !accessToken) {
+      setAccessToken(validSessionToken)
+    }
+  }, [accessToken, searchParams, setAccessToken])
+
+  useEffect(() => {
+    if (!mounted) return
+    const fromQuery = searchParams.get("booking_id")
+    const stored = storage.get<{ bookingId?: string } | null>("local", "booking", null)
+    const id = fromQuery || stored?.bookingId || null
+    setBookingId(id)
+  }, [mounted, searchParams])
+
+  useEffect(() => {
+    if (!mounted || !sessionAccessToken) return
+    if (bookingId && bookingAccessToken) return
+
+    const recoverActiveBooking = async () => {
       try {
-        const parsed = JSON.parse(storedBookingRaw) as {
-          date: string
-          time: string
-          duration: string
-          formExpiresAt?: string
-        }
+        const booking = await getActiveBookingBySession(sessionAccessToken)
+        if (!booking.accessToken) return
+
+        setBookingId(booking.bookingId)
+        setBookingAccessToken(booking.accessToken)
         setStoredBooking({
-          date: parsed.date,
-          time: parsed.time,
-          duration: parsed.duration,
-          formExpiresAt: parsed.formExpiresAt,
+          date: booking.date,
+          time: booking.time,
+          duration: String(booking.duration),
+          formExpiresAt: booking.formExpiresAt,
+          demoExpiresAt: booking.demoExpiresAt,
+          contactSubmitted: booking.contactSubmitted ?? false,
+          contact: booking.contact ?? null,
         })
+        storage.set("local", "booking_access_token", booking.accessToken)
+        storage.set("local", "booking", booking)
+
+        const params = new URLSearchParams(searchParams.toString())
+        params.set("booking_id", booking.bookingId)
+        params.set("booking_token", booking.accessToken)
+        params.set("session_token", sessionAccessToken)
+        router.replace(`/contacto?${params.toString()}`)
       } catch {
-        // Ignorar datos corruptos
+        // Si no hay reserva activa en backend, no hacemos nada.
       }
     }
-  }, [accessToken, setAccessToken])
+
+    recoverActiveBooking()
+  }, [mounted, sessionAccessToken, bookingId, bookingAccessToken, router, searchParams])
+
+  useEffect(() => {
+    if (!mounted || !sessionAccessToken) return
+    if (isCalculated) return
+
+    const recoverROI = async () => {
+      try {
+        const session = await getSession(sessionAccessToken)
+        setAccessToken(session.accessToken)
+        if (session.expiresAt) {
+          useROIStore.getState().setExpiration(session.expiresAt)
+        }
+        if (session.roi) {
+          setClinicData({
+            monthlyPatients: typeof session.roi.monthlyPatients === "number" ? session.roi.monthlyPatients : monthlyPatients,
+            averageTicket: typeof session.roi.averageTicket === "number" ? session.roi.averageTicket : averageTicket,
+            conversionLoss: typeof session.roi.conversionLoss === "number" ? session.roi.conversionLoss : conversionLoss,
+          })
+        }
+      } catch {
+        // Si no hay sesión válida, el diálogo de acceso resolverá el flujo.
+      }
+    }
+
+    recoverROI()
+  }, [mounted, sessionAccessToken, isCalculated, setClinicData, setAccessToken, monthlyPatients, averageTicket, conversionLoss])
+
+  useEffect(() => {
+    if (!mounted || !bookingId || !bookingAccessToken) return
+
+    const loadBooking = async () => {
+      try {
+        const booking = await getBooking(bookingId, bookingAccessToken)
+        setStoredBooking({
+          date: booking.date,
+          time: booking.time,
+          duration: String(booking.duration),
+          formExpiresAt: booking.formExpiresAt,
+          demoExpiresAt: booking.demoExpiresAt,
+          contactSubmitted: booking.contactSubmitted ?? false,
+          contact: booking.contact ?? null,
+        })
+        storage.set("local", "booking", booking)
+      } catch {
+        storage.remove("local", "booking")
+        storage.remove("local", "booking_access_token")
+        setBookingAccessToken(null)
+        setStoredBooking(null)
+      }
+    }
+
+    loadBooking()
+  }, [mounted, bookingId, bookingAccessToken])
 
   // Si no hay acceso, mostramos el diálogo bloqueante sobre una estructura vacía
-  if (mounted && !localAccessToken) {
+  if (mounted && !sessionAccessToken && !(bookingAccessToken && bookingId)) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <Dialog open={true} onOpenChange={() => {}}>
@@ -167,13 +283,14 @@ function ContactFormWithROI() {
     )
   }
 
-  const isExpired = !!storedBooking && !formExpiresAt
-  const bookingDateStr = searchParams.get("booking_date") || storedBooking?.date
-  const bookingTime = searchParams.get("booking_time") || storedBooking?.time
-  const bookingDuration = searchParams.get("booking_duration") || storedBooking?.duration
+  const isExpired = !!storedBooking?.formExpiresAt && new Date(storedBooking.formExpiresAt).getTime() < Date.now()
+  const hasActiveDemo = !!storedBooking?.demoExpiresAt && new Date(storedBooking.demoExpiresAt).getTime() > Date.now()
+  const isDuplicateBookingContactBlocked = Boolean(storedBooking?.contactSubmitted && hasActiveDemo)
+  const bookingDateStr = storedBooking?.date
+  const bookingTime = storedBooking?.time
+  const bookingDuration = storedBooking?.duration
   const bookingDate = bookingDateStr ? new Date(bookingDateStr) : null
   const hasBooking = bookingDate && bookingTime
-
   const perdidaMensual = Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket)
   const recuperacionEstimada = Math.round(perdidaMensual * 0.7)
   const roi = Math.round(((recuperacionEstimada - 297) / 297) * 100)
@@ -212,12 +329,60 @@ function ContactFormWithROI() {
       if (error) { newErrors[key] = error; hasErrors = true }
     })
     if (hasErrors) { setErrors(newErrors); setTouched({ nombre: true, email: true, telefono: true, clinica: true, mensaje: true }); return }
+    if (isDuplicateBookingContactBlocked) {
+      alert("Ya hemos recibido tus datos para esta demo. Gestiona cambios desde el correo de confirmación.")
+      return
+    }
     if (isExpired) { alert("Tu reserva ha expirado."); router.push("/demo"); return }
     setIsSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    if (!hasBooking) resetROI()
-    setIsSubmitting(false)
-    setIsSubmitted(true)
+    try {
+      const payload = {
+        nombre: formData.nombre,
+        email: formData.email,
+        telefono: formData.telefono,
+        clinica: formData.clinica,
+        mensaje: formData.mensaje,
+        roi: {
+          monthlyPatients,
+          averageTicket,
+          conversionLoss,
+          roi,
+        },
+      }
+
+      if (bookingId && bookingAccessToken) {
+        await submitContact({
+          ...payload,
+          bookingId,
+          accessToken: bookingAccessToken,
+        })
+      } else if (sessionAccessToken) {
+        await submitContact({
+          ...payload,
+          sessionToken: sessionAccessToken,
+        })
+      } else {
+        throw new Error("Sesión inválida")
+      }
+
+      setFormExpiration(null)
+      const persistedBooking = storage.get<Record<string, unknown> | null>("local", "booking", null)
+      if (persistedBooking) {
+        storage.set("local", "booking", {
+          ...persistedBooking,
+          formExpiresAt: null,
+          contactSubmitted: true,
+        })
+      }
+      window.dispatchEvent(new Event("clinvetia:contact-submitted"))
+
+      if (!hasBooking) resetROI()
+      setIsSubmitted(true)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "No se pudo enviar el mensaje")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (isSubmitted) {
@@ -233,7 +398,7 @@ function ContactFormWithROI() {
 
   const summaries = (
     <div className="space-y-4">
-      {localAccessToken && (
+      {sessionAccessToken && (
         <GlassCard className="p-0 overflow-hidden border-primary/40 bg-primary/10 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)]">
           <div className="bg-primary/20 px-4 py-3 border-b border-primary/30 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -248,7 +413,6 @@ function ContactFormWithROI() {
             <div className="flex justify-between"><span>Pérdida de conversión</span><span className="font-semibold">{conversionLoss}%</span></div>
             <div className="border-t border-white/10 pt-2 flex justify-between"><span>Pérdida mensual</span><span className="font-semibold text-destructive">-{perdidaMensual.toLocaleString("es-ES")}€</span></div>
             <div className="flex justify-between"><span>Recuperable (70%)</span><span className="font-semibold text-success">+{recuperacionEstimada.toLocaleString("es-ES")}€</span></div>
-            <div className="border-t border-white/10 pt-2 flex justify-between"><span>ROI proyectado</span><span className="font-bold text-success">{roi}%</span></div>
           </div>
         </GlassCard>
       )}
@@ -266,9 +430,6 @@ function ContactFormWithROI() {
                 <p className="text-base font-bold text-primary">{bookingTime} ({bookingDuration} min)</p>
               </div>
               <div className="flex items-center gap-2 pt-2 border-t border-white/5"><Icon icon={Sparkles} size="sm" variant="primary" /><p className="text-xs text-muted-foreground">Demo personalizada con experto</p></div>
-              <Button variant="ghost" size="sm" className="w-full h-8 mt-2 text-xs border-primary/20 hover:bg-primary/10 hover:text-primary" asChild>
-                <Link href="/demo"><Icon icon={Clock} size="xs" className="mr-2" />Reagendar cita</Link>
-              </Button>
             </div>
           </GlassCard>
         </motion.div>
@@ -286,32 +447,131 @@ function ContactFormWithROI() {
         </motion.div>
       )}
 
-      {isCalculated && (
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-          <GlassCard className="p-0 overflow-hidden border-primary/30 bg-primary/5">
-            <div className="bg-primary/10 px-4 py-3 border-b border-primary/30 flex items-center justify-between">
-              <div className="flex items-center gap-2"><Icon icon={Calculator} size="xs" variant="primary" /><span className="text-xs font-bold text-primary uppercase tracking-wider">Tu ROI Proyectado</span></div>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-primary/60 hover:text-primary" asChild><Link href="/calculadora" title="Recalcular"><Icon icon={ArrowRight} size="xs" /></Link></Button>
-            </div>
-            <div className="p-4 space-y-4">
-              <div className="flex justify-between items-end"><span className="text-xs text-muted-foreground">Pérdida mensual</span><span className="text-base font-bold text-destructive">-{perdidaMensual}€</span></div>
-              <div className="flex justify-between items-end border-t border-white/5 pt-2"><span className="text-xs text-muted-foreground">ROI Estimado</span><span className="text-xl font-bold text-success">+{roi}%</span></div>
-              <div className="grid grid-cols-2 gap-2 border-t border-white/5 pt-3">
-                <div className="space-y-0.5"><p className="text-[10px] uppercase text-muted-foreground">Pacientes</p><p className="text-sm font-semibold">{monthlyPatients}</p></div>
-                <div className="space-y-0.5"><p className="text-[10px] uppercase text-muted-foreground">Ticket</p><p className="text-sm font-semibold">{averageTicket}€</p></div>
-              </div>
-            </div>
-          </GlassCard>
-        </motion.div>
-      )}
     </div>
   )
 
-  const submitButton = (
-    <Button type="submit" size="lg" className="w-full gap-2 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] h-14 text-lg" disabled={isSubmitting}>
+  const submitButton = isDuplicateBookingContactBlocked ? null : (
+    <Button
+      type="submit"
+      size="lg"
+      className="w-full gap-2 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] h-14 text-lg"
+      disabled={isSubmitting}
+    >
       {isSubmitting ? "Enviando..." : <><Send className="size-5" />Enviar solicitud</>}
     </Button>
   )
+
+  if (isDuplicateBookingContactBlocked) {
+    return (
+      <div className="space-y-6">
+        <GlassCard className="p-6 md:p-8 space-y-5 border-warning/30 bg-warning/5">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-warning/30 bg-warning/10">
+              <Icon icon={AlertCircle} size="xl" variant="warning" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-base font-semibold text-warning">Ya hemos recibido tus datos para esta demo</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Para evitar duplicados, no se puede enviar otro formulario mientras la cita siga activa.
+                Si hay alg&uacute;n dato incorrecto, escr&iacute;benos y lo corregimos contigo por chat.
+              </p>
+            </div>
+          </div>
+        </GlassCard>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {sessionAccessToken && (
+              <GlassCard className="p-6 md:p-8 space-y-5 h-full">
+                <div className="flex items-center gap-2">
+                  <Icon icon={Calculator} size="default" variant="primary" />
+                  <h3 className="text-base font-semibold">Resumen ROI</h3>
+                </div>
+                <div className="space-y-3 pt-1 text-sm">
+                  <div className="flex justify-between"><span>Pacientes/mes</span><span className="font-semibold">{monthlyPatients}</span></div>
+                  <div className="flex justify-between"><span>Ticket medio</span><span className="font-semibold">{averageTicket}€</span></div>
+                  <div className="flex justify-between"><span>Pérdida conversión</span><span className="font-semibold">{conversionLoss}%</span></div>
+                  <div className="border-t border-white/10 pt-2 flex justify-between"><span>Pérdida mensual</span><span className="font-semibold text-destructive">-{perdidaMensual.toLocaleString("es-ES")}€</span></div>
+                </div>
+              </GlassCard>
+            )}
+
+            {hasBooking && (
+              <GlassCard className="p-6 md:p-8 space-y-5 h-full">
+                <div className="flex items-center gap-2">
+                  <Icon icon={CalendarDays} size="default" variant="primary" />
+                  <h3 className="text-base font-semibold">Resumen demo</h3>
+                </div>
+                <div className="space-y-3 pt-1 text-sm">
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase text-muted-foreground">Fecha</p>
+                    <p className="font-semibold capitalize">
+                      {bookingDate?.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase text-muted-foreground">Hora</p>
+                    <p className="font-semibold">{bookingTime} ({bookingDuration} min)</p>
+                  </div>
+                  {storedBooking?.demoExpiresAt && (
+                    <div className="space-y-1 border-t border-white/10 pt-2">
+                      <p className="text-xs uppercase text-muted-foreground">Activa hasta</p>
+                      <p className="text-muted-foreground">
+                        {new Date(storedBooking.demoExpiresAt).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </GlassCard>
+            )}
+          </div>
+
+          {storedBooking?.contactSubmitted && (
+            <GlassCard className="p-6 md:p-8 space-y-5">
+              <div className="flex items-center gap-2">
+                <Icon icon={CheckCircle2} size="default" variant="primary" />
+                <h3 className="text-base font-semibold">Datos del cliente</h3>
+              </div>
+              {storedBooking.contact ? (
+                <div className="space-y-4 pt-1">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 text-sm">
+                    <div className="space-y-1"><p className="text-xs uppercase text-muted-foreground">Correo</p><p className="font-medium break-all">{storedBooking.contact.email}</p></div>
+                    <div className="space-y-1"><p className="text-xs uppercase text-muted-foreground">Teléfono</p><p className="font-medium">{storedBooking.contact.telefono}</p></div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 text-sm">
+                    <div className="space-y-1"><p className="text-xs uppercase text-muted-foreground">Nombre</p><p className="font-medium">{storedBooking.contact.nombre}</p></div>
+                    <div className="space-y-1"><p className="text-xs uppercase text-muted-foreground">Clínica</p><p className="font-medium">{storedBooking.contact.clinica}</p></div>
+                  </div>
+                  <div className="space-y-1 border-t border-white/10 pt-3">
+                    <p className="text-xs uppercase text-muted-foreground">Datos del formulario (mensaje)</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">{storedBooking.contact.mensaje}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-sm text-muted-foreground">
+                    Hemos recibido tus datos correctamente. El detalle del formulario se est&aacute; sincronizando.
+                  </p>
+                </div>
+              )}
+            </GlassCard>
+          )}
+        </div>
+
+        <Button
+          type="button"
+          size="lg"
+          className="w-full gap-2"
+          onClick={() => {
+            window.dispatchEvent(new Event("clinvetia:open-chat"))
+          }}
+        >
+          <Icon icon={MessageCircle} size="default" variant="primary" />
+          Corregir datos por chat
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <form onSubmit={handleSubmit} className="no-validate" noValidate>
@@ -358,7 +618,7 @@ export default function ContactoPage() {
         <div className="mx-auto max-w-3xl">
           <div className="mb-12 text-center">
             <Badge variant="secondary" className="mb-6">Contacto</Badge>
-            <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">Hablemos de tu clínica</h1>
+            <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">¿De nuevo por aquí? ¿Algún dato erroneo?</h1>
             <p className="text-lg text-muted-foreground">Nuestro equipo está listo para ayudarte a transformar tu gestión veterinaria.</p>
           </div>
           <Suspense fallback={<div className="h-96 flex items-center justify-center"><p className="text-muted-foreground animate-pulse">Cargando...</p></div>}>

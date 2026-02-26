@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([
+    ".DS_Store",
+    ".mongo-data/**",
     // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",

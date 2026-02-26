@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 import { storage } from "@/lib/storage"
 
 export function GlobalBookingTimer() {
-  const { formExpiresAt, setFormExpiration, setAccessToken, reset } = useROIStore()
+  const { formExpiresAt, setFormExpiration } = useROIStore()
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
 
@@ -36,44 +36,49 @@ export function GlobalBookingTimer() {
       setTimeLeft(seconds)
       
       if (remaining <= 0) {
-        // Limpieza global al expirar
-        localStorage.removeItem("clinvetia_booking")
         setFormExpiration(null)
         setTimeLeft(null)
-        
-        // Opcional: Si queremos ser muy agresivos, podemos resetear el store
-        // reset()
       }
     }
 
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
-  }, [formExpiresAt, setFormExpiration, reset])
+  }, [formExpiresAt, setFormExpiration])
 
   useEffect(() => {
     const checkDemoExpiration = () => {
-      const raw = localStorage.getItem("clinvetia_booking")
-      if (!raw) return
-      try {
-        const parsed = JSON.parse(raw) as { demoExpiresAt?: string }
-        if (!parsed.demoExpiresAt) return
-        const demoTime = new Date(parsed.demoExpiresAt).getTime()
-        if (Date.now() >= demoTime) {
-          localStorage.removeItem("clinvetia_booking")
-          storage.remove("local", "access_token")
-          storage.remove("local", "demo_access_token")
-          setAccessToken(null)
-        }
-      } catch {
-        // Ignorar datos corruptos
+      const booking = storage.get<{ demoExpiresAt?: string } | null>("local", "booking", null)
+      if (!booking?.demoExpiresAt) return
+      const demoTime = new Date(booking.demoExpiresAt).getTime()
+      if (Date.now() >= demoTime) {
+        storage.remove("local", "booking")
+        storage.remove("local", "booking_access_token")
+        storage.remove("local", "demo_access_token")
       }
     }
 
     checkDemoExpiration()
     const interval = setInterval(checkDemoExpiration, 60_000)
     return () => clearInterval(interval)
-  }, [setAccessToken])
+  }, [])
+
+  useEffect(() => {
+    const hideTimer = () => {
+      setFormExpiration(null)
+      setTimeLeft(null)
+    }
+
+    const onContactSubmitted = () => hideTimer()
+    window.addEventListener("clinvetia:contact-submitted", onContactSubmitted)
+
+    const booking = storage.get<{ contactSubmitted?: boolean } | null>("local", "booking", null)
+    if (booking?.contactSubmitted) {
+      hideTimer()
+    }
+
+    return () => window.removeEventListener("clinvetia:contact-submitted", onContactSubmitted)
+  }, [setFormExpiration])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -144,8 +149,8 @@ export function GlobalBookingTimer() {
                 <Clock className="h-4 w-4 animate-pulse" />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-sm">Reserva temporal activa</span>
-                <span className="text-[10px] opacity-80">Tu plaza se liberará si el tiempo llega a cero.</span>
+                <span className="font-bold text-sm">Completa tus datos</span>
+                <span className="text-[10px] opacity-80">Este contador solo aplica al formulario de contacto.</span>
               </div>
             </TooltipContent>
           </Tooltip>

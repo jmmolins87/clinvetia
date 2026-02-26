@@ -89,15 +89,15 @@ export function Navbar() {
         "bg-background/60 backdrop-blur-xl",
         "supports-[backdrop-filter]:bg-background/20",
         "border-b border-white/10",
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.06),inset_0_-1px_0_rgba(255,255,255,0.04)]",
+        "shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.06),inset_0_-1px_0_rgba(var(--white-rgb),0.04)]",
       )}
     >
-      <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
 
         <Logo />
 
         {/* ── Nav links + Acciones ────────────────────── */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
 
           <NavLinks />
 

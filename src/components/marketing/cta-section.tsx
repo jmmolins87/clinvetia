@@ -53,7 +53,7 @@ export function CtaSection({
         <TranslatableText text={description} lines={2} />
       </p>
 
-      <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+      <div className="flex flex-col items-center justify-center gap-4 sm:flex-row md:mx-auto md:max-w-lg">
         {actions.map((action) => {
           return (
             <Button

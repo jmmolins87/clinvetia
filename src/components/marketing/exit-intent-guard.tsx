@@ -32,7 +32,7 @@ export function ExitIntentGuard() {
   const isCalculatorPage = pathname === "/calculadora"
 
   useEffect(() => {
-    const storedAccessToken = storage.get<string | null>("local", "access_token", null)
+    const storedAccessToken = storage.get<string | null>("local", "roi_access_token", null)
     setHasLocalAccessToken(!!storedAccessToken)
   }, [hasAcceptedDialog, accessToken, pathname])
 

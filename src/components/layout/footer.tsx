@@ -59,7 +59,7 @@ function FooterLogo() {
         <BrandName className="text-lg font-bold tracking-tight" />
       </Link>
 
-      <p className="max-w-[200px] text-sm leading-relaxed text-muted-foreground">
+      <p className="max-w-[240px] text-sm leading-relaxed text-muted-foreground">
         <TranslatableText text="Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo." />
       </p>
 
@@ -140,7 +140,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* Grid 4 columnas — 2 en mobile */}
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 md:gap-10">
           <FooterLogo />
           {FOOTER_COLUMNS.map((col) => (
             <FooterColumn key={col.heading} heading={col.heading} links={col.links} />

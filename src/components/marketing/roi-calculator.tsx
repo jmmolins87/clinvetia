@@ -35,6 +35,7 @@ import { Slider } from "@/components/ui/slider"
 import { storage } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 import { useROIStore } from "@/store/roi-store"
+import { createSession } from "@/lib/api"
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -70,12 +71,13 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
   const [mounted, setMounted] = useState(false)
   const [showSkipDialog, setShowSkipDialog] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
+  const [isCreatingSession, setIsCreatingSession] = useState(false)
 
   useEffect(() => {
     setMounted(true)
     setHasAcceptedDialog(false)
     setAccessToken(null)
-    storage.remove("local", "access_token")
+    storage.remove("local", "roi_access_token")
   }, [setHasAcceptedDialog, setAccessToken])
 
   const calculatingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -194,12 +196,20 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
         open={showSkipDialog}
         onOpenChange={setShowSkipDialog}
         data={{ monthlyPatients, averageTicket, conversionLoss, roi }}
-        onConfirm={() => {
-          const accessToken = crypto.randomUUID()
-          setHasAcceptedDialog(true)
-          setAccessToken(accessToken)
-          storage.set("local", "access_token", accessToken)
-          router.push("/contacto")
+        isSubmitting={isCreatingSession}
+        onConfirm={async () => {
+          setIsCreatingSession(true)
+          try {
+            const session = await createSession({
+              roi: { monthlyPatients, averageTicket, conversionLoss, roi },
+            })
+            setHasAcceptedDialog(true)
+            setAccessToken(session.accessToken)
+            storage.set("local", "roi_access_token", session.accessToken)
+            router.push("/contacto")
+          } finally {
+            setIsCreatingSession(false)
+          }
         }}
       />
     </div>
@@ -259,7 +269,7 @@ interface ResultDialogData {
   roi: number
 }
 
-function ResultDialog({ open, onOpenChange, data, onConfirm }: { open: boolean; onOpenChange: (open: boolean) => void; data: ResultDialogData; onConfirm: () => void }) {
+function ResultDialog({ open, onOpenChange, data, onConfirm, isSubmitting }: { open: boolean; onOpenChange: (open: boolean) => void; data: ResultDialogData; onConfirm: () => Promise<void> | void; isSubmitting: boolean }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -277,9 +287,9 @@ function ResultDialog({ open, onOpenChange, data, onConfirm }: { open: boolean; 
           <div className="border-t border-primary/20 pt-2 mt-2 flex justify-between"><span>ROI proyectado:</span><span className="font-bold text-success">{data.roi}%</span></div>
         </div>
         <DialogFooter className="mt-4 gap-2">
-          <Button variant="destructive" className="w-full bg-destructive/15 border-2 border-destructive/70 text-destructive shadow-[0_0_20px_rgba(var(--destructive-rgb),0.50)]" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button variant="default" className="w-full" onClick={() => { onOpenChange(false); onConfirm() }}>
-            Continuar
+          <Button variant="destructive" className="w-full bg-destructive/15 border-2 border-destructive/70 text-destructive shadow-[0_0_20px_rgba(var(--destructive-rgb),0.50)]" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>
+          <Button variant="default" className="w-full" onClick={() => { onOpenChange(false); onConfirm() }} disabled={isSubmitting}>
+            {isSubmitting ? "Creando acceso..." : "Continuar"}
             <Icon icon={ArrowRight} size="sm" className="ml-2" />
           </Button>
         </DialogFooter>

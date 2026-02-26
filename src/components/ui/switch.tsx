@@ -19,7 +19,7 @@ const Switch = React.forwardRef<
   >
     <SwitchPrimitive.Thumb
       className={cn(
-        "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 data-[state=unchecked]:translate-x-0 data-[state=checked]:translate-x-5 data-[state=checked]:shadow-[0_0_10px_rgba(255,255,255,0.85),0_0_20px_rgba(var(--primary-rgb),0.40)]"
+        "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 data-[state=unchecked]:translate-x-0 data-[state=checked]:translate-x-5 data-[state=checked]:shadow-[0_0_10px_rgba(var(--white-rgb),0.85),0_0_20px_rgba(var(--primary-rgb),0.40)]"
       )}
     />
   </SwitchPrimitive.Root>
@@ -40,7 +40,7 @@ const SwitchWithLabel = React.forwardRef<
 >(({ labelLeft, labelRight, className, switchClassName, labelClassName, ...props }, ref) => (
   <div
     className={cn(
-      "inline-flex items-center gap-2 rounded-xl p-1.5 bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-1px_0_rgba(0,0,0,0.2)]",
+      "inline-flex items-center gap-2 rounded-xl p-1.5 bg-white/5 border border-white/10 shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.08),inset_0_-1px_0_rgba(var(--black-rgb),0.2)]",
       className
     )}
   >
@@ -59,7 +59,7 @@ const SwitchWithLabel = React.forwardRef<
     >
       <SwitchPrimitive.Thumb
         className={cn(
-          "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 data-[state=unchecked]:translate-x-0 data-[state=checked]:translate-x-5 data-[state=checked]:shadow-[0_0_10px_rgba(255,255,255,0.85),0_0_20px_rgba(var(--primary-rgb),0.40)]"
+          "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 data-[state=unchecked]:translate-x-0 data-[state=checked]:translate-x-5 data-[state=checked]:shadow-[0_0_10px_rgba(var(--white-rgb),0.85),0_0_20px_rgba(var(--primary-rgb),0.40)]"
         )}
       />
     </SwitchPrimitive.Root>

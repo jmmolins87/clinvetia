@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import { MessageCircle, Sparkles, Send } from "lucide-react"
 
 import { Icon } from "@/components/ui/icon"
@@ -23,6 +24,7 @@ import {
 import { cn } from "@/lib/utils"
 
 export function ChatPortal() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(true)
 
@@ -33,6 +35,16 @@ export function ChatPortal() {
     media.addEventListener("change", update)
     return () => media.removeEventListener("change", update)
   }, [])
+
+  useEffect(() => {
+    const handleOpenChat = () => setOpen(true)
+    window.addEventListener("clinvetia:open-chat", handleOpenChat)
+    return () => window.removeEventListener("clinvetia:open-chat", handleOpenChat)
+  }, [])
+
+  if (pathname?.startsWith("/admin")) {
+    return null
+  }
 
   const chatBody = (
     <>
@@ -98,7 +110,7 @@ export function ChatPortal() {
               type="button"
               aria-label="Abrir chat"
               className={cn(
-                "group relative h-32 w-24 overflow-hidden rounded-[26px] border cursor-pointer",
+                "group relative h-48 w-24 overflow-hidden rounded-[26px] border cursor-pointer",
                 "md:h-36 md:w-28 lg:h-40 lg:w-32 xl:h-44 xl:w-36",
                 "bg-[radial-gradient(circle_at_30%_20%,rgba(var(--primary-rgb),0.35),transparent_45%),radial-gradient(circle_at_70%_80%,rgba(var(--accent-rgb),0.25),transparent_55%)]",
                 "border-[rgba(var(--primary-rgb),0.55)] backdrop-blur-xl",
@@ -109,7 +121,7 @@ export function ChatPortal() {
             >
               <span className="absolute inset-1 rounded-[22px] border border-white/20" />
               <span className="absolute inset-2 rounded-[20px] bg-white/5" />
-              <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),transparent_55%)]" />
+              <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(var(--white-rgb),0.10),transparent_55%)]" />
               <div className="absolute inset-3 rounded-[18px] overflow-hidden">
                 <video
                   className="h-full w-full object-cover"

@@ -26,7 +26,7 @@ const badgeVariants = cva(
           "bg-transparent",
           "border-white/25",
           "text-foreground",
-          "shadow-[inset_0_1px_0_rgba(255,255,255,0.10)]",
+          "shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.10)]",
           "hover:bg-white/8",
         ].join(" "),
         accent: "badge-success",

@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   ArrowRight,
   Sparkles,
+  AlertCircle,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -20,8 +21,18 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { Avatar, AvatarGroup } from "@/components/ui/avatar"
 import { BrandName } from "@/components/ui/brand-name"
 import { Icon } from "@/components/ui/icon"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useROIStore } from "@/store/roi-store"
 import { storage } from "@/lib/storage"
+import { ApiError, createBooking, getActiveBookingBySession, getAvailability, getBooking } from "@/lib/api"
+import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
 
 // ── Datos ──────────────────────────────────────────────────────────────────────
 
@@ -37,8 +48,6 @@ const TIME_SLOTS = [
   "15:00", "15:30", "16:00", "16:30",
   "17:00", "17:30",
 ]
-
-const UNAVAILABLE_SLOTS = new Set(["09:30", "11:00", "12:00", "15:30", "17:00"])
 
 const WEEK_DAYS = ["L", "M", "X", "J", "V", "S", "D"]
 
@@ -79,6 +88,11 @@ function isPast(year: number, month: number, day: number) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   return new Date(year, month, day) < today
+}
+
+function isValidAccessToken(token: string | null) {
+  if (!token) return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)
 }
 
 // ── Sub-componentes ────────────────────────────────────────────────────────────
@@ -180,11 +194,13 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
 
 interface TimeSlotPickerProps {
   date: Date | null
+  slots: string[]
+  unavailable: Set<string>
   selected: string | null
   onSelect: (slot: string) => void
 }
 
-function TimeSlotPicker({ date, selected, onSelect }: TimeSlotPickerProps) {
+function TimeSlotPicker({ date, slots, unavailable, selected, onSelect }: TimeSlotPickerProps) {
   const isPastTime = (slot: string) => {
     if (!date) return false
     const today = new Date()
@@ -198,21 +214,21 @@ function TimeSlotPicker({ date, selected, onSelect }: TimeSlotPickerProps) {
 
   return (
     <div className="grid grid-cols-2 gap-2">
-      {TIME_SLOTS.map((slot) => {
-        const unavailable = UNAVAILABLE_SLOTS.has(slot) || isPastTime(slot)
+      {slots.map((slot) => {
+        const isUnavailable = unavailable.has(slot) || isPastTime(slot)
         const isSelected = selected === slot
 
         return (
           <Button
             key={slot}
             variant={isSelected ? "default" : "ghost"}
-            disabled={unavailable}
+            disabled={isUnavailable}
             onClick={() => onSelect(slot)}
             className={cn(
               "flex h-auto items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-150",
-              !unavailable && !isSelected && "border-white/10 bg-white/5 hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
+              !isUnavailable && !isSelected && "border-white/10 bg-white/5 hover:border-primary/50 hover:bg-primary/10 hover:text-primary",
               isSelected && "border-primary/60 bg-primary/15 text-primary shadow-[0_0_12px_rgba(var(--primary-rgb),0.25)] hover:bg-primary/20",
-              unavailable && "opacity-30 border-white/5 bg-white/2"
+              isUnavailable && "opacity-30 border-white/5 bg-white/2"
             )}
           >
             <Icon icon={Clock} size="xs" className={isSelected ? "text-primary" : "text-muted-foreground"} />
@@ -228,11 +244,13 @@ interface ConfirmationViewProps {
   date: Date
   time: string
   duration: number
+  isSubmitting: boolean
+  error: string | null
   onBack: () => void
   onConfirm: () => void
 }
 
-function ConfirmationView({ date, time, duration, onBack, onConfirm }: ConfirmationViewProps) {
+function ConfirmationView({ date, time, duration, isSubmitting, error, onBack, onConfirm }: ConfirmationViewProps) {
   const formattedDate = date.toLocaleDateString("es-ES", {
     weekday: "long", day: "numeric", month: "long",
   })
@@ -276,10 +294,11 @@ function ConfirmationView({ date, time, duration, onBack, onConfirm }: Confirmat
       </GlassCard>
 
       <div className="flex flex-col gap-2">
-        <Button size="lg" className="w-full gap-2" onClick={onConfirm}>
-          Confirmar reserva
+        <Button size="lg" className="w-full gap-2" onClick={onConfirm} disabled={isSubmitting}>
+          {isSubmitting ? "Confirmando..." : "Confirmar reserva"}
           <Icon icon={CheckCircle2} size="sm" />
         </Button>
+        {error && <div className="text-xs text-destructive">{error}</div>}
         <Button variant="ghost" size="sm" className="w-full" onClick={onBack}>
           Cambiar fecha u hora
         </Button>
@@ -330,264 +349,282 @@ export interface BookingCalendarProps {
   onBooked?: (date: Date, time: string, duration: number) => void
 }
 
-type Step = "calendar" | "confirm" | "success"
-
 export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
   const router = useRouter()
-  const today = new Date()
-  const [year, setYear] = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [duration, setDuration] = useState(45)
-  const [step, setStep] = useState<Step>("calendar")
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [duplicateBookingDialogOpen, setDuplicateBookingDialogOpen] = useState(false)
+  const [duplicateBookingDialogBookingId, setDuplicateBookingDialogBookingId] = useState<string | null>(null)
+  const [activeBookingBlock, setActiveBookingBlock] = useState<{
+    bookingId: string
+    date: string
+    time: string
+    duration: number
+    demoExpiresAt: string
+    contactSubmitted: boolean
+  } | null>(null)
+
+  useEffect(() => {
+    const storedBookingToken = storage.get<string | null>("local", "booking_access_token", null)
+    const validBookingToken = isValidAccessToken(storedBookingToken) ? storedBookingToken : null
+
+    if (!validBookingToken && storedBookingToken) {
+      storage.remove("local", "booking_access_token")
+      return
+    }
+
+    const storedBooking = storage.get<{ bookingId?: string } | null>("local", "booking", null)
+    if (!validBookingToken || !storedBooking?.bookingId) return
+
+    const loadActiveBooking = async () => {
+      try {
+        const booking = await getBooking(storedBooking.bookingId!, validBookingToken)
+        const isActiveDemo =
+          new Date(booking.demoExpiresAt).getTime() > Date.now() &&
+          booking.status !== "expired" &&
+          booking.status !== "cancelled"
+
+        if (isActiveDemo) {
+          setActiveBookingBlock({
+            bookingId: booking.bookingId,
+            date: booking.date,
+            time: booking.time,
+            duration: booking.duration,
+            demoExpiresAt: booking.demoExpiresAt,
+            contactSubmitted: booking.contactSubmitted ?? false,
+          })
+          setDuplicateBookingDialogBookingId(booking.bookingId)
+          setDuplicateBookingDialogOpen(true)
+          return
+        }
+
+        setActiveBookingBlock(null)
+      } catch {
+        setActiveBookingBlock(null)
+      }
+    }
+
+    loadActiveBooking()
+  }, [])
+
+  useEffect(() => {
+    if (activeBookingBlock) return
+
+    const sessionToken = storage.get<string | null>("local", "roi_access_token", null)
+    if (!isValidAccessToken(sessionToken)) return
+
+    const recoverActiveBooking = async () => {
+      try {
+        const booking = await getActiveBookingBySession(sessionToken)
+        if (!booking.accessToken) return
+
+        storage.set("local", "booking_access_token", booking.accessToken)
+        storage.set("local", "booking", booking)
+
+        const isActiveDemo =
+          new Date(booking.demoExpiresAt).getTime() > Date.now() &&
+          booking.status !== "expired" &&
+          booking.status !== "cancelled"
+
+        if (!isActiveDemo) return
+
+        setActiveBookingBlock({
+          bookingId: booking.bookingId,
+          date: booking.date,
+          time: booking.time,
+          duration: booking.duration,
+          demoExpiresAt: booking.demoExpiresAt,
+          contactSubmitted: booking.contactSubmitted ?? false,
+        })
+        setDuplicateBookingDialogBookingId(booking.bookingId)
+        setDuplicateBookingDialogOpen(true)
+      } catch {
+        // Sin reserva activa para esta sesión.
+      }
+    }
+
+    recoverActiveBooking()
+  }, [activeBookingBlock])
 
   // Restaurar estado desde localStorage al montar
   useEffect(() => {
-    const saved = localStorage.getItem("clinvetia_booking")
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        const date = new Date(parsed.date)
-        const now = new Date()
-        const expiration = new Date(parsed.expiresAt)
-        
-        if (now < expiration) {
-          setSelectedDate(date)
-          setSelectedTime(parsed.time)
-          setDuration(parseInt(parsed.duration))
-          setYear(date.getFullYear())
-          setMonth(date.getMonth())
-          setStep("confirm") // Ir directamente al resumen en el panel derecho
-        }
-      } catch (e) {
-        console.error("Error restoring booking", e)
-      }
+    if (activeBookingBlock) return
+    const saved = storage.get<{
+      date: string
+      time: string
+      duration: number
+      expiresAt: string
+    } | null>("local", "booking", null)
+
+    if (!saved) return
+
+    const date = new Date(saved.date)
+    const now = new Date()
+    const expiration = new Date(saved.expiresAt)
+
+    if (now < expiration) {
+      setSelectedDate(date)
+      setSelectedTime(saved.time)
+      setDuration(saved.duration)
+      setShowSuccess(false)
     }
-  }, [])
+  }, [activeBookingBlock])
 
-  function handlePrevMonth() {
-    if (month === 0) { setMonth(11); setYear(y => y - 1) }
-    else setMonth(m => m - 1)
-  }
-
-  function handleNextMonth() {
-    if (month === 11) { setMonth(0); setYear(y => y + 1) }
-    else setMonth(m => m + 1)
-  }
-
-  function handleDateSelect(date: Date) {
-    setSelectedDate(date)
-    setSelectedTime(null)
-  }
-
-  function handleConfirm() {
-    if (selectedDate && selectedTime) {
-      onBooked?.(selectedDate, selectedTime, duration)
-      
+  async function handleConfirm(payload: BookingWizardSubmitPayload) {
+    try {
       const store = useROIStore.getState()
-      const demoToken = crypto.randomUUID()
-      
-      const expirationDate = new Date(selectedDate)
-      expirationDate.setHours(23, 59, 59, 999)
-      const expiresAt = expirationDate.toISOString()
+      const response = await createBooking({
+        date: payload.date.toISOString(),
+        time: payload.time,
+        duration: payload.duration,
+        sessionToken: store.accessToken ?? store.token,
+      })
 
-      const [hour, min] = selectedTime.split(":").map(Number)
-      const demoDateTime = new Date(selectedDate)
-      demoDateTime.setHours(hour, min, 0, 0)
-      const demoExpiresAt = demoDateTime.toISOString()
-      
-      // Persistimos la expiración en el store global
-      store.setExpiration(expiresAt)
-      
-      const formExpiration = new Date()
-      formExpiration.setMinutes(formExpiration.getMinutes() + 10)
-      const formExpiresAt = formExpiration.toISOString()
-      
-      // Persistimos las expiraciones en el store global
-      store.setExpiration(expiresAt)
-      store.setFormExpiration(formExpiresAt)
-      
-      const bookingData = {
-        date: selectedDate.toISOString(),
-        time: selectedTime,
-        duration: duration.toString(),
-        expiresAt: expiresAt,
-        formExpiresAt: formExpiresAt, // Límite de 10 min para el formulario
-        token: store.token, // Incluimos el token de sesión
-        demoToken: demoToken,
-        demoExpiresAt: demoExpiresAt,
-      }
-      
-      localStorage.setItem("clinvetia_booking", JSON.stringify(bookingData))
-      storage.set("local", "demo_access_token", demoToken)
-      
-      // Mostramos vista de éxito antes de redirigir
-      setStep("success")
-      
-      // Redirigir tras 2.5 segundos para que vean el mensaje de éxito
+      setSelectedDate(payload.date)
+      setSelectedTime(payload.time)
+      setDuration(payload.duration)
+
+      onBooked?.(payload.date, payload.time, payload.duration)
+
+      store.setExpiration(response.expiresAt)
+      store.setFormExpiration(response.formExpiresAt)
+
+      storage.set("local", "booking_access_token", response.accessToken)
+      storage.set("local", "booking", response)
+
+      setShowSuccess(true)
+
       setTimeout(() => {
-        // Construir params para la página de contacto incluyendo el token
+        const sessionToken = store.accessToken ?? store.token ?? ""
         const params = new URLSearchParams({
-          booking_date: bookingData.date,
-          booking_time: bookingData.time,
-          booking_duration: bookingData.duration,
-          session_token: store.token || "",
+          booking_id: response.bookingId,
+          booking_token: response.accessToken,
         })
+        if (sessionToken) params.set("session_token", sessionToken)
         router.push(`/contacto?${params.toString()}`)
       }, 2500)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo confirmar la reserva"
+      if (error instanceof ApiError && error.status === 409 && message.includes("Ya tienes una demo reservada activa")) {
+        const data = error.data as { bookingId?: string } | null
+        setDuplicateBookingDialogBookingId(data?.bookingId ?? null)
+        setDuplicateBookingDialogOpen(true)
+      } else {
+        setDuplicateBookingDialogBookingId(null)
+        throw new Error(message)
+      }
+    } finally {
     }
   }
 
-  const canProceed = selectedDate !== null && selectedTime !== null
-
   return (
-    <div className={cn("grid gap-6 grid-cols-1 lg:grid-cols-[1fr_360px] lg:grid-rows-1", className)}>
-
-      {/* ── Panel izquierdo: calendario + slots ──────────────────────────── */}
-      <GlassCard className="p-6 space-y-6 lg:h-full">
-
-        {/* Cabecera */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-base font-semibold uppercase tracking-widest text-muted-foreground">
-              Reserva tu demo
-            </p>
-            <h2 className="mt-0.5 text-xl font-bold text-foreground">
-              Elige día y hora
-            </h2>
-          </div>
-          <AvatarGroup size="sm" max={3}>
-            {TEAM_MEMBERS.map((m) => (
-              <Avatar key={m.initials} initials={m.initials} variant={m.variant} />
-            ))}
-          </AvatarGroup>
-        </div>
-
-        {/* Duración */}
-        <div className="my-3">
-          <div className="flex gap-2">
-            {DURATION_OPTIONS.map((opt) => (
-              <Button
-                key={opt.value}
-                variant={duration === opt.value ? "default" : "ghost"}
-                onClick={() => setDuration(opt.value)}
-                className={cn(
-                  "flex-1 cursor-pointer rounded-xl border px-2 py-3 text-center transition-all duration-150",
-                  duration === opt.value
-                    ? "border-primary/50 bg-primary/10 text-primary"
-                    : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground",
-                )}
-              >
-                <p className="text-xs font-bold"><span className="hidden md:inline">Sesión de </span>{opt.label}</p>
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Grid del mes */}
-        <CalendarGrid
-          year={year}
-          month={month}
-          selected={selectedDate}
-          onSelect={handleDateSelect}
-          onPrev={handlePrevMonth}
-          onNext={handleNextMonth}
-        />
-
-        {/* Leyenda */}
-        <div className="flex flex-wrap gap-4 text-base text-muted-foreground mt-6 md:mt-4">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-primary/40 ring-1 ring-primary/60" />
-            Disponible
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-            Seleccionado
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
-            No disponible
-          </span>
-        </div>
-      </GlassCard>
-
-      {/* ── Panel derecho: horarios + confirmación ────────────────────────── */}
-      <div className="flex flex-col gap-4 h-full min-h-[400px]">
-        <AnimatePresence mode="wait">
-          {step === "success" && selectedDate && selectedTime ? (
-            <GlassCard key="success" className="flex-1 p-6 flex flex-col justify-center h-full">
-              <SuccessView date={selectedDate} time={selectedTime} />
-            </GlassCard>
-          ) : step === "confirm" && selectedDate && selectedTime ? (
-            <GlassCard key="confirm" className="flex-1 p-6 h-full">
-              <ConfirmationView
-                date={selectedDate}
-                time={selectedTime}
-                duration={duration}
-                onBack={() => setStep("calendar")}
-                onConfirm={handleConfirm}
-              />
-            </GlassCard>
-          ) : (
-            <motion.div
-              key="slots"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="flex flex-1 flex-col gap-4"
-            >
-              <GlassCard className="flex-1 p-5 space-y-4">
-                {selectedDate ? (
-                  <>
-                    <div>
-          <p className="text-base font-semibold uppercase tracking-widest text-muted-foreground">
-                        Horarios disponibles
-                      </p>
-                      <p className="mt-0.5 text-sm font-medium text-foreground capitalize">
-                        {selectedDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
-                      </p>
-                    </div>
-                    <TimeSlotPicker
-                      date={selectedDate}
-                      selected={selectedTime}
-                      onSelect={setSelectedTime}
-                    />
-                  </>
-                ) : (
-                  <div className="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
-                    <Icon icon={CalendarDays} size="xl" variant="muted" className="opacity-40" />
-                    <p className="text-base text-muted-foreground">
-                      Selecciona un día para ver los horarios disponibles
-                    </p>
-                  </div>
-                )}
-              </GlassCard>
-
-              <Button
-                size="lg"
-                className="w-full gap-2"
-                disabled={!canProceed}
-                onClick={() => setStep("confirm")}
-              >
-                Continuar
-                <Icon icon={ArrowRight} size="sm" />
-              </Button>
-
-              {/* Social proof */}
-              <div className="flex items-center justify-center gap-2 text-base text-muted-foreground">
-                <AvatarGroup size="xs" max={4}>
-                  {TEAM_MEMBERS.map((m) => (
-                    <Avatar key={m.initials} initials={m.initials} size="xs" variant={m.variant} />
-                  ))}
-                </AvatarGroup>
-                <span>+120 demos realizadas este mes</span>
+    <>
+      <Dialog
+        open={duplicateBookingDialogOpen}
+        onOpenChange={(open) => {
+          setDuplicateBookingDialogOpen(open)
+          if (!open && activeBookingBlock) {
+            router.push("/")
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-warning/30 bg-warning/10 sm:mx-0">
+              <Icon icon={AlertCircle} size="xl" variant="warning" />
+            </div>
+            <DialogTitle>Ya tienes una demo activa reservada</DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
+              Para evitar duplicados, no permitimos crear otra reserva mientras tu cita actual siga activa.
+              Si necesitas cambiar fecha u hora, puedes gestionarlo desde los correos de confirmaci&oacute;n.
+            </DialogDescription>
+          </DialogHeader>
+          {activeBookingBlock && (
+            <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <Icon icon={CalendarDays} size="default" variant="primary" className="mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-foreground capitalize">
+                    {new Date(activeBookingBlock.date).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {activeBookingBlock.time} · {activeBookingBlock.duration} min
+                  </p>
+                </div>
               </div>
-            </motion.div>
+              <div className="flex items-start gap-3">
+                <Icon icon={Clock} size="default" variant="muted" className="mt-0.5" />
+                <p className="text-sm text-muted-foreground">
+                  Activa hasta {new Date(activeBookingBlock.demoExpiresAt).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
+            </div>
           )}
-        </AnimatePresence>
-      </div>
-    </div>
+          <DialogFooter className="gap-2 sm:[&>*]:flex-1">
+            <Button variant="ghost" onClick={() => router.push("/")}>
+              Volver al inicio
+            </Button>
+            <Button
+              onClick={() => {
+                const bookingId = duplicateBookingDialogBookingId || activeBookingBlock?.bookingId
+                if (bookingId) {
+                  router.push(`/contacto?booking_id=${encodeURIComponent(bookingId)}`)
+                  return
+                }
+                router.push("/contacto")
+              }}
+            >
+              Ir a contacto
+              <Icon icon={ArrowRight} size="sm" className="ml-2" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {activeBookingBlock ? (
+        <div className={cn("min-h-[8rem]", className)} aria-hidden />
+      ) : (
+        <div className={cn("space-y-4", className)}>
+          <AnimatePresence mode="wait">
+            {showSuccess && selectedDate && selectedTime ? (
+              <GlassCard key="success" className="p-6">
+                <SuccessView date={selectedDate} time={selectedTime} />
+              </GlassCard>
+            ) : (
+              <motion.div
+                key="wizard"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+              >
+                <BookingWizard
+                  title="Reserva tu demo"
+                  subtitle="Selecciona un día, elige hora y confirma tu videollamada"
+                  confirmCtaLabel="Confirmar reserva"
+                  confirmingLabel="Confirmando..."
+                  initialDate={selectedDate}
+                  initialTime={selectedTime}
+                  initialDuration={duration}
+                  initialStep={selectedDate && selectedTime ? "confirm" : selectedDate ? "time" : "date"}
+                  loadAvailability={async (date) => getAvailability(date.toISOString())}
+                  onSubmit={handleConfirm}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="flex items-center justify-center gap-2 text-base text-muted-foreground">
+            <AvatarGroup size="xs" max={4}>
+              {TEAM_MEMBERS.map((m) => (
+                <Avatar key={m.initials} initials={m.initials} size="xs" variant={m.variant} />
+              ))}
+            </AvatarGroup>
+            <span>+120 demos realizadas este mes</span>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

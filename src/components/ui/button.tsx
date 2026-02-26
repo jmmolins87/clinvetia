@@ -25,15 +25,25 @@ const buttonVariants = cva(
           "bg-primary/15",
           "border-2 border-primary/70",
           "text-primary",
-          "shadow-[0_0_20px_rgba(var(--primary-rgb),0.50),0_0_60px_rgba(var(--primary-rgb),0.20),inset_0_1px_0_rgba(255,255,255,0.20)]",
+          "shadow-[0_0_20px_rgba(var(--primary-rgb),0.50),0_0_60px_rgba(var(--primary-rgb),0.20),inset_0_1px_0_rgba(var(--white-rgb),0.20)]",
           "hover:bg-primary/22",
           "hover:border-primary",
-          "hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.70),0_0_80px_rgba(var(--primary-rgb),0.30),inset_0_1px_0_rgba(255,255,255,0.25)]",
+          "hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.70),0_0_80px_rgba(var(--primary-rgb),0.30),inset_0_1px_0_rgba(var(--white-rgb),0.25)]",
         ].join(" "),
 
         secondary: [
           "btn-secondary",
           "border-2",
+        ].join(" "),
+
+        warning: [
+          "bg-warning/15",
+          "border-2 border-warning/70",
+          "text-warning",
+          "shadow-[0_0_20px_rgba(var(--warning-rgb),0.45),0_0_60px_rgba(var(--warning-rgb),0.18),inset_0_1px_0_rgba(var(--white-rgb),0.20)]",
+          "hover:bg-warning/22",
+          "hover:border-warning",
+          "hover:shadow-[0_0_30px_rgba(var(--warning-rgb),0.60),0_0_80px_rgba(var(--warning-rgb),0.24),inset_0_1px_0_rgba(var(--white-rgb),0.25)]",
         ].join(" "),
 
         destructive: [
@@ -57,7 +67,7 @@ const buttonVariants = cva(
           "text-primary",
           "hover:bg-primary/10",
           "hover:border-primary",
-          "hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.35),inset_0_1px_0_rgba(255,255,255,0.15)]",
+          "hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.35),inset_0_1px_0_rgba(var(--white-rgb),0.15)]",
         ].join(" "),
 
         link: "text-primary underline-offset-4 hover:underline hover:text-primary/80 rounded-md",

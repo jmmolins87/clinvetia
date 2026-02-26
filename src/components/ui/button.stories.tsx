@@ -25,7 +25,7 @@ El color Primary es **Green** en dark mode y **Cyan** en light mode.
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "secondary", "ghost", "destructive", "accent", "outline", "link"],
+      options: ["default", "secondary", "warning", "ghost", "destructive", "accent", "outline", "link"],
       description: "Variante visual del botón",
       table: {
         defaultValue: { summary: "default" },
@@ -96,6 +96,17 @@ export const Destructive: Story = {
         code: `import { Button } from "@/components/ui/button"
 
 <Button variant="destructive">Delete</Button>`,
+      },
+    },
+  },
+}
+
+export const Warning: Story = {
+  args: { children: "Review", variant: "warning" },
+  parameters: {
+    docs: {
+      description: {
+        story: "Variante warning (amber) para acciones de atención como desactivar o revisar.",
       },
     },
   },
@@ -196,6 +207,7 @@ import { Zap, Plus, ArrowRight, Trash2 } from "lucide-react"
   <Button className="gap-2"><Icon icon={Zap} size="sm" />Launch</Button>
   <Button variant="accent" className="gap-2"><Icon icon={Plus} size="sm" />Add collaborator</Button>
   <Button variant="outline" className="gap-2"><Icon icon={ArrowRight} size="sm" />Continue</Button>
+  <Button variant="warning" className="gap-2"><Icon icon={ArrowRight} size="sm" />Review</Button>
   <Button variant="destructive" className="gap-2"><Icon icon={Trash2} size="sm" />Delete</Button>
 </div>`,
       },
@@ -206,6 +218,7 @@ import { Zap, Plus, ArrowRight, Trash2 } from "lucide-react"
       <Button className="gap-2"><Icon icon={Zap} size="sm" />Launch</Button>
       <Button variant="accent" className="gap-2"><Icon icon={Plus} size="sm" />Add collaborator</Button>
       <Button variant="outline" className="gap-2"><Icon icon={ArrowRight} size="sm" />Continue</Button>
+      <Button variant="warning" className="gap-2"><Icon icon={ArrowRight} size="sm" />Review</Button>
       <Button variant="destructive" className="gap-2"><Icon icon={Trash2} size="sm" />Delete</Button>
     </div>
   ),
@@ -251,6 +264,7 @@ export const AllVariants: Story = {
   <Button variant="default" className="w-52 justify-start">default</Button>
   <Button variant="secondary" className="w-52 justify-start">secondary</Button>
   <Button variant="accent" className="w-52 justify-start">accent</Button>
+  <Button variant="warning" className="w-52 justify-start">warning</Button>
   <Button variant="ghost" className="w-52 justify-start">ghost</Button>
   <Button variant="outline" className="w-52 justify-start">outline</Button>
   <Button variant="destructive" className="w-52 justify-start">destructive</Button>
@@ -261,7 +275,7 @@ export const AllVariants: Story = {
   },
   render: () => (
     <div className="flex flex-col gap-3 p-6">
-      {(["default", "secondary", "accent", "ghost", "outline", "destructive", "link"] as const).map(
+      {(["default", "secondary", "accent", "warning", "ghost", "outline", "destructive", "link"] as const).map(
         (v) => <Button key={v} variant={v} className="justify-start">{v}</Button>
       )}
     </div>

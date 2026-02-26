@@ -1,0 +1,90 @@
+export const DEMO_BOOKINGS = [
+  {
+    id: "DEMO-001",
+    date: "2026-03-03",
+    time: "10:00",
+    duration: 45,
+    status: "confirmed",
+    nombre: "Dra. Ana Martín",
+    telefono: "+34 612 345 678",
+    clinica: "Clínica Central",
+    email: "demo1@clinica.com",
+  },
+  {
+    id: "DEMO-002",
+    date: "2026-03-04",
+    time: "12:30",
+    duration: 30,
+    status: "pending",
+    nombre: "Dr. Luis Pérez",
+    telefono: "+34 611 222 333",
+    clinica: "Vet Norte",
+    email: "demo2@clinica.com",
+  },
+  {
+    id: "DEMO-003",
+    date: "2026-03-05",
+    time: "16:00",
+    duration: 60,
+    status: "expired",
+    nombre: "Dra. Marta Ruiz",
+    telefono: "+34 644 111 000",
+    clinica: "Hospital Vet Sur",
+    email: "demo3@clinica.com",
+  },
+]
+
+export const DEMO_CONTACTS = [
+  {
+    id: "CNT-001",
+    nombre: "Dra. Ana Martin",
+    email: "ana@clinica.com",
+    telefono: "+34 612 345 678",
+    clinica: "Clinica Central",
+    mensaje: "Quiero revisar la integracion con recordatorios y recepcion de leads desde web.",
+    roi: {
+      monthlyPatients: 420,
+      averageTicket: 68,
+      conversionLoss: 16,
+      roi: 230,
+    },
+    booking: {
+      id: "DEMO-001",
+      date: "2026-03-03T09:00:00.000Z",
+      time: "10:00",
+      duration: 45,
+      status: "confirmed",
+    },
+    createdAt: "2026-03-01T10:00:00.000Z",
+  },
+  {
+    id: "CNT-002",
+    nombre: "Dr. Luis Perez",
+    email: "luis@veterinaria.com",
+    telefono: "+34 611 222 333",
+    clinica: "Vet Norte",
+    mensaje: "Nos interesa una demo enfocada en captacion y filtros de urgencia.",
+    roi: {
+      monthlyPatients: 260,
+      averageTicket: 59,
+      conversionLoss: 12,
+      roi: 145,
+    },
+    booking: {
+      id: "DEMO-002",
+      date: "2026-03-04T11:30:00.000Z",
+      time: "12:30",
+      duration: 30,
+      status: "pending",
+    },
+    createdAt: "2026-03-02T12:15:00.000Z",
+  },
+]
+
+export const DEMO_OVERVIEW = {
+  totalBookings: 42,
+  confirmedBookings: 30,
+  pendingBookings: 8,
+  expiredBookings: 4,
+  cancelledBookings: 0,
+}

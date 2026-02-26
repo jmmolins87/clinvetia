@@ -51,7 +51,7 @@ const toastVariants = cva(
     "space-x-4 overflow-hidden",
     "rounded-2xl border p-4 pr-8",
     "backdrop-blur-xl",
-    "shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_32px_rgba(0,0,0,0.50)]",
+    "shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.12),0_8px_32px_rgba(var(--black-rgb),0.50)]",
     "data-[swipe=cancel]:translate-x-0",
     "data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]",
     "data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]",

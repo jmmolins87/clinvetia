@@ -67,7 +67,7 @@ export function SectionBackground({ variant = "primary", className }: SectionBac
       )}
       
       {/* Sutil malla de puntos para textura */}
-      <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:32px_32px] dark:bg-[radial-gradient(#ffffff03_1px,transparent_1px)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(rgba(var(--white-rgb),0.08)_1px,transparent_1px)] [background-size:32px_32px] dark:bg-[radial-gradient(rgba(var(--white-rgb),0.03)_1px,transparent_1px)]" />
     </div>
   )
 }

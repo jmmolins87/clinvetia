@@ -11,7 +11,6 @@ export function sanitizeInput(input: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;")
-    .trim()
 }
 
 /**

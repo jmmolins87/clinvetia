@@ -150,6 +150,16 @@ function DarkPaletteContent() {
         </div>
       </Section>
 
+      <Section title="Field Surface Tokens">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Swatch name="Field BG" variable="--field-bg" />
+          <Swatch name="Field Border" variable="--field-border" />
+          <Swatch name="Field Icon BG" variable="--field-icon-bg" />
+          <Swatch name="Field Icon Border" variable="--field-icon-border" />
+          <Swatch name="Field Icon BG Hover" variable="--field-icon-bg-hover" />
+        </div>
+      </Section>
+
       <Section title="Tipografía">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <Swatch name="Foreground" variable="--foreground" hex="#ededed" />
@@ -184,6 +194,8 @@ function DarkPaletteContent() {
           <RGBSwatch name="Destructive RGB" variable="--destructive-rgb" value="245, 87, 108" />
           <RGBSwatch name="Success RGB" variable="--success-rgb" value="67, 233, 123" />
           <RGBSwatch name="Warning RGB" variable="--warning-rgb" value="245, 158, 11" />
+          <RGBSwatch name="White RGB" variable="--white-rgb" value="255, 255, 255" />
+          <RGBSwatch name="Black RGB" variable="--black-rgb" value="0, 0, 0" />
         </div>
       </Section>
     </div>
@@ -228,6 +240,16 @@ function LightPaletteContent() {
           <SwatchLight name="Card" hex="#ffffff" variable="--card" dark />
           <SwatchLight name="Muted" hex="#e8edf3" variable="--muted" dark />
           <SwatchLight name="Border" hex="#cbd5e1" variable="--border" dark />
+        </div>
+      </Section>
+
+      <Section title="Field Surface Tokens">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <SwatchLight name="Field BG" hex="rgba(255,255,255,0.05)" variable="--field-bg" dark />
+          <SwatchLight name="Field Border" hex="rgba(255,255,255,0.14)" variable="--field-border" dark />
+          <SwatchLight name="Field Icon BG" hex="rgba(255,255,255,0.05)" variable="--field-icon-bg" dark />
+          <SwatchLight name="Field Icon Border" hex="rgba(255,255,255,0.10)" variable="--field-icon-border" dark />
+          <SwatchLight name="Field Icon BG Hover" hex="rgba(255,255,255,0.10)" variable="--field-icon-bg-hover" dark />
         </div>
       </Section>
 

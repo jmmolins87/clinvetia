@@ -1,0 +1,220 @@
+import { NextResponse } from "next/server"
+import { z } from "zod"
+import { dbConnect } from "@/lib/db"
+import { Booking } from "@/models/Booking"
+import { Contact } from "@/models/Contact"
+import { Session } from "@/models/Session"
+import { sendBrevoEmail } from "@/lib/brevo"
+import {
+  leadSummaryEmail,
+} from "@/lib/emails"
+import { buildICS } from "@/lib/ics"
+
+const contactSchema = z.object({
+  nombre: z.string().min(3).max(50),
+  email: z.string().email().max(100),
+  telefono: z.string().min(9).max(15),
+  clinica: z.string().min(2).max(60),
+  mensaje: z.string().min(10).max(500),
+  bookingId: z.string().optional(),
+  accessToken: z.string().optional(),
+  roi: z
+    .object({
+      monthlyPatients: z.number().optional(),
+      averageTicket: z.number().optional(),
+      conversionLoss: z.number().optional(),
+      roi: z.number().optional(),
+    })
+    .optional(),
+  sessionToken: z.string().optional().nullable(),
+})
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const parsed = contactSchema.parse(body)
+
+    await dbConnect()
+
+    let bookingId: string | null = null
+    let bookingForEmail: { date: Date; time: string; duration: number } | null = null
+
+    if (parsed.bookingId) {
+      if (!parsed.accessToken) {
+        return NextResponse.json({ error: "Missing access token" }, { status: 400 })
+      }
+
+      const booking = await Booking.findById(parsed.bookingId)
+
+      if (!booking) {
+        return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+      }
+
+      if (booking.accessToken !== parsed.accessToken) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+      }
+
+      const existingContact = await Contact.findOne({ bookingId: booking._id }).lean()
+      if (existingContact && new Date(booking.demoExpiresAt).getTime() > Date.now()) {
+        return NextResponse.json(
+          { error: "Ya hemos recibido tus datos para esta demo. Gestiona cambios desde el correo de confirmacion." },
+          { status: 409 }
+        )
+      }
+
+      if (new Date(booking.formExpiresAt).getTime() < Date.now()) {
+        return NextResponse.json({ error: "Booking form expired" }, { status: 410 })
+      }
+
+      bookingId = booking._id.toString()
+      bookingForEmail = { date: booking.date, time: booking.time, duration: booking.duration }
+    } else if (parsed.sessionToken) {
+      const session = await Session.findOne({ token: parsed.sessionToken }).lean()
+      if (!session) {
+        return NextResponse.json({ error: "Session not found" }, { status: 404 })
+      }
+      if (new Date(session.expiresAt).getTime() < Date.now()) {
+        return NextResponse.json({ error: "Session expired" }, { status: 410 })
+      }
+    } else {
+      return NextResponse.json({ error: "Missing booking or session" }, { status: 400 })
+    }
+
+    const createdContact = await Contact.create({
+      nombre: parsed.nombre,
+      email: parsed.email,
+      telefono: parsed.telefono,
+      clinica: parsed.clinica,
+      mensaje: parsed.mensaje,
+      bookingId,
+      sessionToken: parsed.sessionToken ?? null,
+      roi: parsed.roi ?? {},
+    })
+
+    const supportEmail = process.env.BREVO_REPLY_TO || "info@clinvetia.com"
+    const brandName = "Clinvetia"
+
+    let emailResult: { ok: boolean; error?: string } | null = null
+    let internalEmailResult: { ok: boolean; error?: string } | null = null
+    let bookingForInternal:
+      | { dateLabel: string; timeLabel: string; duration: number }
+      | null = null
+
+    if (bookingForEmail) {
+      const [hour, min] = bookingForEmail.time.split(":").map(Number)
+      const start = new Date(bookingForEmail.date)
+      start.setHours(hour, min, 0, 0)
+      const end = new Date(start)
+      end.setMinutes(end.getMinutes() + bookingForEmail.duration)
+
+      const dateLabel = start.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+      const timeLabel = bookingForEmail.time
+      bookingForInternal = {
+        dateLabel,
+        timeLabel,
+        duration: bookingForEmail.duration,
+      }
+
+      const ics = buildICS({
+        uid: bookingId || crypto.randomUUID(),
+        start,
+        end,
+        summary: "Demo Clinvetia",
+        description: "Demo personalizada con Clinvetia",
+        location: "Videollamada",
+        organizerEmail: supportEmail,
+        attendeeEmail: parsed.email,
+      })
+
+      emailResult = await sendBrevoEmail({
+        to: [{ email: parsed.email, name: parsed.nombre }],
+        subject: "Tu demo esta confirmada",
+        htmlContent: leadSummaryEmail({
+          brandName,
+          nombre: parsed.nombre,
+          email: parsed.email,
+          telefono: parsed.telefono,
+          clinica: parsed.clinica,
+          mensaje: parsed.mensaje,
+          supportEmail,
+          booking: bookingForInternal,
+          roi: parsed.roi ?? null,
+        }),
+        attachments: [
+          {
+            name: "clinvetia-demo.ics",
+            content: Buffer.from(ics).toString("base64"),
+            contentType: "text/calendar",
+          },
+        ],
+        replyTo: { email: supportEmail },
+      })
+    } else {
+      emailResult = await sendBrevoEmail({
+        to: [{ email: parsed.email, name: parsed.nombre }],
+        subject: "Resumen de tu solicitud",
+        htmlContent: leadSummaryEmail({
+          brandName,
+          nombre: parsed.nombre,
+          email: parsed.email,
+          telefono: parsed.telefono,
+          clinica: parsed.clinica,
+          mensaje: parsed.mensaje,
+          supportEmail,
+          booking: bookingForInternal,
+          roi: parsed.roi ?? null,
+        }),
+        replyTo: { email: supportEmail },
+      })
+    }
+
+    if (emailResult && !emailResult.ok) {
+      console.error("Brevo email delivery failed", {
+        hasBooking: Boolean(bookingForEmail),
+        recipient: parsed.email,
+        error: emailResult.error,
+      })
+      return NextResponse.json(
+        { error: emailResult.error || "Email delivery failed" },
+        { status: 502 }
+      )
+    }
+
+    internalEmailResult = await sendBrevoEmail({
+      to: [{ email: supportEmail, name: brandName }],
+      subject: bookingForEmail ? "Nuevo lead con reserva demo" : "Nuevo lead de contacto",
+      htmlContent: leadSummaryEmail({
+        supportEmail,
+        brandName,
+        nombre: parsed.nombre,
+        email: parsed.email,
+        telefono: parsed.telefono,
+        clinica: parsed.clinica,
+        mensaje: parsed.mensaje,
+        booking: bookingForInternal,
+        roi: parsed.roi ?? null,
+      }),
+      replyTo: { email: parsed.email, name: parsed.nombre },
+    })
+
+    if (!internalEmailResult.ok) {
+      console.error("Brevo internal email delivery failed", {
+        recipient: supportEmail,
+        leadEmail: parsed.email,
+        error: internalEmailResult.error,
+      })
+      return NextResponse.json(
+        { error: internalEmailResult.error || "Internal email delivery failed" },
+        { status: 502 }
+      )
+    }
+
+    return NextResponse.json({ ok: true, contactId: createdContact._id.toString() })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid payload", details: error.flatten() }, { status: 400 })
+    }
+    console.error("Contact API error", error)
+    return NextResponse.json({ error: "Server error" }, { status: 500 })
+  }
+}
