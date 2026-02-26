@@ -10,6 +10,9 @@ const meta = {
   title: "Design System/SkeletonWrapper",
   component: SkeletonWrapper,
   tags: ["autodocs"],
+  args: {
+    children: " ",
+  },
   parameters: {
     layout: "centered",
   },
