@@ -349,7 +349,7 @@ export default function AdminBookingsPage() {
               {[
                 { key: "all", label: "Todas", count: counts.total, variant: "outline" as const },
                 { key: "pending", label: "Pendientes", count: counts.pending, variant: "warning" as const },
-                { key: "confirmed", label: "Confirmadas", count: counts.confirmed, variant: "primary" as const },
+                { key: "confirmed", label: "Confirmadas", count: counts.confirmed, variant: "default" as const },
                 { key: "cancelled", label: "Canceladas", count: counts.cancelled, variant: "secondary" as const },
                 { key: "expired", label: "Expiradas", count: counts.expired, variant: "destructive" as const },
               ].map((filter) => (
