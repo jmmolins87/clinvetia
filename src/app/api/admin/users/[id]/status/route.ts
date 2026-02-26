@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { dbConnect } from "@/lib/db"
 import { User } from "@/models/User"
@@ -10,17 +10,21 @@ const schema = z.object({
   status: z.enum(["active", "disabled"]),
 })
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const auth = await requireAdmin(req)
   if (!auth.ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   try {
+    const { id } = await params
     const body = await req.json()
     const parsed = schema.parse(body)
 
     await dbConnect()
-    const user = await User.findById(params.id)
+    const user = await User.findById(id)
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
@@ -37,7 +41,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       adminId: auth.data.admin.id,
       action: parsed.status === "disabled" ? "DISABLE_USER" : "ENABLE_USER",
       targetType: "user",
-      targetId: params.id,
+      targetId: id,
       metadata: { email: user.email, status: parsed.status },
     })
 

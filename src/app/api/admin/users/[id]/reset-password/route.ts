@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { dbConnect } from "@/lib/db"
 import { User } from "@/models/User"
 import { hashPassword } from "@/lib/auth"
@@ -9,16 +9,20 @@ import { AdminUserActionToken } from "@/models/AdminUserActionToken"
 import { sendBrevoEmail } from "@/lib/brevo"
 import { adminUserResetPasswordEmail } from "@/lib/emails"
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const auth = await requireAdmin(req)
   if (!auth.ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   try {
+    const { id } = await params
     await req.json().catch(() => null)
 
     await dbConnect()
-    const user = await User.findById(params.id)
+    const user = await User.findById(id)
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
@@ -72,7 +76,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       adminId: auth.data.admin.id,
       action: "REQUEST_RESET_PASSWORD",
       targetType: "user",
-      targetId: params.id,
+      targetId: id,
       metadata: { email: user.email, expiresAt: expiresAt.toISOString() },
     })
 
