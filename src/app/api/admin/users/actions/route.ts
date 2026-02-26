@@ -11,6 +11,19 @@ import { adminUserInviteEmail, adminUserResetPasswordEmail } from "@/lib/emails"
 import { hashPassword } from "@/lib/auth"
 import { recordAdminAudit } from "@/lib/admin-audit"
 
+interface AdminTargetUserRoleView {
+  _id: { toString(): string }
+  role: string
+  email: string
+  name: string
+}
+
+interface AdminTargetUserContactView {
+  _id: { toString(): string }
+  email: string
+  name: string
+}
+
 const actionSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("cancel"),
@@ -102,7 +115,10 @@ export async function POST(req: Request) {
     }
 
     if (actionToken.type === "reset_user_password" && actionToken.payload?.targetUserId) {
-      const targetUser = await User.findById(actionToken.payload.targetUserId).select("role email name").lean()
+      const rawTargetUser = await User.findById(actionToken.payload.targetUserId)
+        .select("role email name")
+        .lean<AdminTargetUserRoleView>()
+      const targetUser = Array.isArray(rawTargetUser) ? rawTargetUser[0] : rawTargetUser
       if (!targetUser) {
         return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
       }
@@ -162,7 +178,10 @@ export async function POST(req: Request) {
       }
     } else {
       const email = actionToken.payload?.email || ""
-      const user = actionToken.payload?.targetUserId ? await User.findById(actionToken.payload.targetUserId).select("name email").lean() : null
+      const rawUser = actionToken.payload?.targetUserId
+        ? await User.findById(actionToken.payload.targetUserId).select("name email").lean<AdminTargetUserContactView>()
+        : null
+      const user = rawUser ? (Array.isArray(rawUser) ? rawUser[0] : rawUser) : null
       const emailResult = await sendBrevoEmail({
         to: [{ email, name: user?.name || email }],
         subject: "Confirma el cambio de password de tu acceso",

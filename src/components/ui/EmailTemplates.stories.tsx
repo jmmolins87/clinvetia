@@ -53,6 +53,7 @@ const mockRoi = {
 }
 
 export const DemoConfirmation: Story = {
+  args: { html: "" },
   render: () => (
     <EmailPreview
       html={bookingConfirmationEmail({
@@ -68,6 +69,7 @@ export const DemoConfirmation: Story = {
 }
 
 export const ContactConfirmation: Story = {
+  args: { html: "" },
   render: () => (
     <EmailPreview
       html={contactConfirmationEmail({
@@ -80,6 +82,7 @@ export const ContactConfirmation: Story = {
 }
 
 export const LeadSummary: Story = {
+  args: { html: "" },
   render: () => (
     <EmailPreview
       html={leadSummaryEmail({
@@ -98,6 +101,7 @@ export const LeadSummary: Story = {
 }
 
 export const InternalLeadNotification: Story = {
+  args: { html: "" },
   render: () => (
     <EmailPreview
       html={internalLeadNotificationEmail({
@@ -115,6 +119,7 @@ export const InternalLeadNotification: Story = {
 }
 
 export const UserInvite: Story = {
+  args: { html: "" },
   render: () => (
     <EmailPreview
       html={adminUserInviteEmail({
@@ -131,6 +136,7 @@ export const UserInvite: Story = {
 }
 
 export const UserResetPassword: Story = {
+  args: { html: "" },
   render: () => (
     <EmailPreview
       html={adminUserResetPasswordEmail({
@@ -144,4 +150,3 @@ export const UserResetPassword: Story = {
     />
   ),
 }
-

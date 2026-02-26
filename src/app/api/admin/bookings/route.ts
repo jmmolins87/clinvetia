@@ -103,7 +103,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 })
     }
 
-    const contact = await Contact.findOne({ bookingId: { $in: [booking._id, String(booking._id)] } }).lean()
+    const rawContact = await Contact.findOne({ bookingId: { $in: [booking._id, String(booking._id)] } }).lean()
+    const contact = Array.isArray(rawContact) ? rawContact[0] : rawContact
     const supportEmail = process.env.BREVO_REPLY_TO || "info@clinvetia.com"
     const brandName = "Clinvetia"
 

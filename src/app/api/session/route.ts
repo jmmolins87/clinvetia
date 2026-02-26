@@ -3,6 +3,18 @@ import { z } from "zod"
 import { dbConnect } from "@/lib/db"
 import { Session } from "@/models/Session"
 
+interface SessionLeanView {
+  _id: { toString(): string }
+  token: string
+  expiresAt: Date | string
+  roi?: {
+    monthlyPatients?: number | null
+    averageTicket?: number | null
+    conversionLoss?: number | null
+    roi?: number | null
+  }
+}
+
 const sessionSchema = z.object({
   roi: z
     .object({
@@ -53,7 +65,8 @@ export async function GET(req: Request) {
     }
 
     await dbConnect()
-    const session = await Session.findOne({ token }).lean()
+    const rawSession = await Session.findOne({ token }).lean<SessionLeanView>()
+    const session = Array.isArray(rawSession) ? rawSession[0] : rawSession
 
     if (!session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 })

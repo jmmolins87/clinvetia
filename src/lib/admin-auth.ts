@@ -5,6 +5,22 @@ import { type AdminRole, isSuperAdmin as isSuperAdminRole } from "@/lib/admin-ro
 
 const COOKIE_NAME = process.env.ADMIN_COOKIE_NAME || "clinvetia_admin_session"
 
+interface AdminSessionLeanView {
+  _id: { toString(): string }
+  token: string
+  adminId: { toString(): string } | string
+  role: string
+  expiresAt: Date | string
+}
+
+interface AdminUserLeanView {
+  _id: { toString(): string }
+  email: string
+  name: string
+  role: string
+  status: "active" | "disabled"
+}
+
 function getCookie(req: Request, name: string) {
   const header = req.headers.get("cookie")
   if (!header) return null
@@ -41,11 +57,13 @@ export async function getAdminFromRequest(req: Request) {
   if (!token) return null
 
   await dbConnect()
-  const session = await AdminSession.findOne({ token }).lean()
+  const rawSession = await AdminSession.findOne({ token }).lean<AdminSessionLeanView>()
+  const session = Array.isArray(rawSession) ? rawSession[0] : rawSession
   if (!session) return null
   if (new Date(session.expiresAt).getTime() < Date.now()) return null
 
-  const admin = await User.findById(session.adminId).lean()
+  const rawAdmin = await User.findById(session.adminId).lean<AdminUserLeanView>()
+  const admin = Array.isArray(rawAdmin) ? rawAdmin[0] : rawAdmin
   if (!admin || admin.status !== "active") return null
 
   return {

@@ -4,6 +4,30 @@ import { dbConnect } from "@/lib/db"
 import { Booking } from "@/models/Booking"
 import { Contact } from "@/models/Contact"
 
+interface BookingLeanView {
+  _id: { toString(): string }
+  date: Date
+  time: string
+  duration: number
+  status: "pending" | "confirmed" | "expired" | "cancelled"
+  sessionToken?: string | null
+  accessToken: string
+  expiresAt: Date
+  formExpiresAt: Date
+  demoExpiresAt: Date
+}
+
+interface ContactLeanView {
+  _id: { toString(): string }
+  nombre?: string
+  email?: string
+  telefono?: string
+  clinica?: string
+  mensaje?: string
+  roi?: unknown
+  createdAt?: Date | string
+}
+
 const bookingSchema = z.object({
   date: z.string().datetime(),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
@@ -43,11 +67,12 @@ export async function POST(req: Request) {
     end.setHours(23, 59, 59, 999)
 
     if (parsed.sessionToken) {
-      const activeBooking = await Booking.findOne({
+      const rawActiveBooking = await Booking.findOne({
         sessionToken: parsed.sessionToken,
         demoExpiresAt: { $gt: new Date() },
         status: { $in: ["pending", "confirmed"] },
-      }).lean()
+      }).lean<BookingLeanView>()
+      const activeBooking = Array.isArray(rawActiveBooking) ? rawActiveBooking[0] : rawActiveBooking
 
       if (activeBooking) {
         return NextResponse.json(
@@ -61,11 +86,12 @@ export async function POST(req: Request) {
       }
     }
 
-    const conflict = await Booking.findOne({
+    const rawConflict = await Booking.findOne({
       date: { $gte: start, $lte: end },
       time: parsed.time,
       status: "confirmed",
-    }).lean()
+    }).lean<BookingLeanView>()
+    const conflict = Array.isArray(rawConflict) ? rawConflict[0] : rawConflict
 
     if (conflict) {
       return NextResponse.json({ error: "Slot unavailable" }, { status: 409 })
@@ -113,13 +139,14 @@ export async function GET(req: Request) {
     await dbConnect()
 
     if (sessionToken && (!bookingId || !token)) {
-      const activeBooking = await Booking.findOne({
+      const rawActiveBooking = await Booking.findOne({
         sessionToken,
         demoExpiresAt: { $gt: new Date() },
         status: { $in: ["pending", "confirmed"] },
       })
         .sort({ createdAt: -1 })
-        .lean()
+        .lean<BookingLeanView>()
+      const activeBooking = Array.isArray(rawActiveBooking) ? rawActiveBooking[0] : rawActiveBooking
 
       if (!activeBooking) {
         return NextResponse.json({ error: "Active booking not found" }, { status: 404 })
@@ -128,12 +155,12 @@ export async function GET(req: Request) {
       const existingContact =
         (await Contact.findOne({ bookingId: { $in: [activeBooking._id, activeBooking._id.toString()] } })
           .select("nombre email telefono clinica mensaje roi createdAt")
-          .lean()) ||
+          .lean<ContactLeanView>()) ||
         (activeBooking.sessionToken
           ? await Contact.findOne({ sessionToken: activeBooking.sessionToken })
               .sort({ createdAt: -1 })
               .select("nombre email telefono clinica mensaje roi createdAt")
-              .lean()
+              .lean<ContactLeanView>()
           : null)
 
       return NextResponse.json({
@@ -165,7 +192,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing bookingId/token or sessionToken" }, { status: 400 })
     }
 
-    const booking = await Booking.findById(bookingId).lean()
+    const rawBooking = await Booking.findById(bookingId).lean<BookingLeanView>()
+    const booking = Array.isArray(rawBooking) ? rawBooking[0] : rawBooking
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 })
@@ -178,12 +206,12 @@ export async function GET(req: Request) {
     const existingContact =
       (await Contact.findOne({ bookingId: { $in: [booking._id, booking._id.toString()] } })
         .select("nombre email telefono clinica mensaje roi createdAt")
-        .lean()) ||
+        .lean<ContactLeanView>()) ||
       (booking.sessionToken
         ? await Contact.findOne({ sessionToken: booking.sessionToken })
             .sort({ createdAt: -1 })
             .select("nombre email telefono clinica mensaje roi createdAt")
-            .lean()
+            .lean<ContactLeanView>()
         : null)
 
     return NextResponse.json({

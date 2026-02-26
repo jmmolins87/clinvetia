@@ -18,7 +18,7 @@ type Story = StoryObj<typeof meta>
 export const Variants: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
-      <Toggle defaultPressed variant="accent">Accent</Toggle>
+      <Toggle pressed variant="accent">Accent</Toggle>
       <Toggle variant="outline">Outline</Toggle>
       <Toggle variant="warning">Warning</Toggle>
       <Toggle variant="secondary">Secondary</Toggle>
@@ -26,4 +26,3 @@ export const Variants: Story = {
     </div>
   ),
 }
-

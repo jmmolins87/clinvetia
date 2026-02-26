@@ -10,6 +10,16 @@ import {
 } from "@/lib/emails"
 import { buildICS } from "@/lib/ics"
 
+interface SessionLeanView {
+  _id: { toString(): string }
+  token: string
+  expiresAt: Date | string
+}
+
+interface ContactExistsLeanView {
+  _id: { toString(): string }
+}
+
 const contactSchema = z.object({
   nombre: z.string().min(3).max(50),
   email: z.string().email().max(100),
@@ -54,7 +64,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
       }
 
-      const existingContact = await Contact.findOne({ bookingId: booking._id }).lean()
+      const rawExistingContact = await Contact.findOne({ bookingId: booking._id }).lean<ContactExistsLeanView>()
+      const existingContact = Array.isArray(rawExistingContact) ? rawExistingContact[0] : rawExistingContact
       if (existingContact && new Date(booking.demoExpiresAt).getTime() > Date.now()) {
         return NextResponse.json(
           { error: "Ya hemos recibido tus datos para esta demo. Gestiona cambios desde el correo de confirmacion." },
@@ -69,7 +80,8 @@ export async function POST(req: Request) {
       bookingId = booking._id.toString()
       bookingForEmail = { date: booking.date, time: booking.time, duration: booking.duration }
     } else if (parsed.sessionToken) {
-      const session = await Session.findOne({ token: parsed.sessionToken }).lean()
+      const rawSession = await Session.findOne({ token: parsed.sessionToken }).lean<SessionLeanView>()
+      const session = Array.isArray(rawSession) ? rawSession[0] : rawSession
       if (!session) {
         return NextResponse.json({ error: "Session not found" }, { status: 404 })
       }

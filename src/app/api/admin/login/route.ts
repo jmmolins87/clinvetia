@@ -6,6 +6,15 @@ import { verifyPassword } from "@/lib/auth"
 import { createAdminSession, getAdminCookieName } from "@/lib/admin-auth"
 import { type AdminRole } from "@/lib/admin-roles"
 
+interface LoginUser {
+  _id: { toString(): string }
+  email: string
+  name: string
+  role: string
+  passwordHash: string
+  status: "active" | "disabled"
+}
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
@@ -18,7 +27,8 @@ export async function POST(req: Request) {
 
     await dbConnect()
 
-    const user = await User.findOne({ email: parsed.email }).lean()
+    const rawUser = await User.findOne({ email: parsed.email }).lean<LoginUser>()
+    const user = Array.isArray(rawUser) ? rawUser[0] : rawUser
     if (!user) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
@@ -31,13 +41,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
+    const userId = String(user._id)
+
     const session = await createAdminSession({
-      adminId: String(user._id),
+      adminId: userId,
       role: user.role as AdminRole,
     })
 
     const res = NextResponse.json({
-      id: user._id.toString(),
+      id: userId,
       email: user.email,
       name: user.name,
       role: user.role,

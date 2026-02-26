@@ -413,11 +413,12 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
     if (activeBookingBlock) return
 
     const sessionToken = storage.get<string | null>("local", "roi_access_token", null)
-    if (!isValidAccessToken(sessionToken)) return
+    const validSessionToken = isValidAccessToken(sessionToken) ? sessionToken : null
+    if (!validSessionToken) return
 
     const recoverActiveBooking = async () => {
       try {
-        const booking = await getActiveBookingBySession(sessionToken)
+        const booking = await getActiveBookingBySession(validSessionToken)
         if (!booking.accessToken) return
 
         storage.set("local", "booking_access_token", booking.accessToken)
@@ -500,8 +501,8 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
         const sessionToken = store.accessToken ?? store.token ?? ""
         const params = new URLSearchParams({
           booking_id: response.bookingId,
-          booking_token: response.accessToken,
         })
+        if (response.accessToken) params.set("booking_token", response.accessToken)
         if (sessionToken) params.set("session_token", sessionToken)
         router.push(`/contacto?${params.toString()}`)
       }, 2500)
