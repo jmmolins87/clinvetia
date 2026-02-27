@@ -8,6 +8,7 @@ import { GlobalBackground } from "@/components/ui/global-background";
 import { GlobalBookingTimer } from "@/components/marketing/global-booking-timer";
 import { ExitIntentGuard } from "@/components/marketing/exit-intent-guard";
 import { ChatPortal } from "@/components/marketing/chat-portal";
+import { CookieConsent } from "@/components/marketing/cookie-consent";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -48,6 +49,7 @@ export default function RootLayout({
               <GlobalBookingTimer />
               <ExitIntentGuard />
               <ChatPortal />
+              <CookieConsent />
               {children}
             </TranslationSkeletonProvider>
           </LoadingProvider>
