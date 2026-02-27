@@ -47,6 +47,9 @@ export async function GET(req: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid query" }, { status: 400 })
     }
-    return NextResponse.json({ error: "Server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Server error" },
+      { status: 500 }
+    )
   }
 }
