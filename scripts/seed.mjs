@@ -46,7 +46,7 @@ async function run() {
   )
 
   await User.updateOne(
-    { email: adminEmail },
+    { role: "superadmin" },
     {
       $set: {
         email: adminEmail,

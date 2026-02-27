@@ -42,7 +42,6 @@ export default function AdminBookingsPage() {
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "tomorrow" | "week">("all")
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const [rescheduleBooking, setRescheduleBooking] = useState<BookingRow | null>(null)
-  const [rescheduleSubmitting, setRescheduleSubmitting] = useState(false)
   const [deleteBookingTarget, setDeleteBookingTarget] = useState<BookingRow | null>(null)
 
   useEffect(() => {
@@ -195,7 +194,6 @@ export default function AdminBookingsPage() {
       throw new Error("Selecciona una cita para reagendar")
     }
     setError(null)
-    setRescheduleSubmitting(true)
     setUpdatingId(rescheduleBooking.id)
     try {
       const res = await fetch("/api/admin/bookings", {
@@ -223,7 +221,6 @@ export default function AdminBookingsPage() {
       setError(message)
       throw new Error(message)
     } finally {
-      setRescheduleSubmitting(false)
       setUpdatingId(null)
     }
   }

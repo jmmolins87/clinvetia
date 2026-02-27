@@ -184,8 +184,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="flex items-start gap-5 md:gap-6">
-        <aside className="hidden w-[280px] shrink-0 self-start lg:sticky lg:top-0 lg:block">
-            <GlassCard className="flex max-h-[100vh] flex-col overflow-y-auto p-5">
+        <aside className="hidden w-[280px] shrink-0 self-start sticky top-6 lg:block">
+          <div className="max-h-[calc(100vh-3rem)] overflow-y-auto">
+              <GlassCard className="flex flex-col p-5">
             <div className="space-y-4 border-b border-white/10 pb-5">
               <div className="space-y-2.5">
                 <div className="text-lg font-semibold leading-tight">
@@ -248,7 +249,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
 
             </div>
-            </GlassCard>
+              </GlassCard>
+          </div>
         </aside>
 
         <div className="min-w-0 flex-1">

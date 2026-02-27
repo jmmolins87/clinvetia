@@ -42,13 +42,6 @@ const TEAM_MEMBERS = [
   { initials: "PR", variant: "default" as const },
 ]
 
-const TIME_SLOTS = [
-  "09:00", "09:30", "10:00", "10:30",
-  "11:00", "11:30", "12:00", "12:30",
-  "15:00", "15:30", "16:00", "16:30",
-  "17:00", "17:30",
-]
-
 const WEEK_DAYS = ["L", "M", "X", "J", "V", "S", "D"]
 
 const MONTHS = [
@@ -351,10 +344,20 @@ export interface BookingCalendarProps {
 
 export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
   const router = useRouter()
+  const today = new Date()
+  const [year, setYear] = useState(today.getFullYear())
+  const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [duration, setDuration] = useState(45)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [desktopStep, setDesktopStep] = useState<"calendar" | "confirm" | "success">("calendar")
+  const [slots, setSlots] = useState<string[]>([])
+  const [unavailable, setUnavailable] = useState<Set<string>>(new Set())
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null)
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [duplicateBookingDialogOpen, setDuplicateBookingDialogOpen] = useState(false)
   const [duplicateBookingDialogBookingId, setDuplicateBookingDialogBookingId] = useState<string | null>(null)
   const [activeBookingBlock, setActiveBookingBlock] = useState<{
@@ -469,11 +472,79 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
       setSelectedDate(date)
       setSelectedTime(saved.time)
       setDuration(saved.duration)
+      setYear(date.getFullYear())
+      setMonth(date.getMonth())
       setShowSuccess(false)
+      setDesktopStep("confirm")
     }
   }, [activeBookingBlock])
 
+  useEffect(() => {
+    if (!selectedDate) {
+      setSlots([])
+      setUnavailable(new Set())
+      setAvailabilityError(null)
+      return
+    }
+
+    let mounted = true
+
+    const run = async () => {
+      setIsLoadingAvailability(true)
+      setAvailabilityError(null)
+      try {
+        const data = await getAvailability(selectedDate.toISOString())
+        if (!mounted) return
+        setSlots(data.slots ?? [])
+        setUnavailable(new Set(data.unavailable ?? []))
+      } catch (error) {
+        if (!mounted) return
+        setSlots([])
+        setUnavailable(new Set())
+        setAvailabilityError(error instanceof Error ? error.message : "No se pudieron cargar los horarios")
+      } finally {
+        if (mounted) setIsLoadingAvailability(false)
+      }
+    }
+
+    run()
+    return () => {
+      mounted = false
+    }
+  }, [selectedDate])
+
+  function handlePrevMonth() {
+    if (month === 0) {
+      setMonth(11)
+      setYear((v) => v - 1)
+      return
+    }
+    setMonth((v) => v - 1)
+  }
+
+  function handleNextMonth() {
+    if (month === 11) {
+      setMonth(0)
+      setYear((v) => v + 1)
+      return
+    }
+    setMonth((v) => v + 1)
+  }
+
+  function handleDateSelect(date: Date) {
+    setSelectedDate(date)
+    setSelectedTime(null)
+    setDesktopStep("calendar")
+  }
+
+  function handleTimeSelect(time: string) {
+    setSelectedTime(time)
+    setDesktopStep("calendar")
+  }
+
   async function handleConfirm(payload: BookingWizardSubmitPayload) {
+    setIsSubmitting(true)
+    setSubmitError(null)
     try {
       const store = useROIStore.getState()
       const response = await createBooking({
@@ -496,6 +567,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
       storage.set("local", "booking", response)
 
       setShowSuccess(true)
+      setDesktopStep("success")
 
       setTimeout(() => {
         const sessionToken = store.accessToken ?? store.token ?? ""
@@ -514,9 +586,10 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
         setDuplicateBookingDialogOpen(true)
       } else {
         setDuplicateBookingDialogBookingId(null)
-        throw new Error(message)
+        setSubmitError(message)
       }
     } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -587,43 +660,207 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
       {activeBookingBlock ? (
         <div className={cn("min-h-[8rem]", className)} aria-hidden />
       ) : (
-        <div className={cn("space-y-4", className)}>
-          <AnimatePresence mode="wait">
-            {showSuccess && selectedDate && selectedTime ? (
-              <GlassCard key="success" className="p-6">
-                <SuccessView date={selectedDate} time={selectedTime} />
-              </GlassCard>
-            ) : (
-              <motion.div
-                key="wizard"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-              >
-                <BookingWizard
-                  title="Reserva tu demo"
-                  subtitle="Selecciona un día, elige hora y confirma tu videollamada"
-                  confirmCtaLabel="Confirmar reserva"
-                  confirmingLabel="Confirmando..."
-                  initialDate={selectedDate}
-                  initialTime={selectedTime}
-                  initialDuration={duration}
-                  initialStep={selectedDate && selectedTime ? "confirm" : selectedDate ? "time" : "date"}
-                  loadAvailability={async (date) => getAvailability(date.toISOString())}
-                  onSubmit={handleConfirm}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="flex items-center justify-center gap-2 text-base text-muted-foreground">
-            <AvatarGroup size="xs" max={4}>
-              {TEAM_MEMBERS.map((m) => (
-                <Avatar key={m.initials} initials={m.initials} size="xs" variant={m.variant} />
-              ))}
-            </AvatarGroup>
-            <span>+120 demos realizadas este mes</span>
+        <>
+          <div className={cn("space-y-4 lg:hidden", className)}>
+            <AnimatePresence mode="wait">
+              {showSuccess && selectedDate && selectedTime ? (
+                <GlassCard key="success" className="p-6">
+                  <SuccessView date={selectedDate} time={selectedTime} />
+                </GlassCard>
+              ) : (
+                <motion.div
+                  key="wizard"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                >
+                  <BookingWizard
+                    title="Reserva tu demo"
+                    subtitle="Selecciona un día, elige hora y confirma tu videollamada"
+                    confirmCtaLabel="Confirmar reserva"
+                    confirmingLabel="Confirmando..."
+                    initialDate={selectedDate}
+                    initialTime={selectedTime}
+                    initialDuration={duration}
+                    initialStep={selectedDate && selectedTime ? "confirm" : selectedDate ? "time" : "date"}
+                    loadAvailability={async (date) => getAvailability(date.toISOString())}
+                    onSubmit={handleConfirm}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div className="flex items-center justify-center gap-2 text-base text-muted-foreground">
+              <AvatarGroup size="xs" max={4}>
+                {TEAM_MEMBERS.map((m) => (
+                  <Avatar key={m.initials} initials={m.initials} size="xs" variant={m.variant} />
+                ))}
+              </AvatarGroup>
+              <span>+120 demos realizadas este mes</span>
+            </div>
           </div>
-        </div>
+
+          <div className={cn("hidden gap-6 lg:grid lg:grid-cols-[1fr_360px]", className)}>
+            <GlassCard className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-base font-semibold uppercase tracking-widest text-muted-foreground">
+                    Reserva tu demo
+                  </p>
+                  <h2 className="mt-0.5 text-xl font-bold text-foreground">
+                    Elige día y hora
+                  </h2>
+                </div>
+                <AvatarGroup size="sm" max={3}>
+                  {TEAM_MEMBERS.map((m) => (
+                    <Avatar key={m.initials} initials={m.initials} variant={m.variant} />
+                  ))}
+                </AvatarGroup>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-base font-medium text-muted-foreground">Duración de la sesión</p>
+                <div className="flex gap-2">
+                  {DURATION_OPTIONS.map((opt) => (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      variant={duration === opt.value ? "default" : "ghost"}
+                      onClick={() => setDuration(opt.value)}
+                      className={cn(
+                        "flex-1 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all duration-150",
+                        duration === opt.value
+                          ? "border-primary/50 bg-primary/10 text-primary"
+                          : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                      )}
+                    >
+                      <p className="text-sm font-bold">{opt.label}</p>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <CalendarGrid
+                year={year}
+                month={month}
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                onPrev={handlePrevMonth}
+                onNext={handleNextMonth}
+              />
+
+              <div className="flex flex-wrap gap-4 text-base text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-primary/40 ring-1 ring-primary/60" />
+                  Disponible
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                  Seleccionado
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                  No disponible
+                </span>
+              </div>
+            </GlassCard>
+
+            <div className="flex flex-col gap-4">
+              <AnimatePresence mode="wait">
+                {desktopStep === "success" && selectedDate && selectedTime ? (
+                  <GlassCard key="success" className="flex-1 p-6">
+                    <SuccessView date={selectedDate} time={selectedTime} />
+                  </GlassCard>
+                ) : desktopStep === "confirm" && selectedDate && selectedTime ? (
+                  <GlassCard key="confirm" className="flex-1 p-6">
+                    <ConfirmationView
+                      date={selectedDate}
+                      time={selectedTime}
+                      duration={duration}
+                      isSubmitting={isSubmitting}
+                      error={submitError}
+                      onBack={() => setDesktopStep("calendar")}
+                      onConfirm={() => {
+                        if (!selectedDate || !selectedTime) return
+                        handleConfirm({ date: selectedDate, time: selectedTime, duration })
+                      }}
+                    />
+                  </GlassCard>
+                ) : (
+                  <motion.div
+                    key="slots"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="flex flex-1 flex-col gap-4"
+                  >
+                    <GlassCard className="flex-1 p-5 space-y-4">
+                      {selectedDate ? (
+                        <>
+                          <div>
+                            <p className="text-base font-semibold uppercase tracking-widest text-muted-foreground">
+                              Horarios disponibles
+                            </p>
+                            <p className="mt-0.5 text-sm font-medium text-foreground capitalize">
+                              {selectedDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+                            </p>
+                          </div>
+                          {isLoadingAvailability ? (
+                            <div className="grid grid-cols-2 gap-2">
+                              {Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i} className="h-10 rounded-xl border border-white/10 bg-white/5 animate-pulse" />
+                              ))}
+                            </div>
+                          ) : availabilityError ? (
+                            <div className="text-sm text-destructive">{availabilityError}</div>
+                          ) : (
+                            <>
+                              <TimeSlotPicker
+                                date={selectedDate}
+                                slots={slots}
+                                unavailable={unavailable}
+                                selected={selectedTime}
+                                onSelect={handleTimeSelect}
+                              />
+                              {!availabilityError && slots.length === 0 && (
+                                <div className="text-sm text-muted-foreground">No hay horarios disponibles para este día.</div>
+                              )}
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex flex-1 flex-col items-center justify-center gap-3 py-10 text-center">
+                          <Icon icon={CalendarDays} size="xl" className="text-muted-foreground/40" />
+                          <p className="text-base text-muted-foreground">
+                            Selecciona un día para ver los horarios disponibles
+                          </p>
+                        </div>
+                      )}
+                    </GlassCard>
+
+                    <Button
+                      size="lg"
+                      className="w-full gap-2"
+                      disabled={!selectedDate || !selectedTime}
+                      onClick={() => setDesktopStep("confirm")}
+                    >
+                      Continuar
+                      <Icon icon={ArrowRight} size="sm" />
+                    </Button>
+
+                    <div className="flex items-center justify-center gap-2 text-base text-muted-foreground">
+                      <AvatarGroup size="xs" max={4}>
+                        {TEAM_MEMBERS.map((m) => (
+                          <Avatar key={m.initials} initials={m.initials} size="xs" variant={m.variant} />
+                        ))}
+                      </AvatarGroup>
+                      <span>+120 demos realizadas este mes</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </>
       )}
     </>
   )

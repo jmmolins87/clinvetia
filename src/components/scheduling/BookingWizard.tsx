@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Sparkles } from "lucide-react"
+import { ArrowLeft, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Sparkles } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -159,7 +159,7 @@ export function BookingWizard({
     setStep(initialStep)
     setSubmitError(null)
     setAvailabilityError(null)
-  }, [initialDateKey, initialTime, initialDuration, initialStep])
+  }, [initialDate, initialDateKey, initialTime, initialDuration, initialStep])
 
   useEffect(() => {
     if (!selectedDate) {

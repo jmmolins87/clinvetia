@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Input } from "@/components/ui/input"
@@ -71,7 +71,7 @@ export default function AdminUsersPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [pendingActionLoadingId, setPendingActionLoadingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Pick<AdminUser, "id" | "name" | "email"> | null>(null)
-  const creatableRoles = role ? allowedCreatableRoles(role) : []
+  const creatableRoles = useMemo(() => (role ? allowedCreatableRoles(role) : []), [role])
   const [createTouched, setCreateTouched] = useState<{ email: boolean; name: boolean }>({
     email: false,
     name: false,

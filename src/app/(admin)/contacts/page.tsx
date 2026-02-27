@@ -30,7 +30,6 @@ export default function AdminContactsPage() {
     } | null
     createdAt: string
   }>>([])
-  const [mode, setMode] = useState<"demo" | "superadmin" | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,8 +41,7 @@ export default function AdminContactsPage() {
           router.push("/admin/login")
           return
         }
-        const meData = await meRes.json()
-        setMode(meData.admin.role)
+        await meRes.json()
 
         const res = await fetch("/api/admin/contacts", { cache: "no-store" })
         if (!res.ok) {
