@@ -6,6 +6,8 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
+import { Icon } from "@/components/ui/icon"
+import { Trash2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -191,12 +193,12 @@ export default function AdminContactsPage() {
                 ref={index === 0 ? itemRef : undefined}
                 className="rounded-xl border border-white/10 px-4 py-4 space-y-4"
               >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <div className="text-sm font-medium">{contact.nombre}</div>
-                    <div className="text-xs text-muted-foreground">{contact.clinica}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{contact.nombre}</div>
+                    <div className="text-xs text-muted-foreground truncate">{contact.clinica}</div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 justify-end">
                     <Badge variant="secondary">{new Date(contact.createdAt).toLocaleDateString("es-ES")}</Badge>
                     <Button
                       type="button"
@@ -206,12 +208,15 @@ export default function AdminContactsPage() {
                       disabled={deletingId === contact.id || !canDelete}
                       onClick={() => setDeleteTarget({ id: contact.id, nombre: contact.nombre })}
                     >
-                      Eliminar
+                      <span className="hidden sm:inline">Eliminar</span>
+                      <span className="inline sm:hidden">
+                        <Icon icon={Trash2} size="xs" variant="destructive" />
+                      </span>
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 text-xs md:max-w-2xl">
+                <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-2 xl:grid-cols-4 md:max-w-2xl">
                   <div className="space-y-1">
                     <div className="text-muted-foreground uppercase">Correo</div>
                     <div className="text-foreground break-all">{contact.email}</div>
@@ -248,7 +253,7 @@ export default function AdminContactsPage() {
                 )}
 
                 {contact.roi && (
-                  <div className="grid grid-cols-4 gap-3 text-xs">
+                  <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-4">
                     <div className="rounded-lg border border-white/8 bg-white/5 px-3 py-2">
                       <span className="text-muted-foreground">Pacientes/mes: </span>{contact.roi.monthlyPatients ?? "-"}
                     </div>

@@ -114,6 +114,9 @@ export async function POST(req: Request) {
       subject: "Confirma tu acceso a Clinvetia",
       htmlContent: adminUserInviteEmail({
         brandName: "Clinvetia",
+        senderName: auth.data.admin.name,
+        senderEmail: auth.data.admin.email,
+        senderRole: auth.data.admin.role,
         recipientName: parsed.name,
         recipientEmail: parsed.email,
         role: parsed.role,

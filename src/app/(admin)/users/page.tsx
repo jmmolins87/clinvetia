@@ -477,16 +477,16 @@ export default function AdminUsersPage() {
                         initials={getInitials(user.name, user.email)}
                       />
                       <div>
-                        <div className="text-sm font-medium">{user.name} · {user.email}</div>
-                        <div className="text-xs text-muted-foreground">{user.role} · {user.status}</div>
+                        <div className="text-base sm:text-sm font-medium">{user.name} · {user.email}</div>
+                        <div className="text-sm sm:text-xs text-muted-foreground">{user.role} · {user.status}</div>
                       </div>
                     </div>
                     {role && canEditThisUser && (
-                      <div className="flex flex-nowrap items-center gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-nowrap sm:items-center">
                         <Button
                           variant="default"
                           size="sm"
-                          className="!w-auto shrink-0"
+                          className="w-full sm:!w-auto shrink-0"
                           disabled={!canEditThisUser}
                           onClick={() => openEditDialog(user)}
                         >
@@ -496,7 +496,7 @@ export default function AdminUsersPage() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            className="!w-auto shrink-0"
+                            className="w-full sm:!w-auto shrink-0"
                             disabled={!canEditThisUser}
                             onClick={() => {
                               if (!user.id) return
@@ -511,7 +511,7 @@ export default function AdminUsersPage() {
                             <Button
                               variant="warning"
                               size="sm"
-                              className="!w-auto shrink-0"
+                              className="w-full sm:!w-auto shrink-0"
                               onClick={() => user.id && handleStatus(user.id, "disabled")}
                               disabled={statusLoading === user.id || !canEditThisUser}
                             >
@@ -520,7 +520,7 @@ export default function AdminUsersPage() {
                             <Button
                               variant="destructive"
                               size="sm"
-                              className="!w-auto shrink-0"
+                              className="w-full sm:!w-auto shrink-0"
                               disabled={!canEditThisUser}
                               onClick={() => user.id && setDeleteTarget({ id: user.id, name: user.name, email: user.email })}
                             >
@@ -532,7 +532,7 @@ export default function AdminUsersPage() {
                           <Button
                             variant="accent"
                             size="sm"
-                            className="!w-auto shrink-0"
+                            className="w-full sm:!w-auto shrink-0"
                             onClick={() => user.id && handleStatus(user.id, "active")}
                             disabled={statusLoading === user.id || !canEditThisUser}
                           >
@@ -691,9 +691,9 @@ export default function AdminUsersPage() {
         </GlassCard>
 
         <GlassCard className="p-5 space-y-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold">Solicitudes pendientes</h3>
-            <Badge variant="accent" className="w-fit sm:ml-3">
+            <Badge variant="accent" className="w-fit">
               {pendingActions.length}
             </Badge>
           </div>

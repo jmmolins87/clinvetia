@@ -167,6 +167,9 @@ export async function POST(req: Request) {
         subject: "Confirma tu acceso a Clinvetia",
         htmlContent: adminUserInviteEmail({
           brandName: "Clinvetia",
+          senderName: auth.data.admin.name,
+          senderEmail: auth.data.admin.email,
+          senderRole: auth.data.admin.role,
           recipientName: name,
           recipientEmail: email,
           role: roleValue,
@@ -190,8 +193,12 @@ export async function POST(req: Request) {
         subject: "Confirma el cambio de password de tu acceso",
         htmlContent: adminUserResetPasswordEmail({
           brandName: "Clinvetia",
+          senderName: auth.data.admin.name,
+          senderEmail: auth.data.admin.email,
+          senderRole: auth.data.admin.role,
           recipientName: user?.name || email,
           recipientEmail: email,
+          recipientRole: user?.role,
           generatedPassword,
           confirmUrl,
           supportEmail,

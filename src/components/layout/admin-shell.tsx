@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { BarChart3, CalendarDays, FileClock, Inbox, LayoutGrid, LogOut, Menu, Settings, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +9,16 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { BrandName } from "@/components/ui/brand-name"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Sheet,
   SheetContent,
@@ -17,6 +27,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { ContentScroll } from "@/components/ui/content-scroll"
+import { useToast } from "@/components/ui/use-toast"
+import { ADMIN_ROLES, allowedCreatableRoles, type AdminRole } from "@/lib/admin-roles"
+import { sanitizeInput } from "@/lib/security"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -30,8 +44,17 @@ const navItems = [
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [admin, setAdmin] = useState<{ id: string; name: string; email: string; role: string } | null>(null)
+  const { toast } = useToast()
+  const [admin, setAdmin] = useState<{ id: string; name: string; email: string; role: AdminRole } | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editName, setEditName] = useState("")
+  const [editRole, setEditRole] = useState<AdminRole>("worker")
+  const [editTouched, setEditTouched] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [editLoading, setEditLoading] = useState(false)
+  const isDashboard = pathname === "/admin/dashboard"
+  const editableRoles = useMemo(() => (admin ? allowedCreatableRoles(admin.role) : []), [admin])
 
   useEffect(() => {
     let cancelled = false
@@ -84,9 +107,110 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
   }
 
+  useEffect(() => {
+    if (!editOpen || !admin) return
+    setEditName(admin.name)
+    setEditRole(admin.role)
+    setEditTouched(false)
+    setEditError(null)
+  }, [editOpen, admin])
+
+  useEffect(() => {
+    if (!admin || editableRoles.length === 0) return
+    if (!editableRoles.includes(editRole)) {
+      setEditRole(editableRoles[0])
+    }
+  }, [admin, editableRoles, editRole])
+
+  const saveAdminProfile = async () => {
+    if (!admin) return
+    const nextName = editName.trim()
+    if (!nextName || nextName.length < 2 || nextName.length > 80) {
+      setEditError("El nombre debe tener entre 2 y 80 caracteres")
+      setEditTouched(true)
+      return
+    }
+    setEditLoading(true)
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(admin.id)}/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nextName, role: editRole }),
+      })
+      const payload = await res.json().catch(() => null)
+      if (!res.ok) {
+        throw new Error(payload?.error || "No se pudo actualizar")
+      }
+      setAdmin((prev) => (prev ? { ...prev, name: nextName, role: editRole } : prev))
+      toast({ title: "Usuario actualizado", description: "Los cambios se han guardado correctamente." })
+      setEditOpen(false)
+      router.refresh()
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "No se pudo actualizar")
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
   return (
-    <div className="h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_0%,rgba(var(--primary-rgb),0.12),transparent_35%),radial-gradient(circle_at_100%_20%,rgba(var(--secondary-rgb),0.10),transparent_40%)]">
+    <div className="h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_0%,rgba(var(--primary-rgb),0.12),transparent_35%),radial-gradient(circle_at_100%_20%,rgba(var(--secondary-rgb),0.10),transparent_40%)] no-scroll-dashboard">
       <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col px-3 py-4 md:px-5 md:py-6">
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="glass sm:max-w-[520px]">
+            <DialogHeader>
+              <DialogTitle>Editar usuario</DialogTitle>
+              <DialogDescription>
+                Actualiza tu nombre y rol. No podrás asignar un rol superior al tuyo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="admin-name">Nombre</label>
+                <Input
+                  id="admin-name"
+                  value={editName}
+                  onChange={(e) => {
+                    const value = sanitizeInput(e.target.value)
+                    setEditName(value)
+                    if (editTouched) {
+                      setEditError(value.trim().length < 2 ? "El nombre debe tener al menos 2 caracteres" : null)
+                    }
+                  }}
+                  onBlur={(e) => {
+                    setEditTouched(true)
+                    const value = e.target.value.trim()
+                    setEditError(value.length < 2 || value.length > 80 ? "El nombre debe tener entre 2 y 80 caracteres" : null)
+                  }}
+                  className={editError ? "glass border-destructive/50" : "glass"}
+                  disabled={editLoading}
+                />
+                {editTouched && editError && <div className="text-xs text-destructive">{editError}</div>}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="admin-role">Rol</label>
+                <Select
+                  id="admin-role"
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as AdminRole)}
+                  className="glass"
+                  disabled={editLoading || editableRoles.length === 0}
+                >
+                  {ADMIN_ROLES.filter((role) => editableRoles.includes(role)).map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            <DialogFooter className="grid grid-cols-2 gap-2 sm:[&>*]:flex-none">
+              <Button variant="ghost" className="w-full" onClick={() => setEditOpen(false)} disabled={editLoading}>
+                Cancelar
+              </Button>
+              <Button className="w-full" onClick={saveAdminProfile} disabled={editLoading}>
+                {editLoading ? "Guardando..." : "Guardar cambios"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <div className="mb-4 lg:hidden">
           <GlassCard className="p-3">
             <div className="flex items-center justify-between gap-3">
@@ -95,7 +219,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <div className="truncate text-sm font-semibold">Centro de operaciones Clinvetia</div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="shrink-0">Interno</Badge>
+                <Badge variant="default" className="shrink-0">{admin?.role || "interno"}</Badge>
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
@@ -111,7 +235,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       </SheetDescription>
                     </SheetHeader>
 
-                    <div className="mt-6 space-y-5">
+                    <ContentScroll className="mt-6 space-y-5">
                       <div className="space-y-2">
                         {navItems.map((item) => {
                           const active = pathname === item.href
@@ -159,8 +283,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                             <div className="truncate text-muted-foreground">{admin?.email || "..."}</div>
                           </div>
                           <div className="grid gap-2">
-                            <Button variant="ghost" size="sm" className="justify-start border border-white/10 !w-full" asChild>
-                              <Link href="/admin/users">Gestionar usuarios</Link>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="justify-start border border-white/10 !w-full"
+                              onClick={() => (isDashboard ? setEditOpen(true) : router.push("/admin/users"))}
+                            >
+                              Gestionar usuarios
                             </Button>
                             <Button
                               variant="destructive"
@@ -175,7 +304,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </ContentScroll>
                   </SheetContent>
                 </Sheet>
               </div>
@@ -283,7 +412,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1 flex flex-col min-h-0">
+        <div className={cn("min-w-0 flex-1 flex flex-col min-h-0", isDashboard && "overflow-y-auto")}>
           <GlassCard className="mb-5 hidden p-5 md:p-6 lg:block">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -305,8 +434,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   </div>
                 </div>
                 <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto md:flex-nowrap">
-                  <Button variant="ghost" size="sm" className="!w-auto shrink-0 border border-white/10" asChild>
-                    <Link href="/admin/users">Gestionar usuarios</Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="!w-auto shrink-0 border border-white/10"
+                    onClick={() => (isDashboard ? setEditOpen(true) : router.push("/admin/users"))}
+                  >
+                    Gestionar usuarios
                   </Button>
                   <Button
                     variant="destructive"
@@ -323,7 +457,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
           </GlassCard>
 
-          <div className="flex-1 min-h-0 space-y-5 pb-6">{children}</div>
+          <div className="flex-1 min-h-0 space-y-5 pb-6">
+            {children}
+          </div>
         </div>
         </div>
       </div>

@@ -650,3 +650,8 @@ html {
 .dialog-close-hover:hover {
   box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.25);
 }
+
+/* Custom */
+.no-scroll-dashboard {
+  height: auto;
+}

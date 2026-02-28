@@ -293,6 +293,9 @@ export function leadSummaryEmail(params: {
 
 export function adminUserInviteEmail(params: {
   brandName: string
+  senderName: string
+  senderEmail: string
+  senderRole: string
   recipientName: string
   recipientEmail: string
   role: string
@@ -319,6 +322,20 @@ export function adminUserInviteEmail(params: {
         </div>
 
         <div style="padding:24px;">
+          <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px 16px 14px;margin-bottom:16px;">
+            <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Solicitud interna</p>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+              <tr>
+                <td style="padding:0 0 8px;color:#9fb0c0;font-size:13px;width:140px;">Solicitado por</td>
+                <td style="padding:0 0 8px;color:#ffffff;font-size:14px;font-weight:600;">${params.senderName} · ${params.senderRole}</td>
+              </tr>
+              <tr>
+                <td style="padding:0;color:#9fb0c0;font-size:13px;">Email interno</td>
+                <td style="padding:0;color:#ffffff;font-size:14px;font-weight:600;">${params.senderEmail}</td>
+              </tr>
+            </table>
+          </div>
+
           <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px 16px 14px;margin-bottom:16px;">
             <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Credenciales de acceso</p>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
@@ -368,8 +385,12 @@ export function adminUserInviteEmail(params: {
 
 export function adminUserResetPasswordEmail(params: {
   brandName: string
+  senderName: string
+  senderEmail: string
+  senderRole: string
   recipientName: string
   recipientEmail: string
+  recipientRole?: string
   generatedPassword: string
   confirmUrl: string
   supportEmail: string
@@ -394,6 +415,20 @@ export function adminUserResetPasswordEmail(params: {
 
         <div style="padding:24px;">
           <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px 16px 14px;margin-bottom:16px;">
+            <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Solicitud interna</p>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+              <tr>
+                <td style="padding:0 0 8px;color:#9fb0c0;font-size:13px;width:140px;">Solicitado por</td>
+                <td style="padding:0 0 8px;color:#ffffff;font-size:14px;font-weight:600;">${params.senderName} · ${params.senderRole}</td>
+              </tr>
+              <tr>
+                <td style="padding:0;color:#9fb0c0;font-size:13px;">Email interno</td>
+                <td style="padding:0;color:#ffffff;font-size:14px;font-weight:600;">${params.senderEmail}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px 16px 14px;margin-bottom:16px;">
             <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Nuevo password</p>
             <p style="margin:0 0 10px;color:#b6c2cf;font-size:13px;line-height:1.45;">
               Esta contraseña se aplicará cuando confirmes la solicitud.
@@ -406,7 +441,7 @@ export function adminUserResetPasswordEmail(params: {
           <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:18px;">
             <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Confirmación del usuario</p>
             <p style="margin:0;color:#b6c2cf;font-size:14px;line-height:1.55;">
-              Si estás de acuerdo con este cambio, confirma desde el botón. Si no reconoces la solicitud, no hagas clic.
+              Si estás de acuerdo con este cambio${params.recipientRole ? ` (rol ${params.recipientRole})` : ""}, confirma desde el botón. Si no reconoces la solicitud, no hagas clic.
             </p>
             <p style="margin:14px 0 0;">
               <a href="${params.confirmUrl}" style="display:inline-block;background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.55);border-radius:12px;padding:11px 16px;text-decoration:none;font-weight:700;box-shadow:0 0 18px rgba(245,158,11,0.18);">

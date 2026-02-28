@@ -66,8 +66,12 @@ export async function POST(
       subject: "Confirma el cambio de password de tu acceso",
       htmlContent: adminUserResetPasswordEmail({
         brandName: "Clinvetia",
+        senderName: auth.data.admin.name,
+        senderEmail: auth.data.admin.email,
+        senderRole: auth.data.admin.role,
         recipientName: user.name,
         recipientEmail: user.email,
+        recipientRole: user.role,
         generatedPassword,
         confirmUrl,
         supportEmail,

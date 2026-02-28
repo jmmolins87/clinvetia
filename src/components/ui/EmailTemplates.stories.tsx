@@ -124,6 +124,9 @@ export const UserInvite: Story = {
     <EmailPreview
       html={adminUserInviteEmail({
         brandName: "Clinvetia",
+        senderName: "Juan Molins",
+        senderEmail: "info@clinvetia.com",
+        senderRole: "superadmin",
         recipientName: "Marina Torres",
         recipientEmail: "marina@clinvetia.com",
         role: "manager",
@@ -141,8 +144,12 @@ export const UserResetPassword: Story = {
     <EmailPreview
       html={adminUserResetPasswordEmail({
         brandName: "Clinvetia",
+        senderName: "Juan Molins",
+        senderEmail: "info@clinvetia.com",
+        senderRole: "superadmin",
         recipientName: "Marina Torres",
         recipientEmail: "marina@clinvetia.com",
+        recipientRole: "manager",
         generatedPassword: "Zx91pqrs88LM",
         confirmUrl: "http://localhost:3000/admin/confirm-user-action?token=mock-token",
         supportEmail: "info@clinvetia.com",

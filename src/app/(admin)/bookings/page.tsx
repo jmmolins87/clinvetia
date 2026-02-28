@@ -44,7 +44,6 @@ export default function AdminBookingsPage() {
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "tomorrow" | "week">("all")
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const [rescheduleBooking, setRescheduleBooking] = useState<BookingRow | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [deleteBookingTarget, setDeleteBookingTarget] = useState<BookingRow | null>(null)
   const [page, setPage] = useState(1)
   const listRef = useRef<HTMLDivElement | null>(null)
@@ -245,7 +244,6 @@ export default function AdminBookingsPage() {
     if (!rescheduleBooking) {
       throw new Error("Selecciona una cita para reagendar")
     }
-    setError(null)
     setUpdatingId(rescheduleBooking.id)
     try {
       const res = await fetch("/api/admin/bookings", {
@@ -270,7 +268,11 @@ export default function AdminBookingsPage() {
       setRescheduleBooking(null)
     } catch (err) {
       const message = err instanceof Error ? err.message : "No se pudo reagendar la cita"
-      setError(message)
+      toast({
+        variant: "destructive",
+        title: "No se pudo reagendar la cita",
+        description: message,
+      })
       throw new Error(message)
     } finally {
       setUpdatingId(null)
@@ -491,9 +493,10 @@ export default function AdminBookingsPage() {
                         </div>
                         <Badge variant={badgeVariantForStatus(booking.status)}>{booking.status}</Badge>
                       </div>
+                      <div className="border-t border-white/10 sm:hidden" />
 
                       {mode === "superadmin" && (
-                        <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap xl:justify-end">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center xl:flex-nowrap xl:justify-end">
                           {booking.status !== "expired" && (
                             <Button
                               type="button"
@@ -501,7 +504,7 @@ export default function AdminBookingsPage() {
                               size="sm"
                               disabled={booking.status === "confirmed" || updatingId === booking.id}
                               onClick={() => updateBookingStatus(booking.id, "confirmed")}
-                              className="w-[120px] shrink-0 cursor-pointer px-3"
+                              className="w-full sm:w-[120px] shrink-0 cursor-pointer px-3"
                             >
                               {updatingId === booking.id ? "Actualizando..." : "Aceptar"}
                             </Button>
@@ -511,7 +514,7 @@ export default function AdminBookingsPage() {
                             variant="accent"
                             size="sm"
                             onClick={() => openRescheduleDialog(booking)}
-                            className="w-[120px] shrink-0 cursor-pointer px-3 shadow-[0_0_14px_rgba(var(--accent-rgb),0.22)] disabled:opacity-100"
+                            className="w-full sm:w-[120px] shrink-0 cursor-pointer px-3 shadow-[0_0_14px_rgba(var(--accent-rgb),0.22)] disabled:opacity-100"
                           >
                             Reagendar
                           </Button>
@@ -522,12 +525,12 @@ export default function AdminBookingsPage() {
                               size="sm"
                               disabled={booking.status === "cancelled" || updatingId === booking.id}
                               onClick={() => updateBookingStatus(booking.id, "cancelled")}
-                              className="w-[120px] shrink-0 cursor-pointer px-3"
+                              className="w-full sm:w-[120px] shrink-0 cursor-pointer px-3"
                             >
                               {updatingId === booking.id ? "Actualizando..." : "Cancelar"}
                             </Button>
                           ) : (
-                            <span className="w-[120px] shrink-0" aria-hidden="true" />
+                            <span className="hidden sm:block w-[120px] shrink-0" aria-hidden="true" />
                           )}
                         </div>
                       )}
