@@ -268,7 +268,7 @@ export function BookingWizard({
         </div>
 
         {showDurationSelector && (
-          <div className="grid grid-cols-3 gap-2 pb-1">
+          <div className="grid grid-cols-3 gap-3 pb-6">
             {durationOptions.map((option) => (
               <Button
                 key={option.value}
@@ -288,7 +288,7 @@ export function BookingWizard({
           </div>
         )}
 
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+        <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={step}

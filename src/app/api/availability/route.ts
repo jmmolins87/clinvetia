@@ -4,7 +4,9 @@ import { dbConnect } from "@/lib/db"
 import { Booking } from "@/models/Booking"
 
 const querySchema = z.object({
-  date: z.string().datetime().optional(),
+  date: z
+    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.string().datetime()])
+    .optional(),
 })
 
 const TIME_SLOTS = [
@@ -23,7 +25,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ slots: TIME_SLOTS, unavailable: [] })
     }
 
-    const date = new Date(parsed.date)
+    const date = parsed.date.includes("T")
+      ? new Date(parsed.date)
+      : new Date(`${parsed.date}T00:00:00.000Z`)
     if (Number.isNaN(date.getTime())) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 })
     }

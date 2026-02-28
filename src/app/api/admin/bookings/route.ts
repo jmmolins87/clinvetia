@@ -60,8 +60,10 @@ export async function GET(req: Request) {
     {} as Record<string, (typeof contacts)[number]>
   )
 
+  const visibleBookings = bookings.filter((b) => contactByBookingId[String(b._id)])
+
   return NextResponse.json({
-    bookings: bookings.map((b) => ({
+    bookings: visibleBookings.map((b) => ({
       ...(contactByBookingId[String(b._id)]
         ? {
             nombre: contactByBookingId[String(b._id)].nombre,
@@ -109,8 +111,11 @@ export async function POST(req: Request) {
     const brandName = "Clinvetia"
 
     if (parsed.action === "delete") {
-      if (booking.status !== "cancelled") {
-        return NextResponse.json({ error: "Solo se pueden eliminar citas canceladas" }, { status: 409 })
+      if (!["cancelled", "expired"].includes(booking.status)) {
+        return NextResponse.json(
+          { error: "Solo se pueden eliminar citas canceladas o expiradas" },
+          { status: 409 }
+        )
       }
       await Booking.deleteOne({ _id: booking._id })
     } else if (parsed.action === "status") {

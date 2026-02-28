@@ -1,21 +1,42 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Icon } from "@/components/ui/icon"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function AdminLoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get("notice") !== "reset-requested") return
+    toast({
+      variant: "destructive",
+      title: "Sesión cerrada",
+      description: "Se solicitó un cambio de contraseña. Inicia sesión cuando hayas confirmado el cambio.",
+    })
+  }, [searchParams, toast])
+
+  useEffect(() => {
+    if (searchParams.get("notice") !== "reset-confirmed") return
+    toast({
+      variant: "success",
+      title: "Cambio confirmado",
+      description: "La contraseña se ha actualizado. Ya puedes iniciar sesión con la nueva contraseña.",
+    })
+  }, [searchParams, toast])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

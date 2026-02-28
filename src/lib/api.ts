@@ -96,11 +96,16 @@ export async function getBooking(bookingId: string, accessToken: string): Promis
   })
 }
 
-export async function getActiveBookingBySession(sessionToken: string): Promise<BookingResponse> {
-  return apiFetch<BookingResponse>(`/api/booking?sessionToken=${encodeURIComponent(sessionToken)}`, {
-    headers: { "x-session-token": sessionToken },
-    cache: "no-store",
-  })
+export async function getActiveBookingBySession(sessionToken: string): Promise<(BookingResponse & { active?: boolean }) | null> {
+  const data = await apiFetch<BookingResponse & { active?: boolean }>(
+    `/api/booking?sessionToken=${encodeURIComponent(sessionToken)}`,
+    {
+      headers: { "x-session-token": sessionToken },
+      cache: "no-store",
+    }
+  )
+  if (data && data.active === false) return null
+  return data
 }
 
 export async function getAvailability(date?: string): Promise<AvailabilityResponse> {

@@ -62,6 +62,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "El usuario demo solo existe como usuario único del sistema" }, { status: 403 })
     }
     const actorRole = auth.data.admin.role as AdminRole
+    if (actorRole === "worker" || actorRole === "demo") {
+      return NextResponse.json({ error: "No puedes crear usuarios con tu rol" }, { status: 403 })
+    }
     if (!canManageRole(actorRole, parsed.role)) {
       return NextResponse.json({ error: "No puedes crear usuarios con ese rol" }, { status: 403 })
     }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Trash2 } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Icon } from "@/components/ui/icon"
 import { Toggle } from "@/components/ui/toggle"
+import { useToast } from "@/components/ui/use-toast"
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
+import { useDynamicPageSize } from "@/lib/use-dynamic-page-size"
 
 type BookingRow = {
   id: string
@@ -33,16 +35,28 @@ type BookingRow = {
 
 export default function AdminBookingsPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [bookings, setBookings] = useState<BookingRow[]>([])
   const [mode, setMode] = useState<"demo" | "superadmin" | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "expired">("all")
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "tomorrow" | "week">("all")
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const [rescheduleBooking, setRescheduleBooking] = useState<BookingRow | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [deleteBookingTarget, setDeleteBookingTarget] = useState<BookingRow | null>(null)
+  const [page, setPage] = useState(1)
+  const listRef = useRef<HTMLDivElement | null>(null)
+  const itemRef = useRef<HTMLDivElement | null>(null)
+  const footerRef = useRef<HTMLDivElement | null>(null)
+  const pageSize = useDynamicPageSize({
+    listRef,
+    itemRef,
+    footerRef,
+    defaultSize: 6,
+    deps: [bookings.length, statusFilter, dateFilter],
+  })
 
   useEffect(() => {
     const load = async () => {
@@ -63,16 +77,20 @@ export default function AdminBookingsPage() {
         const data = await res.json()
         setBookings(data.bookings)
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar reservas")
+        toast({
+          variant: "destructive",
+          title: "No se pudieron cargar las citas",
+          description: err instanceof Error ? err.message : "Error al cargar reservas",
+        })
       } finally {
         setLoading(false)
       }
     }
 
     load()
-  }, [router])
+  }, [router, toast])
 
-  const loadBookings = async () => {
+  const loadBookings = useCallback(async () => {
     const res = await fetch("/api/admin/bookings", { cache: "no-store" })
     if (!res.ok) {
       const payload = await res.json().catch(() => null)
@@ -80,10 +98,26 @@ export default function AdminBookingsPage() {
     }
     const data = await res.json()
     setBookings(data.bookings)
-  }
+  }, [])
+
+  useEffect(() => {
+    if (!mode) return
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== "clinvetia:booking-updated") return
+      loadBookings().catch(() => {})
+    }
+    const onLocalEvent = () => {
+      loadBookings().catch(() => {})
+    }
+    window.addEventListener("storage", onStorage)
+    window.addEventListener("clinvetia:booking-updated", onLocalEvent)
+    return () => {
+      window.removeEventListener("storage", onStorage)
+      window.removeEventListener("clinvetia:booking-updated", onLocalEvent)
+    }
+  }, [loadBookings, mode])
 
   const updateBookingStatus = async (id: string, status: "confirmed" | "cancelled") => {
-    setError(null)
     setUpdatingId(id)
     try {
       const res = await fetch("/api/admin/bookings", {
@@ -97,14 +131,17 @@ export default function AdminBookingsPage() {
       }
       await loadBookings()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo actualizar la cita")
+      toast({
+        variant: "destructive",
+        title: "No se pudo actualizar la cita",
+        description: err instanceof Error ? err.message : "No se pudo actualizar la cita",
+      })
     } finally {
       setUpdatingId(null)
     }
   }
 
   const deleteBooking = async (id: string) => {
-    setError(null)
     setUpdatingId(id)
     try {
       const res = await fetch("/api/admin/bookings", {
@@ -118,7 +155,11 @@ export default function AdminBookingsPage() {
       }
       await loadBookings()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo eliminar la cita")
+      toast({
+        variant: "destructive",
+        title: "No se pudo eliminar la cita",
+        description: err instanceof Error ? err.message : "No se pudo eliminar la cita",
+      })
     } finally {
       setUpdatingId(null)
     }
@@ -168,6 +209,18 @@ export default function AdminBookingsPage() {
     return statusOk && dateOk
   })
 
+  useEffect(() => {
+    setPage(1)
+  }, [statusFilter, dateFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / pageSize))
+  const pageSafe = Math.min(page, totalPages)
+  const pagedBookings = filteredBookings.slice((pageSafe - 1) * pageSize, pageSafe * pageSize)
+
+  useEffect(() => {
+    setPage(1)
+  }, [filteredBookings.length, pageSize])
+
   const badgeVariantForStatus = (status: string): "primary" | "warning" | "secondary" | "destructive" | "outline" => {
     if (status === "confirmed") return "primary"
     if (status === "pending") return "warning"
@@ -185,7 +238,6 @@ export default function AdminBookingsPage() {
   }
 
   const openRescheduleDialog = (booking: BookingRow) => {
-    setError(null)
     setRescheduleBooking(booking)
     setRescheduleOpen(true)
   }
@@ -233,17 +285,19 @@ export default function AdminBookingsPage() {
             <DialogTitle>Confirmar eliminación</DialogTitle>
             <DialogDescription>
               {deleteBookingTarget
-                ? `Vas a eliminar la cita cancelada del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time}.`
+                ? `Vas a eliminar la cita ${
+                    deleteBookingTarget.status === "expired" ? "expirada" : "cancelada"
+                  } del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time}.`
                 : "Confirma la eliminación de la cita."}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:[&>*]:flex-none">
-            <Button variant="ghost" className="!w-auto" onClick={() => setDeleteBookingTarget(null)}>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+            <Button variant="ghost" className="w-full sm:flex-1" onClick={() => setDeleteBookingTarget(null)}>
               Cancelar
             </Button>
             <Button
               variant="destructive"
-              className="!w-auto"
+              className="w-full sm:flex-1"
               onClick={async () => {
                 const id = deleteBookingTarget?.id
                 setDeleteBookingTarget(null)
@@ -282,7 +336,7 @@ export default function AdminBookingsPage() {
                   new Date(rescheduleBooking.date).toDateString() === date.toDateString()
               }}
               loadAvailability={async (date) => {
-                const res = await fetch(`/api/availability?date=${encodeURIComponent(date.toISOString())}`, { cache: "no-store" })
+                const res = await fetch(`/api/availability?date=${encodeURIComponent(date.toISOString().slice(0, 10))}`, { cache: "no-store" })
                 if (!res.ok) {
                   const payload = await res.json().catch(() => null)
                   throw new Error(payload?.error || "No se pudieron cargar los horarios")
@@ -307,7 +361,6 @@ export default function AdminBookingsPage() {
         {mode && <Badge variant={mode === "superadmin" ? "primary" : "secondary"}>{mode}</Badge>}
       </div>
 
-      {error && <div className="text-sm text-destructive">{error}</div>}
 
       {!loading && (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
@@ -377,9 +430,13 @@ export default function AdminBookingsPage() {
           <div className="text-sm text-muted-foreground">Sin reservas para los filtros seleccionados</div>
         )}
         {!loading && (
-          <div className="space-y-5">
-            {filteredBookings.map((booking) => (
-              <div key={booking.id} className={`rounded-xl border p-4 md:p-5 ${rowClassForStatus(booking.status)}`}>
+          <div ref={listRef} className="space-y-5 mb-4">
+            {pagedBookings.map((booking, index) => (
+              <div
+                key={booking.id}
+                ref={index === 0 ? itemRef : undefined}
+                className={`rounded-xl border p-4 md:p-5 ${rowClassForStatus(booking.status)}`}
+              >
                 <div className="grid gap-4 xl:grid-cols-[minmax(220px,1fr)_minmax(260px,1.1fr)_auto] xl:items-stretch">
                   <div className="h-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 space-y-2">
                     <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Cita</div>
@@ -405,7 +462,7 @@ export default function AdminBookingsPage() {
                     <div className="flex h-full flex-col justify-between gap-4 xl:min-w-[250px]">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          {booking.status === "cancelled" && mode === "superadmin" ? (
+                          {(booking.status === "cancelled" || booking.status === "expired") && mode === "superadmin" ? (
                             <Button
                               type="button"
                               variant="ghost"
@@ -413,8 +470,16 @@ export default function AdminBookingsPage() {
                               disabled={updatingId === booking.id}
                               onClick={() => setDeleteBookingTarget(booking)}
                               className="!w-auto shrink-0 cursor-pointer border border-destructive/30 bg-destructive/10 px-2.5 text-destructive hover:bg-destructive/15"
-                              aria-label="Eliminar cita cancelada"
-                              title="Eliminar cita cancelada"
+                              aria-label={
+                                booking.status === "expired"
+                                  ? "Eliminar cita expirada"
+                                  : "Eliminar cita cancelada"
+                              }
+                              title={
+                                booking.status === "expired"
+                                  ? "Eliminar cita expirada"
+                                  : "Eliminar cita cancelada"
+                              }
                             >
                               {updatingId === booking.id ? (
                                 "..."
@@ -429,35 +494,41 @@ export default function AdminBookingsPage() {
 
                       {mode === "superadmin" && (
                         <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap xl:justify-end">
-                          <Button
-                            type="button"
-                            variant="default"
-                            size="sm"
-                            disabled={booking.status === "confirmed" || updatingId === booking.id}
-                            onClick={() => updateBookingStatus(booking.id, "confirmed")}
-                            className="!w-auto shrink-0 cursor-pointer px-3"
-                          >
-                            {updatingId === booking.id ? "Actualizando..." : "Aceptar"}
-                          </Button>
+                          {booking.status !== "expired" && (
+                            <Button
+                              type="button"
+                              variant="default"
+                              size="sm"
+                              disabled={booking.status === "confirmed" || updatingId === booking.id}
+                              onClick={() => updateBookingStatus(booking.id, "confirmed")}
+                              className="w-[120px] shrink-0 cursor-pointer px-3"
+                            >
+                              {updatingId === booking.id ? "Actualizando..." : "Aceptar"}
+                            </Button>
+                          )}
                           <Button
                             type="button"
                             variant="accent"
                             size="sm"
                             onClick={() => openRescheduleDialog(booking)}
-                            className="!w-auto shrink-0 cursor-pointer px-3 shadow-[0_0_14px_rgba(var(--accent-rgb),0.22)] disabled:opacity-100"
+                            className="w-[120px] shrink-0 cursor-pointer px-3 shadow-[0_0_14px_rgba(var(--accent-rgb),0.22)] disabled:opacity-100"
                           >
                             Reagendar
                           </Button>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            disabled={(booking.status === "cancelled" || booking.status === "expired") || updatingId === booking.id}
-                            onClick={() => updateBookingStatus(booking.id, "cancelled")}
-                            className="!w-auto shrink-0 cursor-pointer px-3"
-                          >
-                            {updatingId === booking.id ? "Actualizando..." : "Cancelar"}
-                          </Button>
+                          {booking.status !== "expired" ? (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              disabled={booking.status === "cancelled" || updatingId === booking.id}
+                              onClick={() => updateBookingStatus(booking.id, "cancelled")}
+                              className="w-[120px] shrink-0 cursor-pointer px-3"
+                            >
+                              {updatingId === booking.id ? "Actualizando..." : "Cancelar"}
+                            </Button>
+                          ) : (
+                            <span className="w-[120px] shrink-0" aria-hidden="true" />
+                          )}
                         </div>
                       )}
 
@@ -467,6 +538,38 @@ export default function AdminBookingsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {!loading && filteredBookings.length > 0 && (
+          <div
+            ref={footerRef}
+            className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs text-muted-foreground"
+          >
+            <span>
+              Página {pageSafe} de {totalPages} · {filteredBookings.length} citas
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="!w-auto"
+                disabled={pageSafe <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="!w-auto"
+                disabled={pageSafe >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Siguiente
+              </Button>
+            </div>
           </div>
         )}
       </GlassCard>

@@ -29,7 +29,7 @@ interface ContactLeanView {
 }
 
 const bookingSchema = z.object({
-  date: z.string().datetime(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   duration: z.number().int().min(15).max(120),
   sessionToken: z.string().optional().nullable(),
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
     await dbConnect()
 
-    const date = new Date(parsed.date)
+    const date = new Date(`${parsed.date}T00:00:00.000Z`)
     if (Number.isNaN(date.getTime())) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 })
     }
@@ -149,7 +149,7 @@ export async function GET(req: Request) {
       const activeBooking = Array.isArray(rawActiveBooking) ? rawActiveBooking[0] : rawActiveBooking
 
       if (!activeBooking) {
-        return NextResponse.json({ error: "Active booking not found" }, { status: 404 })
+        return NextResponse.json({ active: false })
       }
 
       const existingContact =
@@ -164,6 +164,7 @@ export async function GET(req: Request) {
           : null)
 
       return NextResponse.json({
+        active: true,
         bookingId: activeBooking._id.toString(),
         accessToken: activeBooking.accessToken,
         date: activeBooking.date.toISOString(),

@@ -88,6 +88,13 @@ function isValidAccessToken(token: string | null) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)
 }
 
+function formatLocalDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
 // ── Sub-componentes ────────────────────────────────────────────────────────────
 
 interface CalendarGridProps {
@@ -422,7 +429,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
     const recoverActiveBooking = async () => {
       try {
         const booking = await getActiveBookingBySession(validSessionToken)
-        if (!booking.accessToken) return
+        if (!booking || !booking.accessToken) return
 
         storage.set("local", "booking_access_token", booking.accessToken)
         storage.set("local", "booking", booking)
@@ -493,7 +500,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
       setIsLoadingAvailability(true)
       setAvailabilityError(null)
       try {
-        const data = await getAvailability(selectedDate.toISOString())
+        const data = await getAvailability(formatLocalDateKey(selectedDate))
         if (!mounted) return
         setSlots(data.slots ?? [])
         setUnavailable(new Set(data.unavailable ?? []))
@@ -548,10 +555,10 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
     try {
       const store = useROIStore.getState()
       const response = await createBooking({
-        date: payload.date.toISOString(),
+        date: formatLocalDateKey(payload.date),
         time: payload.time,
         duration: payload.duration,
-        sessionToken: store.accessToken ?? store.token,
+        sessionToken: store.accessToken ?? null,
       })
 
       setSelectedDate(payload.date)
@@ -565,6 +572,10 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
 
       storage.set("local", "booking_access_token", response.accessToken)
       storage.set("local", "booking", response)
+      try {
+        localStorage.setItem("clinvetia:booking-updated", String(Date.now()))
+      } catch {}
+      window.dispatchEvent(new Event("clinvetia:booking-updated"))
 
       setShowSuccess(true)
       setDesktopStep("success")
@@ -683,7 +694,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                     initialTime={selectedTime}
                     initialDuration={duration}
                     initialStep={selectedDate && selectedTime ? "confirm" : selectedDate ? "time" : "date"}
-                    loadAvailability={async (date) => getAvailability(date.toISOString())}
+                  loadAvailability={async (date) => getAvailability(formatLocalDateKey(date))}
                     onSubmit={handleConfirm}
                   />
                 </motion.div>

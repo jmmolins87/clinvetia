@@ -38,6 +38,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     const loadMe = async () => {
       try {
         const res = await fetch("/api/admin/me", { cache: "no-store" })
+        if (res.status === 401) {
+          router.push("/admin/login")
+          return
+        }
         if (!res.ok) return
         const data = await res.json()
         if (!cancelled) setAdmin(data.admin ?? null)
@@ -47,7 +51,26 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [router])
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== "clinvetia:password-reset-confirmed") return
+      router.refresh()
+    }
+    window.addEventListener("storage", onStorage)
+    return () => window.removeEventListener("storage", onStorage)
+  }, [router])
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      if (event.data?.type !== "clinvetia:password-reset-confirmed") return
+      router.refresh()
+    }
+    window.addEventListener("message", onMessage)
+    return () => window.removeEventListener("message", onMessage)
+  }, [router])
 
   const handleLogout = async () => {
     if (loggingOut) return
@@ -62,8 +85,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_10%_0%,rgba(var(--primary-rgb),0.12),transparent_35%),radial-gradient(circle_at_100%_20%,rgba(var(--secondary-rgb),0.10),transparent_40%)]">
-      <div className="mx-auto w-full max-w-[1600px] px-3 py-4 md:px-5 md:py-6">
+    <div className="h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_0%,rgba(var(--primary-rgb),0.12),transparent_35%),radial-gradient(circle_at_100%_20%,rgba(var(--secondary-rgb),0.10),transparent_40%)]">
+      <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col px-3 py-4 md:px-5 md:py-6">
         <div className="mb-4 lg:hidden">
           <GlassCard className="p-3">
             <div className="flex items-center justify-between gap-3">
@@ -183,7 +206,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </GlassCard>
         </div>
 
-        <div className="flex items-start gap-5 md:gap-6">
+        <div className="flex flex-1 min-h-0 items-start gap-5 md:gap-6">
         <aside className="hidden w-[280px] shrink-0 self-start sticky top-6 lg:block">
           <div className="max-h-[calc(100vh-3rem)] overflow-y-auto">
               <GlassCard className="flex flex-col p-5">
@@ -202,17 +225,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <nav className="mt-5 flex-1 space-y-2.5">
               {navItems.map((item) => {
                 const active = pathname === item.href
+                const auditDisabled = item.href === "/admin/audit" && ["manager", "worker", "demo"].includes(admin?.role || "")
+                const className = cn(
+                  "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all",
+                  active
+                    ? "border-primary/40 bg-primary/10 text-foreground shadow-[0_0_20px_rgba(var(--primary-rgb),0.12)]"
+                    : "border-white/5 bg-white/0 text-muted-foreground hover:border-white/10 hover:bg-white/5 hover:text-foreground",
+                  auditDisabled && "cursor-not-allowed border-white/5 bg-white/0 text-muted-foreground/60 hover:border-white/5 hover:bg-white/0 hover:text-muted-foreground/60"
+                )
+                if (auditDisabled) {
+                  return (
+                    <div key={item.href} className={className} aria-disabled="true" title="No disponible para tu rol">
+                      <Icon icon={item.icon} size="sm" variant="muted" />
+                      <span className="font-medium">{item.label}</span>
+                    </div>
+                  )
+                }
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-all",
-                      active
-                        ? "border-primary/40 bg-primary/10 text-foreground shadow-[0_0_20px_rgba(var(--primary-rgb),0.12)]"
-                        : "border-white/5 bg-white/0 text-muted-foreground hover:border-white/10 hover:bg-white/5 hover:text-foreground"
-                    )}
-                  >
+                  <Link key={item.href} href={item.href} className={className}>
                     <Icon icon={item.icon} size="sm" variant={active ? "primary" : "muted"} />
                     <span className="font-medium">{item.label}</span>
                   </Link>
@@ -253,7 +283,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 flex flex-col min-h-0">
           <GlassCard className="mb-5 hidden p-5 md:p-6 lg:block">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -293,7 +323,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
           </GlassCard>
 
-          <div className="space-y-5">{children}</div>
+          <div className="flex-1 min-h-0 space-y-5 pb-6">{children}</div>
         </div>
         </div>
       </div>

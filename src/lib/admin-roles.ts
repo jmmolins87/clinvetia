@@ -25,6 +25,7 @@ export function canManageRole(actorRole: AdminRole, targetRole: AdminRole) {
 }
 
 export function allowedCreatableRoles(actorRole: AdminRole): AdminRole[] {
+  if (actorRole === "worker" || actorRole === "demo") return []
   if (isSuperAdmin(actorRole)) return ADMIN_ROLES.filter((role) => role !== "demo")
   return ADMIN_ROLES.filter((role) => role !== "superadmin" && role !== "demo" && canManageRole(actorRole, role))
 }

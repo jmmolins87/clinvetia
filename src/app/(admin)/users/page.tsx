@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Input } from "@/components/ui/input"
@@ -17,9 +17,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useToast } from "@/components/ui/use-toast"
 import { ADMIN_ROLES, allowedCreatableRoles, canManageRole, roleBadgeVariant, type AdminRole } from "@/lib/admin-roles"
 import { sanitizeInput } from "@/lib/security"
 import { cn } from "@/lib/utils"
+import { useDynamicPageSize } from "@/lib/use-dynamic-page-size"
 
 type AdminUser = {
   id?: string
@@ -54,6 +56,7 @@ function getInitials(name: string, email: string) {
 
 export default function AdminUsersPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [role, setRole] = useState<AdminRole | null>(null)
   const [currentAdminId, setCurrentAdminId] = useState<string | null>(null)
@@ -71,7 +74,25 @@ export default function AdminUsersPage() {
   const [resetLoading, setResetLoading] = useState(false)
   const [pendingActionLoadingId, setPendingActionLoadingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Pick<AdminUser, "id" | "name" | "email"> | null>(null)
+  const [editUser, setEditUser] = useState<AdminUser | null>(null)
+  const [editName, setEditName] = useState("")
+  const [editRole, setEditRole] = useState<AdminRole>("worker")
+  const [editTouched, setEditTouched] = useState(false)
+  const [editErrors, setEditErrors] = useState<{ name?: string }>({})
+  const [editLoading, setEditLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const listRef = useRef<HTMLDivElement | null>(null)
+  const itemRef = useRef<HTMLDivElement | null>(null)
+  const footerRef = useRef<HTMLDivElement | null>(null)
+  const pageSize = useDynamicPageSize({
+    listRef,
+    itemRef,
+    footerRef,
+    defaultSize: 6,
+    deps: [users.length],
+  })
   const creatableRoles = useMemo(() => (role ? allowedCreatableRoles(role) : []), [role])
+  const editableRoles = useMemo(() => (role ? allowedCreatableRoles(role) : []), [role])
   const [createTouched, setCreateTouched] = useState<{ email: boolean; name: boolean }>({
     email: false,
     name: false,
@@ -127,6 +148,23 @@ export default function AdminUsersPage() {
       setCreateRole(creatableRoles[0])
     }
   }, [role, creatableRoles, createRole])
+
+  useEffect(() => {
+    if (!editUser) return
+    if (editableRoles.length === 0) return
+    if (!editableRoles.includes(editRole)) {
+      const nextRole = editableRoles.includes(editUser.role) ? editUser.role : editableRoles[0]
+      setEditRole(nextRole)
+    }
+  }, [editUser, editableRoles, editRole])
+
+  useEffect(() => {
+    setPage(1)
+  }, [users.length, pageSize])
+
+  const totalPages = Math.max(1, Math.ceil(users.length / pageSize))
+  const pageSafe = Math.min(page, totalPages)
+  const pagedUsers = users.slice((pageSafe - 1) * pageSize, pageSafe * pageSize)
 
   const validateCreateField = (field: "email" | "name", value: string) => {
     if (!value.trim()) return "Este campo es obligatorio"
@@ -199,6 +237,46 @@ export default function AdminUsersPage() {
     }
   }
 
+  const openEditDialog = (user: AdminUser) => {
+    setEditUser(user)
+    setEditName(user.name)
+    setEditRole(user.role)
+    setEditErrors({})
+    setEditTouched(false)
+  }
+
+  const handleEditSave = async () => {
+    if (!editUser?.id) return
+    const nameError = validateCreateField("name", editName)
+    setEditErrors({ name: nameError })
+    setEditTouched(true)
+    if (nameError) return
+
+    setEditLoading(true)
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(editUser.id)}/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName.trim(), role: editRole }),
+      })
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null)
+        throw new Error(payload?.error || "No se pudo actualizar el usuario")
+      }
+      toast({ title: "Usuario actualizado", description: "Los cambios se han guardado correctamente." })
+      setEditUser(null)
+      await loadUsers()
+    } catch (err) {
+      toast({
+        title: "No se pudo actualizar",
+        description: err instanceof Error ? err.message : "Error al actualizar usuario",
+        variant: "destructive",
+      })
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
   const handleStatus = async (id: string, status: "active" | "disabled") => {
     setStatusLoading(id)
     setError(null)
@@ -234,7 +312,19 @@ export default function AdminUsersPage() {
         const payload = await res.json().catch(() => null)
         throw new Error(payload?.error || "No se pudo resetear")
       }
+      const payload = await res.json().catch(() => null)
       setResetPassword(null)
+      if (payload?.logout) {
+        toast({
+          variant: "destructive",
+          title: "Cambio de contraseña solicitado",
+          description: "Se cerrará tu sesión porque has solicitado un cambio de contraseña.",
+        })
+        setTimeout(() => {
+          router.push("/admin/login?notice=reset-requested")
+        }, 400)
+        return
+      }
       await loadUsers()
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo resetear")
@@ -296,6 +386,63 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={Boolean(editUser)} onOpenChange={(open) => !open && setEditUser(null)}>
+        <DialogContent className="glass sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Editar usuario</DialogTitle>
+            <DialogDescription>
+              Actualiza el nombre y el rol del usuario. No podrás asignar un rol superior al tuyo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="edit-name">Nombre</label>
+              <Input
+                id="edit-name"
+                value={editName}
+                onChange={(e) => {
+                  const value = sanitizeInput(e.target.value)
+                  setEditName(value)
+                  if (editTouched) {
+                    setEditErrors({ name: validateCreateField("name", value) })
+                  }
+                }}
+                onBlur={(e) => {
+                  setEditTouched(true)
+                  setEditErrors({ name: validateCreateField("name", e.target.value) })
+                }}
+                className={editErrors.name ? "glass border-destructive/50" : "glass"}
+                disabled={editLoading}
+                required
+              />
+              {editTouched && editErrors.name && <div className="text-xs text-destructive">{editErrors.name}</div>}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="edit-role">Rol</label>
+              <Select
+                id="edit-role"
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value as AdminRole)}
+                disabled={editLoading || !role || editableRoles.length === 0}
+                className="glass"
+              >
+                {ADMIN_ROLES.filter((itemRole) => !role || editableRoles.includes(itemRole)).map((itemRole) => (
+                  <option key={itemRole} value={itemRole}>{itemRole}</option>
+                ))}
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="grid grid-cols-2 gap-2 sm:[&>*]:flex-none">
+            <Button variant="ghost" className="w-full" onClick={() => setEditUser(null)} disabled={editLoading}>
+              Cancelar
+            </Button>
+            <Button className="w-full" onClick={handleEditSave} disabled={editLoading}>
+              {editLoading ? "Guardando..." : "Guardar cambios"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-semibold">Usuarios</h2>
       </div>
@@ -312,12 +459,16 @@ export default function AdminUsersPage() {
         )}
         {!loading && users.length === 0 && <div className="text-sm text-muted-foreground">Sin usuarios</div>}
         {!loading && (
-          <div className="space-y-3">
-            {users.map((user) => {
-              const canEditThisUser = role ? canManageRole(role, user.role) : false
+          <div ref={listRef} className="space-y-3 mb-4">
+            {pagedUsers.map((user, index) => {
+              const canEditThisUser = role ? canManageRole(role, user.role) && user.role !== "demo" : false
               const isCurrentUser = Boolean(currentAdminId && user.id && currentAdminId === user.id)
               return (
-                <div key={user.email} className="space-y-3 rounded-lg border border-white/10 px-3 py-3">
+                <div
+                  key={user.email}
+                  ref={index === 0 ? itemRef : undefined}
+                  className="space-y-3 rounded-lg border border-white/10 px-3 py-3"
+                >
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar
@@ -332,6 +483,15 @@ export default function AdminUsersPage() {
                     </div>
                     {role && canEditThisUser && (
                       <div className="flex flex-nowrap items-center gap-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="!w-auto shrink-0"
+                          disabled={!canEditThisUser}
+                          onClick={() => openEditDialog(user)}
+                        >
+                          Editar
+                        </Button>
                         {user.status !== "disabled" && (
                           <Button
                             variant="secondary"
@@ -389,7 +549,15 @@ export default function AdminUsersPage() {
                       <p className="text-sm text-muted-foreground">
                         Se generará una nueva contraseña temporal y se enviará un correo al usuario para que confirme el cambio.
                       </p>
-                      <div className="flex flex-nowrap justify-start gap-2">
+                      <div className="flex flex-nowrap justify-end gap-2">
+                        <button
+                          type="button"
+                          className={cn(buttonVariants({ variant: "default", size: "sm" }), "!w-auto shrink-0")}
+                          onClick={handleResetPassword}
+                          disabled={resetLoading}
+                        >
+                          {resetLoading ? "Enviando..." : "Enviar email de verificación"}
+                        </button>
                         <button
                           type="button"
                           className={cn(buttonVariants({ variant: "destructive", size: "sm" }), "!w-auto shrink-0")}
@@ -400,14 +568,6 @@ export default function AdminUsersPage() {
                         >
                           Cancelar
                         </button>
-                        <button
-                          type="button"
-                          className={cn(buttonVariants({ variant: "default", size: "sm" }), "!w-auto shrink-0")}
-                          onClick={handleResetPassword}
-                          disabled={resetLoading}
-                        >
-                          {resetLoading ? "Enviando..." : "Enviar email de verificación"}
-                        </button>
                       </div>
                     </div>
                   )}
@@ -416,90 +576,127 @@ export default function AdminUsersPage() {
             })}
           </div>
         )}
-      </GlassCard>
-
-      <GlassCard className="p-5 space-y-4">
-        <h3 className="text-lg font-semibold">Crear usuario</h3>
-        {role && creatableRoles.length === 0 && (
-          <div className="text-sm text-muted-foreground">Tu rol no puede crear usuarios.</div>
+        {!loading && users.length > 0 && (
+          <div
+            ref={footerRef}
+            className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4 text-xs text-muted-foreground"
+          >
+            <span>
+              Página {pageSafe} de {totalPages} · {users.length} usuarios
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="!w-auto"
+                disabled={pageSafe <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="!w-auto"
+                disabled={pageSafe >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Siguiente
+              </Button>
+            </div>
+          </div>
         )}
-        <form className="grid gap-4" onSubmit={handleCreate}>
-          <div className="grid gap-4 lg:grid-cols-3">
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="name">Nombre</label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => {
-                const value = sanitizeInput(e.target.value)
-                setName(value)
-                if (createTouched.name) {
-                  setCreateErrors((prev) => ({ ...prev, name: validateCreateField("name", value) }))
-                }
-              }}
-              onBlur={(e) => {
-                setCreateTouched((prev) => ({ ...prev, name: true }))
-                setCreateErrors((prev) => ({ ...prev, name: validateCreateField("name", e.target.value) }))
-              }}
-              disabled={!role || creatableRoles.length === 0}
-              className={createErrors.name ? "glass border-destructive/50" : "glass"}
-              required
-            />
-            {createTouched.name && createErrors.name && <div className="text-xs text-destructive">{createErrors.name}</div>}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="email">Email</label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => {
-                const value = sanitizeInput(e.target.value)
-                setEmail(value)
-                if (createTouched.email) {
-                  setCreateErrors((prev) => ({ ...prev, email: validateCreateField("email", value) }))
-                }
-              }}
-              onBlur={(e) => {
-                setCreateTouched((prev) => ({ ...prev, email: true }))
-                setCreateErrors((prev) => ({ ...prev, email: validateCreateField("email", e.target.value) }))
-              }}
-              disabled={!role || creatableRoles.length === 0}
-              className={createErrors.email ? "glass border-destructive/50" : "glass"}
-              required
-            />
-            {createTouched.email && createErrors.email && <div className="text-xs text-destructive">{createErrors.email}</div>}
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="role">Rol</label>
-            <Select
-              id="role"
-              value={createRole}
-              onChange={(e) => setCreateRole(e.target.value as AdminRole)}
-              disabled={!role || creatableRoles.length === 0}
-              className="glass"
-            >
-              {ADMIN_ROLES.filter((itemRole) => !role || creatableRoles.includes(itemRole)).map((itemRole) => (
-                <option key={itemRole} value={itemRole}>{itemRole}</option>
-              ))}
-            </Select>
-          </div>
-          </div>
-          <div>
-            <Button type="submit" className="w-full sm:w-auto" disabled={!role || creatableRoles.length === 0 || creating}>
-              {creating ? "Enviando invitación..." : "Enviar invitación"}
-            </Button>
-          </div>
-        </form>
       </GlassCard>
 
-      <GlassCard className="p-5 space-y-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-lg font-semibold">Solicitudes pendientes</h3>
-          <Badge variant="accent" className="w-fit sm:ml-3">
-            {pendingActions.length}
-          </Badge>
-        </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <GlassCard className="p-5 space-y-4">
+          <h3 className="text-lg font-semibold">Crear usuario</h3>
+          {role && creatableRoles.length === 0 && (
+            <div className="text-sm text-muted-foreground">Tu rol no puede crear usuarios.</div>
+          )}
+          <form className="grid gap-4" onSubmit={handleCreate}>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="name">Nombre</label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => {
+                    const value = sanitizeInput(e.target.value)
+                    setName(value)
+                    if (createTouched.name) {
+                      setCreateErrors((prev) => ({ ...prev, name: validateCreateField("name", value) }))
+                    }
+                  }}
+                  onBlur={(e) => {
+                    setCreateTouched((prev) => ({ ...prev, name: true }))
+                    setCreateErrors((prev) => ({ ...prev, name: validateCreateField("name", e.target.value) }))
+                  }}
+                  disabled={!role || creatableRoles.length === 0}
+                  className={createErrors.name ? "glass border-destructive/50" : "glass"}
+                  required
+                />
+                {createTouched.name && createErrors.name && (
+                  <div className="text-xs text-destructive">{createErrors.name}</div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="email">Email</label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    const value = sanitizeInput(e.target.value)
+                    setEmail(value)
+                    if (createTouched.email) {
+                      setCreateErrors((prev) => ({ ...prev, email: validateCreateField("email", value) }))
+                    }
+                  }}
+                  onBlur={(e) => {
+                    setCreateTouched((prev) => ({ ...prev, email: true }))
+                    setCreateErrors((prev) => ({ ...prev, email: validateCreateField("email", e.target.value) }))
+                  }}
+                  disabled={!role || creatableRoles.length === 0}
+                  className={createErrors.email ? "glass border-destructive/50" : "glass"}
+                  required
+                />
+                {createTouched.email && createErrors.email && (
+                  <div className="text-xs text-destructive">{createErrors.email}</div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="role">Rol</label>
+                <Select
+                  id="role"
+                  value={createRole}
+                  onChange={(e) => setCreateRole(e.target.value as AdminRole)}
+                  disabled={!role || creatableRoles.length === 0}
+                  className="glass"
+                >
+                  {ADMIN_ROLES.filter((itemRole) => !role || creatableRoles.includes(itemRole)).map((itemRole) => (
+                    <option key={itemRole} value={itemRole}>{itemRole}</option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Button type="submit" className="w-full sm:w-auto" disabled={!role || creatableRoles.length === 0 || creating}>
+                {creating ? "Enviando invitación..." : "Enviar invitación"}
+              </Button>
+            </div>
+          </form>
+        </GlassCard>
+
+        <GlassCard className="p-5 space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-lg font-semibold">Solicitudes pendientes</h3>
+            <Badge variant="accent" className="w-fit sm:ml-3">
+              {pendingActions.length}
+            </Badge>
+          </div>
 
         {pendingLoading && (
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -517,6 +714,7 @@ export default function AdminUsersPage() {
             {pendingActions.map((actionItem) => {
               const isInvite = actionItem.type === "invite_user"
               const isBusy = pendingActionLoadingId === actionItem.id
+              const disableActions = role === "worker" || role === "demo"
               return (
                 <div key={actionItem.id} className="rounded-lg border border-white/10 px-3 py-3">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -546,7 +744,7 @@ export default function AdminUsersPage() {
                         size="sm"
                         className="!w-auto shrink-0"
                         onClick={() => handlePendingAction(actionItem.id, "resend")}
-                        disabled={isBusy}
+                        disabled={isBusy || disableActions}
                       >
                         {isBusy ? "Enviando..." : "Reenviar"}
                       </Button>
@@ -555,7 +753,7 @@ export default function AdminUsersPage() {
                         size="sm"
                         className="!w-auto shrink-0"
                         onClick={() => handlePendingAction(actionItem.id, "cancel")}
-                        disabled={isBusy}
+                        disabled={isBusy || disableActions}
                       >
                         {isBusy ? "Cancelando..." : "Cancelar"}
                       </Button>
@@ -566,7 +764,8 @@ export default function AdminUsersPage() {
             })}
           </div>
         )}
-      </GlassCard>
+        </GlassCard>
+      </div>
     </div>
   )
 }

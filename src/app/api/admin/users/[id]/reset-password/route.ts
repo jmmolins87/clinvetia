@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/admin-auth"
 import { recordAdminAudit } from "@/lib/admin-audit"
 import { canManageRole, isAdminRole, type AdminRole } from "@/lib/admin-roles"
 import { AdminUserActionToken } from "@/models/AdminUserActionToken"
+import { AdminSession } from "@/models/AdminSession"
 import { sendBrevoEmail } from "@/lib/brevo"
 import { adminUserResetPasswordEmail } from "@/lib/emails"
 
@@ -36,6 +37,12 @@ export async function POST(
     const token = crypto.randomUUID()
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 24)
+
+    const previousStatus = user.status
+    if (user.status !== "disabled") {
+      user.status = "disabled"
+      await user.save()
+    }
 
     await AdminUserActionToken.create({
       token,
@@ -68,9 +75,15 @@ export async function POST(
       replyTo: { email: supportEmail },
     })
     if (!emailResult.ok) {
+      if (previousStatus !== user.status) {
+        user.status = previousStatus
+        await user.save()
+      }
       await AdminUserActionToken.deleteOne({ token })
       return NextResponse.json({ error: emailResult.error || "No se pudo enviar el correo de verificación" }, { status: 502 })
     }
+
+    await AdminSession.deleteMany({ adminId: user._id })
 
     await recordAdminAudit({
       adminId: auth.data.admin.id,
@@ -80,7 +93,13 @@ export async function POST(
       metadata: { email: user.email, expiresAt: expiresAt.toISOString() },
     })
 
-    return NextResponse.json({ ok: true, pending: true, expiresAt: expiresAt.toISOString() })
+    return NextResponse.json({
+      ok: true,
+      pending: true,
+      expiresAt: expiresAt.toISOString(),
+      confirmUrl,
+      logout: String(user._id) === auth.data.admin.id,
+    })
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 })
   }

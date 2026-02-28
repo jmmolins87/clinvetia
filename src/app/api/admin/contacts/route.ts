@@ -4,6 +4,7 @@ import { DEMO_CONTACTS } from "@/lib/admin-demo-data"
 import { Contact } from "@/models/Contact"
 import { Booking } from "@/models/Booking"
 import { dbConnect } from "@/lib/db"
+import { canManageRole, isAdminRole, type AdminRole } from "@/lib/admin-roles"
 
 export async function GET(req: Request) {
   const auth = await requireAdmin(req)
@@ -53,4 +54,29 @@ export async function GET(req: Request) {
       createdAt: c.createdAt.toISOString(),
     })),
   })
+}
+
+export async function DELETE(req: Request) {
+  const auth = await requireAdmin(req)
+  if (!auth.ok) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  const actorRole = auth.data.admin.role as AdminRole
+  if (!isAdminRole(actorRole) || !canManageRole(actorRole, "admin")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get("id")
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 })
+  }
+
+  await dbConnect()
+  const contact = await Contact.findById(id)
+  if (!contact) {
+    return NextResponse.json({ error: "Contact not found" }, { status: 404 })
+  }
+  await Contact.deleteOne({ _id: contact._id })
+  return NextResponse.json({ ok: true })
 }

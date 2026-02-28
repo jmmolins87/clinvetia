@@ -97,6 +97,9 @@ export async function POST(req: Request) {
     const body = await req.json()
     const parsed = actionSchema.parse(body)
     const actorRole = auth.data.admin.role as AdminRole
+    if (actorRole === "worker" || actorRole === "demo") {
+      return NextResponse.json({ error: "No puedes gestionar solicitudes con tu rol" }, { status: 403 })
+    }
 
     await dbConnect()
     const actionToken = await AdminUserActionToken.findById(parsed.id)

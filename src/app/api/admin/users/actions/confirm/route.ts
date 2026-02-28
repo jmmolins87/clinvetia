@@ -3,6 +3,7 @@ import { z } from "zod"
 
 import { dbConnect } from "@/lib/db"
 import { User } from "@/models/User"
+import { AdminSession } from "@/models/AdminSession"
 import { AdminUserActionToken } from "@/models/AdminUserActionToken"
 import { isAdminRole } from "@/lib/admin-roles"
 
@@ -53,7 +54,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
       }
       user.passwordHash = passwordHash
+      user.status = "active"
       await user.save()
+      await AdminSession.deleteMany({ adminId: user._id })
     } else {
       return NextResponse.json({ error: "Tipo de solicitud no soportado" }, { status: 400 })
     }
@@ -70,4 +73,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Server error" }, { status: 500 })
   }
 }
-

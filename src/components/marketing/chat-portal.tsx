@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
-import { MessageCircle, Sparkles, Send } from "lucide-react"
+import { MessageCircle, Sparkles, Send, X } from "lucide-react"
 
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import {
   Sheet,
   SheetTrigger,
   SheetContent,
+  SheetClose,
   SheetHeader,
   SheetTitle,
   SheetDescription,
@@ -49,10 +50,25 @@ export function ChatPortal() {
   const chatBody = (
     <>
       <SheetHeader className="px-6 pt-6 pb-4 border-b border-white/10 bg-background/60 backdrop-blur-xl">
-        <SheetTitle className="text-xl">Chat ClinvetIA</SheetTitle>
-        <SheetDescription className="text-sm">
-          Respuestas rápidas con contexto de tu clínica.
-        </SheetDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <SheetTitle className="text-xl">Chat ClinvetIA</SheetTitle>
+            <SheetDescription className="text-sm">
+              Respuestas rápidas con contexto de tu clínica.
+            </SheetDescription>
+          </div>
+          <SheetClose asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              aria-label="Cerrar chat"
+            >
+              <Icon icon={X} size="sm" variant="muted" />
+            </Button>
+          </SheetClose>
+        </div>
       </SheetHeader>
 
       <div className="flex-1 space-y-4 px-6 py-5">
@@ -98,7 +114,8 @@ export function ChatPortal() {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={setOpen}>
+      {isDesktop && (
+        <Sheet open={open} onOpenChange={setOpen}>
         <div
           className={cn(
             "fixed bottom-6 right-6 z-[40] hidden lg:block transition-opacity duration-200",
@@ -110,8 +127,8 @@ export function ChatPortal() {
               type="button"
               aria-label="Abrir chat"
               className={cn(
-                "group relative h-48 w-24 overflow-hidden rounded-[26px] border cursor-pointer",
-                "md:h-36 md:w-28 lg:h-40 lg:w-32 xl:h-44 xl:w-36",
+                "group relative h-40 w-24 overflow-hidden rounded-[26px] border cursor-pointer",
+                "md:h-36 md:w-28 lg:h-48 lg:w-32 xl:h-52 xl:w-36",
                 "bg-[radial-gradient(circle_at_30%_20%,rgba(var(--primary-rgb),0.35),transparent_45%),radial-gradient(circle_at_70%_80%,rgba(var(--accent-rgb),0.25),transparent_55%)]",
                 "border-[rgba(var(--primary-rgb),0.55)] backdrop-blur-xl",
                 "shadow-[0_0_30px_rgba(var(--primary-rgb),0.45),0_0_70px_rgba(var(--accent-rgb),0.25)]",
@@ -150,7 +167,8 @@ export function ChatPortal() {
             {chatBody}
           </div>
         </SheetContent>
-      </Sheet>
+        </Sheet>
+      )}
 
       <div className="fixed bottom-5 right-5 z-[40] lg:hidden">
         <Button

@@ -180,7 +180,7 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
               <GlassCard className="p-5 space-y-4">
                 <p className="text-lg font-medium">¿Quieres ver estos números en tu clínica?</p>
                 <p className="text-base text-muted-foreground leading-relaxed">Analizamos tu caso concreto en una llamada de 30 min. Recibirás tu proyección real sin compromiso.</p>
-                <div className="border-t border-white/10 pt-4 text-center font-semibold text-success">Demo gratuita</div>
+                <div className="mt-3 border-t border-white/10 pt-4 text-center font-semibold text-success">Demo gratuita</div>
               </GlassCard>
 
               <Button size="lg" className="w-full gap-2" onClick={() => setShowSkipDialog(true)}>

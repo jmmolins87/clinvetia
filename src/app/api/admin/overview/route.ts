@@ -62,19 +62,9 @@ export async function GET(req: Request) {
   const endSeriesDate = new Date(dates[dates.length - 1])
   endSeriesDate.setHours(23, 59, 59, 999)
 
-  const [totalBookings, bookingsByStatus, recentBookings, recentContacts, bookingsSeriesAgg, contactsSeriesAgg] = await Promise.all([
-    Booking.countDocuments(),
-    Booking.aggregate<{ _id: string; count: number }>([
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]),
-    Booking.find({})
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .lean(),
-    Contact.find({})
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .lean(),
+  const [contacts, recentContacts, bookingsSeriesAgg, contactsSeriesAgg] = await Promise.all([
+    Contact.find({}).sort({ createdAt: -1 }).lean(),
+    Contact.find({}).sort({ createdAt: -1 }).limit(5).lean(),
     Booking.aggregate<{ _id: string; count: number }>([
       { $match: { createdAt: { $gte: startSeriesDate, $lte: endSeriesDate } } },
       {
@@ -99,13 +89,28 @@ export async function GET(req: Request) {
     ]),
   ])
 
-  const statusCounts = bookingsByStatus.reduce(
+  const bookingIds = contacts
+    .map((c) => c.bookingId)
+    .filter(Boolean)
+    .map((id) => String(id))
+
+  const bookings = bookingIds.length
+    ? await Booking.find({ _id: { $in: bookingIds } }).sort({ createdAt: -1 }).lean()
+    : []
+
+  const recentBookings = bookings.slice(0, 5)
+
+  const bookingsByStatus = bookings.reduce(
     (acc: Record<string, number>, item) => {
-      acc[item._id] = item.count
+      acc[item.status] = (acc[item.status] ?? 0) + 1
       return acc
     },
     {} as Record<string, number>
   )
+
+  const totalBookings = bookings.length
+
+  const statusCounts = bookingsByStatus
 
   const bookingSeriesMap = bookingsSeriesAgg.reduce(
     (acc: Record<string, number>, item) => {

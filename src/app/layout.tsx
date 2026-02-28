@@ -9,6 +9,7 @@ import { GlobalBookingTimer } from "@/components/marketing/global-booking-timer"
 import { ExitIntentGuard } from "@/components/marketing/exit-intent-guard";
 import { ChatPortal } from "@/components/marketing/chat-portal";
 import { CookieConsent } from "@/components/marketing/cookie-consent";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
               <ExitIntentGuard />
               <ChatPortal />
               <CookieConsent />
+              <Toaster />
               {children}
             </TranslationSkeletonProvider>
           </LoadingProvider>

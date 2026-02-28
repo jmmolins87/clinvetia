@@ -192,22 +192,26 @@ export async function POST(req: Request) {
       )
     }
 
-    internalEmailResult = await sendBrevoEmail({
-      to: [{ email: supportEmail, name: brandName }],
-      subject: bookingForEmail ? "Nuevo lead con reserva demo" : "Nuevo lead de contacto",
-      htmlContent: leadSummaryEmail({
-        supportEmail,
-        brandName,
-        nombre: parsed.nombre,
-        email: parsed.email,
-        telefono: parsed.telefono,
-        clinica: parsed.clinica,
-        mensaje: parsed.mensaje,
-        booking: bookingForInternal,
-        roi: parsed.roi ?? null,
-      }),
-      replyTo: { email: parsed.email, name: parsed.nombre },
-    })
+    if (supportEmail.toLowerCase() !== parsed.email.toLowerCase()) {
+      internalEmailResult = await sendBrevoEmail({
+        to: [{ email: supportEmail, name: brandName }],
+        subject: bookingForEmail ? "Nuevo lead con reserva demo" : "Nuevo lead de contacto",
+        htmlContent: leadSummaryEmail({
+          supportEmail,
+          brandName,
+          nombre: parsed.nombre,
+          email: parsed.email,
+          telefono: parsed.telefono,
+          clinica: parsed.clinica,
+          mensaje: parsed.mensaje,
+          booking: bookingForInternal,
+          roi: parsed.roi ?? null,
+        }),
+        replyTo: { email: parsed.email, name: parsed.nombre },
+      })
+    } else {
+      internalEmailResult = { ok: true }
+    }
 
     if (!internalEmailResult.ok) {
       console.error("Brevo internal email delivery failed", {

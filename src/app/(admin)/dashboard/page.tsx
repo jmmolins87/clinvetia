@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -21,6 +21,17 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
 import { Spinner } from "@/components/ui/spinner"
+import { useToast } from "@/components/ui/use-toast"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 type OverviewResponse = {
   mode: "demo" | "superadmin"
@@ -168,33 +179,54 @@ function DonutStatus({
 
 export default function AdminDashboardPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [data, setData] = useState<OverviewResponse | null>(null)
   const [rangeDays, setRangeDays] = useState<7 | 30>(7)
-  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch(`/api/admin/overview?range=${rangeDays}`, { cache: "no-store" })
-        if (res.status === 401) {
-          router.push("/admin/login")
-          return
-        }
-        if (!res.ok) {
-          const payload = await res.json().catch(() => null)
-          throw new Error(payload?.error || "Error al cargar datos")
-        }
-        setData((await res.json()) as OverviewResponse)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar datos")
-      } finally {
-        setLoading(false)
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/overview?range=${rangeDays}`, { cache: "no-store" })
+      if (res.status === 401) {
+        router.push("/admin/login")
+        return
       }
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null)
+        throw new Error(payload?.error || "Error al cargar datos")
+      }
+      setData((await res.json()) as OverviewResponse)
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "No se pudo cargar el dashboard",
+        description: err instanceof Error ? err.message : "Error al cargar datos",
+      })
+    } finally {
+      setLoading(false)
     }
+  }, [rangeDays, router, toast])
 
+  useEffect(() => {
+    setLoading(true)
     load()
-  }, [router, rangeDays])
+  }, [load])
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== "clinvetia:dashboard-refresh") return
+      load()
+    }
+    const onLocalEvent = () => load()
+    window.addEventListener("storage", onStorage)
+    window.addEventListener("clinvetia:dashboard-refresh", onLocalEvent)
+    window.addEventListener("clinvetia:booking-updated", onLocalEvent)
+    return () => {
+      window.removeEventListener("storage", onStorage)
+      window.removeEventListener("clinvetia:dashboard-refresh", onLocalEvent)
+      window.removeEventListener("clinvetia:booking-updated", onLocalEvent)
+    }
+  }, [load])
 
   const kpis = data?.kpis ?? {
     totalBookings: 0,
@@ -264,8 +296,8 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <GlassCard className="border-white/10 p-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 w-full overflow-hidden">
+              <GlassCard className="border-white/10 p-4 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase tracking-wider text-muted-foreground">Total citas</span>
                   <Icon icon={CalendarDays} size="sm" variant="primary" />
@@ -274,7 +306,7 @@ export default function AdminDashboardPage() {
                 <div className="mt-1 text-xs text-muted-foreground">Base de operaciones</div>
               </GlassCard>
 
-              <GlassCard className="border-white/10 p-4">
+              <GlassCard className="border-white/10 p-4 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase tracking-wider text-muted-foreground">Aceptación</span>
                   <Icon icon={TrendingUp} size="sm" variant="accent" />
@@ -283,7 +315,7 @@ export default function AdminDashboardPage() {
                 <div className="mt-1 text-xs text-muted-foreground">Confirmadas / total</div>
               </GlassCard>
 
-              <GlassCard className="border-warning/20 bg-warning/5 p-4">
+              <GlassCard className="border-warning/20 bg-warning/5 p-4 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase tracking-wider text-warning">Pendientes</span>
                   <Icon icon={Clock3} size="sm" variant="warning" />
@@ -292,7 +324,7 @@ export default function AdminDashboardPage() {
                 <div className="mt-1 text-xs text-muted-foreground">Requieren decisión</div>
               </GlassCard>
 
-              <GlassCard className="border-secondary/20 bg-secondary/5 p-4">
+              <GlassCard className="border-secondary/20 bg-secondary/5 p-4 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase tracking-wider text-secondary">Leads recientes</span>
                   <Icon icon={Inbox} size="sm" variant="secondary" />
@@ -326,8 +358,6 @@ export default function AdminDashboardPage() {
           </div>
         </GlassCard>
       </div>
-
-      {error && <div className="text-sm text-destructive">{error}</div>}
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_1fr_1fr]">
         <GlassCard className="p-5">
@@ -515,15 +545,19 @@ export default function AdminDashboardPage() {
             <h3 className="text-base font-semibold">Tabla rápida de operación</h3>
             <Badge variant="outline" className="w-fit">Acción sugerida</Badge>
           </div>
-          <div className="mt-4 overflow-x-auto rounded-xl border border-white/10">
-            <div className="min-w-[640px]">
-            <div className="grid grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] bg-white/5 px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground">
-              <div>Bloque</div>
-              <div>Volumen</div>
-              <div>Estado</div>
-              <div>Acción</div>
-            </div>
-            {[
+          <div className="mt-4">
+            <ScrollArea className="max-h-[260px]">
+              <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bloque</TableHead>
+                  <TableHead>Volumen</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Acción</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[
               {
                 label: "Citas pendientes",
                 value: kpis.pendingBookings,
@@ -556,24 +590,26 @@ export default function AdminDashboardPage() {
                 href: "/admin/bookings",
                 actionVariant: "destructive" as const,
               },
-            ].map((row) => (
-              <div key={row.label} className="grid grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] items-center border-t border-white/10 px-3 py-3 text-sm">
-                <div>{row.label}</div>
-                <div className="font-semibold">{row.value}</div>
-                <div className="text-muted-foreground">{row.status}</div>
-                <div className="flex justify-start">
-                  <Button
-                    variant={row.actionVariant}
-                    size="sm"
-                    className="h-7 w-auto px-2.5 text-xs"
-                    asChild
-                  >
-                    <Link href={row.href}>{row.actionLabel}</Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-            </div>
+                ].map((row) => (
+                  <TableRow key={row.label}>
+                    <TableCell>{row.label}</TableCell>
+                    <TableCell className="font-semibold">{row.value}</TableCell>
+                    <TableCell className="text-muted-foreground">{row.status}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant={row.actionVariant}
+                        size="sm"
+                        className="h-7 w-auto px-2.5 text-xs"
+                        asChild
+                      >
+                        <Link href={row.href}>{row.actionLabel}</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              </Table>
+            </ScrollArea>
           </div>
         </GlassCard>
 
@@ -610,15 +646,19 @@ export default function AdminDashboardPage() {
             <h3 className="text-base font-semibold">Tabla de estadísticas (citas)</h3>
             <Badge variant="outline" className="w-fit">Estados</Badge>
           </div>
-          <div className="mt-4 overflow-x-auto rounded-xl border border-white/10">
-            <div className="min-w-[680px]">
-            <div className="grid grid-cols-[1.2fr_0.7fr_0.7fr_0.9fr] bg-white/5 px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground">
-              <div>Métrica</div>
-              <div>Valor</div>
-              <div>% total</div>
-              <div>Lectura</div>
-            </div>
-            {[
+          <div className="mt-4">
+            <ScrollArea className="max-h-[260px]">
+              <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Métrica</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>% total</TableHead>
+                  <TableHead>Lectura</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[
               { label: "Confirmadas", value: kpis.confirmedBookings, tone: "OK" },
               { label: "Pendientes", value: kpis.pendingBookings, tone: "Atención" },
               { label: "Canceladas", value: kpis.cancelledBookings, tone: "Seguimiento" },
@@ -634,21 +674,25 @@ export default function AdminDashboardPage() {
                       ? "text-secondary"
                       : "text-destructive"
               return (
-                <div key={row.label} className="grid grid-cols-[1.2fr_0.7fr_0.7fr_0.9fr] items-center border-t border-white/10 px-3 py-3 text-sm">
-                  <div>{row.label}</div>
-                  <div className={`font-semibold ${valueClass}`}>{row.value}</div>
-                  <div className="text-muted-foreground">{pct}%</div>
-                  <div className="text-xs text-muted-foreground">{row.tone}</div>
-                </div>
+                <TableRow key={row.label}>
+                  <TableCell>{row.label}</TableCell>
+                  <TableCell className={`font-semibold ${valueClass}`}>{row.value}</TableCell>
+                  <TableCell className="text-muted-foreground">{pct}%</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{row.tone}</TableCell>
+                </TableRow>
               )
             })}
-            <div className="grid grid-cols-[1.2fr_0.7fr_0.7fr_0.9fr] items-center border-t border-white/10 bg-white/5 px-3 py-3 text-sm font-semibold">
-              <div>Total</div>
-              <div>{kpis.totalBookings}</div>
-              <div>100%</div>
-              <div className="text-primary">Operativo</div>
-            </div>
-            </div>
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell className="font-semibold">Total</TableCell>
+                  <TableCell className="font-semibold">{kpis.totalBookings}</TableCell>
+                  <TableCell className="font-semibold">100%</TableCell>
+                  <TableCell className="font-semibold text-primary">Operativo</TableCell>
+                </TableRow>
+              </TableFooter>
+              </Table>
+            </ScrollArea>
           </div>
         </GlassCard>
 
@@ -657,14 +701,18 @@ export default function AdminDashboardPage() {
             <h3 className="text-base font-semibold">Tabla de estadísticas (actividad)</h3>
             <Badge variant="accent" className="w-fit">Resumen</Badge>
           </div>
-          <div className="mt-4 overflow-x-auto rounded-xl border border-white/10">
-            <div className="min-w-[620px]">
-            <div className="grid grid-cols-[1.2fr_0.8fr_1fr] bg-white/5 px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground">
-              <div>Indicador</div>
-              <div>Valor</div>
-              <div>Observación</div>
-            </div>
-            {[
+          <div className="mt-4">
+            <ScrollArea className="max-h-[260px]">
+              <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Indicador</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Observación</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[
               {
                 label: "Leads recientes",
                 value: data?.recentContacts.length ?? 0,
@@ -691,25 +739,27 @@ export default function AdminDashboardPage() {
                 note: kpis.cancelledBookings > 0 ? "Conviene seguimiento comercial" : "Sin cancelaciones",
               },
             ].map((row) => (
-              <div key={row.label} className="grid grid-cols-[1.2fr_0.8fr_1fr] items-center border-t border-white/10 px-3 py-3 text-sm">
-                <div>{row.label}</div>
-                <div
-                  className={
-                    row.label === "Carga pendiente"
-                      ? "font-semibold text-warning"
-                      : row.label === "Cancelaciones"
-                        ? "font-semibold text-secondary"
-                        : row.label === "Ratio confirmación"
-                          ? "font-semibold text-primary"
-                          : "font-semibold"
-                  }
-                >
-                  {row.value}
-                </div>
-                <div className="text-xs text-muted-foreground">{row.note}</div>
-              </div>
+                <TableRow key={row.label}>
+                  <TableCell>{row.label}</TableCell>
+                  <TableCell
+                    className={
+                      row.label === "Carga pendiente"
+                        ? "font-semibold text-warning"
+                        : row.label === "Cancelaciones"
+                          ? "font-semibold text-secondary"
+                          : row.label === "Ratio confirmación"
+                            ? "font-semibold text-primary"
+                            : "font-semibold"
+                    }
+                  >
+                    {row.value}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{row.note}</TableCell>
+                </TableRow>
             ))}
-            </div>
+              </TableBody>
+              </Table>
+            </ScrollArea>
           </div>
         </GlassCard>
       </div>

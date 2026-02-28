@@ -21,14 +21,14 @@ export default function ConfirmUserActionPage() {
   useEffect(() => {
     if (!result?.ok) return
     const timeout = window.setTimeout(() => {
-      router.push("/admin")
+      router.push("/admin/login?notice=reset-confirmed")
     }, 1200)
     return () => window.clearTimeout(timeout)
   }, [result, router])
 
   const confirm = async () => {
     if (!token) {
-      setResult({ ok: false, message: "Token no válido" })
+      setResult({ ok: false, message: "Este enlace ya no es válido. Solicita un nuevo correo de confirmación." })
       return
     }
     setLoading(true)
@@ -41,7 +41,16 @@ export default function ConfirmUserActionPage() {
       })
       const payload = await res.json().catch(() => null)
       if (!res.ok) {
-        throw new Error(payload?.error || "No se pudo confirmar la solicitud")
+        const errorMessage = payload?.error || "No se pudo confirmar la solicitud"
+        if (res.status === 404 && /ya utilizada|no válida/i.test(errorMessage)) {
+          throw new Error(
+            "Este correo ya fue utilizado o ya no es válido. Si solicitaste un nuevo cambio, usa el último correo recibido."
+          )
+        }
+        if (res.status === 410) {
+          throw new Error("Este correo ha expirado. Solicita un nuevo enlace de confirmación.")
+        }
+        throw new Error(errorMessage)
       }
       setResult({
         ok: true,
@@ -75,14 +84,20 @@ export default function ConfirmUserActionPage() {
           </div>
         )}
 
-        {!result?.ok && (
-          <Button className="w-full" onClick={confirm} disabled={loading || !token}>
+        {!result && (
+          <Button className="w-full mt-2" onClick={confirm} disabled={loading || !token}>
             {loading ? "Confirmando..." : "Confirmar solicitud"}
           </Button>
         )}
 
         {result?.ok && (
-          <Button className="w-full" variant="accent" onClick={() => router.push("/admin")}>
+          <Button className="w-full" variant="accent" onClick={() => router.push("/admin/login")}>
+            Ir al login
+          </Button>
+        )}
+
+        {result && !result.ok && (
+          <Button className="w-full" variant="accent" onClick={() => router.push("/admin/login")}>
             Ir al login
           </Button>
         )}

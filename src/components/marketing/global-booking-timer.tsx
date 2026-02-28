@@ -38,6 +38,23 @@ export function GlobalBookingTimer() {
       if (remaining <= 0) {
         setFormExpiration(null)
         setTimeLeft(null)
+        const booking = storage.get<{ bookingId?: string; accessToken?: string } | null>("local", "booking", null)
+        if (booking?.bookingId && booking?.accessToken) {
+          fetch("/api/booking/expire", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bookingId: booking.bookingId, accessToken: booking.accessToken }),
+          }).catch(() => {})
+        }
+        storage.remove("local", "booking")
+        storage.remove("local", "booking_access_token")
+        storage.remove("local", "demo_access_token")
+        try {
+          const stamp = String(Date.now())
+          localStorage.setItem("clinvetia:booking-expired", stamp)
+          localStorage.setItem("clinvetia:booking-expired-at", stamp)
+        } catch {}
+        window.dispatchEvent(new Event("clinvetia:booking-expired"))
       }
     }
 
@@ -48,13 +65,30 @@ export function GlobalBookingTimer() {
 
   useEffect(() => {
     const checkDemoExpiration = () => {
-      const booking = storage.get<{ demoExpiresAt?: string } | null>("local", "booking", null)
+      const booking = storage.get<{ 
+        demoExpiresAt?: string; 
+        bookingId?: string; 
+        accessToken?: string 
+      } | null>("local", "booking", null)
       if (!booking?.demoExpiresAt) return
       const demoTime = new Date(booking.demoExpiresAt).getTime()
       if (Date.now() >= demoTime) {
+        if (booking?.bookingId && booking?.accessToken) {
+          fetch("/api/booking/expire", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bookingId: booking.bookingId, accessToken: booking.accessToken }),
+          }).catch(() => {})
+        }
         storage.remove("local", "booking")
         storage.remove("local", "booking_access_token")
         storage.remove("local", "demo_access_token")
+        try {
+          const stamp = String(Date.now())
+          localStorage.setItem("clinvetia:booking-expired", stamp)
+          localStorage.setItem("clinvetia:booking-expired-at", stamp)
+        } catch {}
+        window.dispatchEvent(new Event("clinvetia:booking-expired"))
       }
     }
 
