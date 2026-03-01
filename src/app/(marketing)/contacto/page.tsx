@@ -28,6 +28,7 @@ import { sanitizeInput } from "@/lib/security"
 import { storage } from "@/lib/storage"
 import { ApiError, createBooking, getActiveBookingBySession, getAvailability, getBooking, getSession, submitContact } from "@/lib/api"
 import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
+import { getRecaptchaToken } from "@/lib/recaptcha-client"
 
 interface FormData {
   nombre: string
@@ -615,6 +616,7 @@ function ContactFormWithROI() {
 
     setIsSubmitting(true)
     try {
+      const recaptchaToken = await getRecaptchaToken("contact_submit")
 
       const payload = {
         nombre: formData.nombre,
@@ -622,6 +624,7 @@ function ContactFormWithROI() {
         telefono: formData.telefono,
         clinica: formData.clinica,
         mensaje: formData.mensaje,
+        recaptchaToken,
         roi: {
           monthlyPatients,
           averageTicket,
@@ -892,6 +895,7 @@ function ContactFormWithROI() {
                 time: payload.time,
                 duration: payload.duration,
                 sessionToken: sessionAccessToken,
+                recaptchaToken: await getRecaptchaToken("booking_create"),
               })
 
                 setBookingId(response.bookingId)

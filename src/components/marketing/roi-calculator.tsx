@@ -36,6 +36,7 @@ import { storage } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 import { useROIStore } from "@/store/roi-store"
 import { createSession } from "@/lib/api"
+import { getRecaptchaToken } from "@/lib/recaptcha-client"
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -203,8 +204,10 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
           setIsCreatingSession(true)
           setCreateSessionError(null)
           try {
+            const recaptchaToken = await getRecaptchaToken("session_create")
             const session = await createSession({
               roi: { monthlyPatients, averageTicket, conversionLoss, roi },
+              recaptchaToken,
             })
             if (!session?.accessToken) {
               throw new Error("No se pudo crear el token de sesión")

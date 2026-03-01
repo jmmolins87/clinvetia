@@ -3,6 +3,7 @@ import { z } from "zod"
 import { dbConnect } from "@/lib/db"
 import { Booking } from "@/models/Booking"
 import { Contact } from "@/models/Contact"
+import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 
 interface BookingLeanView {
   _id: { toString(): string }
@@ -33,12 +34,23 @@ const bookingSchema = z.object({
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   duration: z.number().int().min(15).max(120),
   sessionToken: z.string().optional().nullable(),
+  recaptchaToken: z.string().min(10),
 })
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
     const parsed = bookingSchema.parse(body)
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
+    const recaptcha = await verifyRecaptchaToken({
+      token: parsed.recaptchaToken,
+      action: "booking_create",
+      minScore: 0.45,
+      ip,
+    })
+    if (!recaptcha.ok) {
+      return NextResponse.json({ error: recaptcha.reason || "reCAPTCHA validation failed" }, { status: 400 })
+    }
 
     await dbConnect()
 

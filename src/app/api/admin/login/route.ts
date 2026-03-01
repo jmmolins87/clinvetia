@@ -5,6 +5,7 @@ import { User } from "@/models/User"
 import { verifyPassword } from "@/lib/auth"
 import { createAdminSession, getAdminCookieName } from "@/lib/admin-auth"
 import { type AdminRole } from "@/lib/admin-roles"
+import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 
 interface LoginUser {
   _id: { toString(): string }
@@ -18,12 +19,23 @@ interface LoginUser {
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
+  recaptchaToken: z.string().min(10),
 })
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
     const parsed = loginSchema.parse(body)
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
+    const recaptcha = await verifyRecaptchaToken({
+      token: parsed.recaptchaToken,
+      action: "admin_login",
+      minScore: 0.5,
+      ip,
+    })
+    if (!recaptcha.ok) {
+      return NextResponse.json({ error: recaptcha.reason || "reCAPTCHA validation failed" }, { status: 400 })
+    }
 
     await dbConnect()
 

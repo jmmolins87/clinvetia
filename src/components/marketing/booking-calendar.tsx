@@ -33,6 +33,7 @@ import { useROIStore } from "@/store/roi-store"
 import { storage } from "@/lib/storage"
 import { ApiError, createBooking, getActiveBookingBySession, getAvailability, getBooking } from "@/lib/api"
 import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
+import { getRecaptchaToken } from "@/lib/recaptcha-client"
 
 // ── Datos ──────────────────────────────────────────────────────────────────────
 
@@ -630,11 +631,13 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
     const finalDuration = isRegisteredClient ? payload.duration : 30
     try {
       const store = useROIStore.getState()
+      const recaptchaToken = await getRecaptchaToken("booking_create")
       const response = await createBooking({
         date: formatLocalDateKey(payload.date),
         time: payload.time,
         duration: finalDuration,
         sessionToken: store.accessToken ?? null,
+        recaptchaToken,
       })
 
       setSelectedDate(payload.date)

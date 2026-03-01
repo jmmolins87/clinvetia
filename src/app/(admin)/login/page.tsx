@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Icon } from "@/components/ui/icon"
 import { useToast } from "@/components/ui/use-toast"
+import { getRecaptchaToken } from "@/lib/recaptcha-client"
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -44,10 +45,11 @@ export default function AdminLoginPage() {
     setIsSubmitting(true)
 
     try {
+      const recaptchaToken = await getRecaptchaToken("admin_login")
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, recaptchaToken }),
       })
 
       if (!res.ok) {

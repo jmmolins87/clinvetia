@@ -8,9 +8,60 @@ import { GlobalBackground } from "@/components/ui/global-background";
 import { Toaster } from "@/components/ui/toaster";
 import "./[locale]/globals.css";
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://clinvetia.com"
+
 export const metadata: Metadata = {
-  title: "Clinvetia - Software Veterinario con IA",
+  metadataBase: new URL(appUrl),
+  title: {
+    default: "Clinvetia - Software Veterinario con IA",
+    template: "%s · Clinvetia",
+  },
   description: "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
+  alternates: {
+    canonical: "/",
+  },
+  applicationName: "Clinvetia",
+  category: "software",
+  keywords: [
+    "software veterinario",
+    "ia veterinaria",
+    "automatización clínica veterinaria",
+    "agenda veterinaria",
+    "gestión clínica veterinaria",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    url: appUrl,
+    siteName: "Clinvetia",
+    title: "Clinvetia - Software Veterinario con IA",
+    description: "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Clinvetia",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clinvetia - Software Veterinario con IA",
+    description: "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
+    images: ["/logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   icons: {
     icon: [{ url: "/logo.png", type: "image/png" }],
     shortcut: [{ url: "/logo.png", type: "image/png" }],
@@ -29,6 +80,36 @@ export default function RootLayout({
         suppressHydrationWarning
         className="antialiased bg-background text-foreground relative min-h-screen"
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Clinvetia",
+              url: appUrl,
+              logo: `${appUrl}/logo.png`,
+              sameAs: [],
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Clinvetia",
+              url: appUrl,
+              inLanguage: "es",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: `${appUrl}/?q={search_term_string}`,
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
         <ThemeProvider>
           <LoadingProvider>
             <TranslationSkeletonProvider>

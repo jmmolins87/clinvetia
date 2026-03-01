@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { dbConnect } from "@/lib/db"
 import { Session } from "@/models/Session"
+import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 
 interface SessionLeanView {
   _id: { toString(): string }
@@ -16,6 +17,7 @@ interface SessionLeanView {
 }
 
 const sessionSchema = z.object({
+  recaptchaToken: z.string().min(10),
   roi: z
     .object({
       monthlyPatients: z.number().optional(),
@@ -30,6 +32,16 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}))
     const parsed = sessionSchema.parse(body)
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
+    const recaptcha = await verifyRecaptchaToken({
+      token: parsed.recaptchaToken,
+      action: "session_create",
+      minScore: 0.45,
+      ip,
+    })
+    if (!recaptcha.ok) {
+      return NextResponse.json({ error: recaptcha.reason || "reCAPTCHA validation failed" }, { status: 400 })
+    }
 
     await dbConnect()
 

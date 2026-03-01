@@ -15,6 +15,7 @@ import {
   buildGoogleMeetLink,
 } from "@/lib/booking-communication"
 import { getSharedMailboxEmail } from "@/lib/admin-mailbox"
+import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 
 interface SessionLeanView {
   _id: { toString(): string }
@@ -36,6 +37,7 @@ const contactSchema = z.object({
   telefono: z.string().min(9).max(15),
   clinica: z.string().min(2).max(60),
   mensaje: z.string().min(10).max(500),
+  recaptchaToken: z.string().min(10),
   bookingId: z.string().optional(),
   accessToken: z.string().optional(),
   roi: z
@@ -53,6 +55,16 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const parsed = contactSchema.parse(body)
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
+    const recaptcha = await verifyRecaptchaToken({
+      token: parsed.recaptchaToken,
+      action: "contact_submit",
+      minScore: 0.45,
+      ip,
+    })
+    if (!recaptcha.ok) {
+      return NextResponse.json({ error: recaptcha.reason || "reCAPTCHA validation failed" }, { status: 400 })
+    }
 
     await dbConnect()
 

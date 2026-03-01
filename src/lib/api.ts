@@ -36,6 +36,7 @@ export type ContactPayload = {
   telefono: string
   clinica: string
   mensaje: string
+  recaptchaToken?: string
   bookingId?: string
   accessToken?: string
   sessionToken?: string | null
@@ -82,6 +83,7 @@ export async function createBooking(payload: {
   time: string
   duration: number
   sessionToken?: string | null
+  recaptchaToken?: string
 }): Promise<BookingResponse> {
   return apiFetch<BookingResponse>("/api/booking", {
     method: "POST",
@@ -120,7 +122,7 @@ export async function submitContact(payload: ContactPayload): Promise<{ ok: true
   })
 }
 
-export async function createSession(payload?: { roi?: ContactPayload["roi"] }): Promise<{ accessToken: string; expiresAt: string }> {
+export async function createSession(payload?: { roi?: ContactPayload["roi"]; recaptchaToken?: string }): Promise<{ accessToken: string; expiresAt: string }> {
   return apiFetch<{ accessToken: string; expiresAt: string }>("/api/session", {
     method: "POST",
     body: JSON.stringify(payload || {}),
