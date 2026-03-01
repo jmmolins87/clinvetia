@@ -17,9 +17,6 @@ export const metadata: Metadata = {
     template: "%s · Clinvetia",
   },
   description: "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
-  alternates: {
-    canonical: "/",
-  },
   applicationName: "Clinvetia",
   category: "software",
   keywords: [
@@ -67,6 +64,7 @@ export const metadata: Metadata = {
     shortcut: [{ url: "/logo.png", type: "image/png" }],
     apple: [{ url: "/logo.png", type: "image/png" }],
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
@@ -98,15 +96,29 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "Clinvetia",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "EUR",
+              },
+              url: appUrl,
+              inLanguage: "es-ES",
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
               "@type": "WebSite",
               name: "Clinvetia",
               url: appUrl,
               inLanguage: "es",
-              potentialAction: {
-                "@type": "SearchAction",
-                target: `${appUrl}/?q={search_term_string}`,
-                "query-input": "required name=search_term_string",
-              },
             }),
           }}
         />

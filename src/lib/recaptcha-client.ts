@@ -3,6 +3,10 @@ declare global {
     grecaptcha?: {
       ready: (cb: () => void) => void
       execute: (siteKey: string, options: { action: string }) => Promise<string>
+      enterprise?: {
+        ready: (cb: () => void) => void
+        execute: (siteKey: string, options: { action: string }) => Promise<string>
+      }
     }
   }
 }
@@ -11,7 +15,7 @@ function loadRecaptchaScript(siteKey: string): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("No browser environment"))
   if (window.grecaptcha) return Promise.resolve()
 
-  const existing = document.querySelector<HTMLScriptElement>('script[data-recaptcha="v3"]')
+  const existing = document.querySelector<HTMLScriptElement>('script[data-recaptcha="enterprise-v3"]')
   if (existing) {
     return new Promise((resolve, reject) => {
       existing.addEventListener("load", () => resolve(), { once: true })
@@ -21,10 +25,10 @@ function loadRecaptchaScript(siteKey: string): Promise<void> {
 
   return new Promise((resolve, reject) => {
     const script = document.createElement("script")
-    script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(siteKey)}`
     script.async = true
     script.defer = true
-    script.dataset.recaptcha = "v3"
+    script.dataset.recaptcha = "enterprise-v3"
     script.onload = () => resolve()
     script.onerror = () => reject(new Error("Failed to load reCAPTCHA"))
     document.head.appendChild(script)
@@ -47,6 +51,16 @@ export async function getRecaptchaToken(action: string) {
   }
 
   const token = await new Promise<string>((resolve, reject) => {
+    if (window.grecaptcha?.enterprise) {
+      window.grecaptcha.enterprise.ready(() => {
+        window.grecaptcha?.enterprise
+          ?.execute(siteKey, { action })
+          .then(resolve)
+          .catch(() => reject(new Error("reCAPTCHA execute failed")))
+      })
+      return
+    }
+
     window.grecaptcha?.ready(() => {
       window.grecaptcha
         ?.execute(siteKey, { action })

@@ -11,10 +11,23 @@ export const metadata: Metadata = {
   },
   description:
     "Clinvetia automatiza la gestión de tu clínica veterinaria con agentes de inteligencia artificial. Comprende consultas, clasifica urgencias y agenda citas automáticamente.",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
+    title: "Clinvetia — Software veterinario con IA",
+    description:
+      "Clinvetia automatiza la gestión de tu clínica veterinaria con agentes de inteligencia artificial. Comprende consultas, clasifica urgencias y agenda citas automáticamente.",
+    url: "/",
     siteName: "Clinvetia",
     locale: "es_ES",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Clinvetia — Software veterinario con IA",
+    description:
+      "Clinvetia automatiza la gestión de tu clínica veterinaria con agentes de inteligencia artificial. Comprende consultas, clasifica urgencias y agenda citas automáticamente.",
   },
 }
 

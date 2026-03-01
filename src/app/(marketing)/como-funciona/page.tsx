@@ -151,7 +151,6 @@ export default function ComoFuncionaPage() {
                 title={step.title}
                 description={step.text}
                 index={idx}
-                iconClassName={idx % 2 !== 0 ? "bg-secondary/10" : ""}
               />
             ))}
           </div>

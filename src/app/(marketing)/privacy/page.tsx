@@ -1,8 +1,22 @@
 import { LegalLayout } from "@/components/layout/legal-layout"
+import type { Metadata } from "next"
 
-export const metadata = {
-  title: "Política de Privacidad · Clinvetia",
+export const metadata: Metadata = {
+  title: "Política de privacidad",
   description: "Información detallada sobre cómo protegemos y gestionamos tus datos personales.",
+  alternates: {
+    canonical: "/privacy",
+  },
+  openGraph: {
+    title: "Política de privacidad",
+    description: "Información detallada sobre cómo protegemos y gestionamos tus datos personales.",
+    url: "/privacy",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Política de privacidad",
+    description: "Información detallada sobre cómo protegemos y gestionamos tus datos personales.",
+  },
 }
 
 const sections = [

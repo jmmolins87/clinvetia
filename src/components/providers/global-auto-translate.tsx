@@ -25,7 +25,7 @@ function applyTextNode(node: Text, locale: "es" | "en") {
   } else {
     const previousTranslated = translateText(original, "en")
     const isRuntimeSourceUpdate =
-      locale === "es" ? current !== original : current !== previousTranslated
+      current !== original && current !== previousTranslated
     if (isRuntimeSourceUpdate) {
       original = current
       textOriginal.set(node, current)
@@ -54,7 +54,7 @@ function applyElementAttributes(element: Element, locale: "es" | "en") {
     } else {
       const previousTranslated = translateText(originalCached, "en")
       const isRuntimeSourceUpdate =
-        locale === "es" ? current !== originalCached : current !== previousTranslated
+        current !== originalCached && current !== previousTranslated
       if (isRuntimeSourceUpdate) {
         original = current
         originalMap.set(attr, current)

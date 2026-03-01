@@ -1,8 +1,22 @@
 import { LegalLayout } from "@/components/layout/legal-layout"
+import type { Metadata } from "next"
 
-export const metadata = {
-  title: "Seguridad · Clinvetia",
+export const metadata: Metadata = {
+  title: "Seguridad",
   description: "Detalles sobre nuestras medidas de seguridad y protección de la infraestructura.",
+  alternates: {
+    canonical: "/security",
+  },
+  openGraph: {
+    title: "Seguridad",
+    description: "Detalles sobre nuestras medidas de seguridad y protección de la infraestructura.",
+    url: "/security",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Seguridad",
+    description: "Detalles sobre nuestras medidas de seguridad y protección de la infraestructura.",
+  },
 }
 
 const sections = [

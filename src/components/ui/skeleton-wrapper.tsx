@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { Skeleton, SkeletonProps } from "./skeleton"
-import { useGlobalLoading } from "../providers/loading-provider"
 import { cn } from "@/lib/utils"
 
 interface SkeletonWrapperProps extends SkeletonProps {
@@ -21,8 +20,7 @@ export function SkeletonWrapper({
   as: Component = "div",
   ...skeletonProps
 }: SkeletonWrapperProps) {
-  const { isLoading } = useGlobalLoading()
-  const active = showSkeleton ?? isLoading
+  const active = Boolean(showSkeleton)
 
   return (
     <Component className={cn(Component === "div" ? "grid" : "inline-grid", wrapperClassName)}>

@@ -265,8 +265,9 @@ export default function SolucionPage() {
                   key={item.text}
                   {...fadeUp}
                   transition={{ delay: 0.1 + index * 0.1 }}
+                  className="h-full"
                 >
-                  <GlassCard className="p-6 flex items-start gap-4 border-white/10 hover:border-primary/20 transition-colors">
+                  <GlassCard className="h-full p-6 flex items-start gap-4 border-white/10 hover:border-primary/20 transition-colors">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 border border-primary/20 text-primary mb-2">
                       <Icon icon={item.icon} size="lg" variant="primary" />
                     </div>
