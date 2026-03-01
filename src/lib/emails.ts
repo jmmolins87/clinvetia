@@ -120,6 +120,7 @@ export function internalLeadNotificationEmail(params: {
   clinica: string
   mensaje: string
   booking?: {
+    bookingId?: string
     dateLabel: string
     timeLabel: string
     duration: number

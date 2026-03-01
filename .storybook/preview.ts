@@ -1,6 +1,6 @@
 import React from "react"
 import type { Preview, Decorator } from "@storybook/react"
-import "../src/app/globals.css"
+import "../src/app/[locale]/globals.css"
 import { TranslationSkeletonProvider } from "../src/components/providers/translation-skeleton"
 
 // ── Constantes de tema ────────────────────────────────────────────────────────

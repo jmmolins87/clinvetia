@@ -364,9 +364,10 @@ function SuccessView({ date, time }: SuccessViewProps) {
 export interface BookingCalendarProps {
   className?: string
   onBooked?: (date: Date, time: string, duration: number) => void
+  embedded?: boolean
 }
 
-export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
+export function BookingCalendar({ className, onBooked, embedded = false }: BookingCalendarProps) {
   const router = useRouter()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -699,7 +700,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-warning/30 bg-warning/10 sm:mx-0">
               <Icon icon={AlertCircle} size="xl" variant="warning" />
             </div>
-            <DialogTitle>Ya tienes una demo activa reservada</DialogTitle>
+            <DialogTitle>Ya tienes una cita activa reservada</DialogTitle>
             <DialogDescription className="text-sm leading-relaxed">
               Para evitar duplicados, no permitimos crear otra reserva mientras tu cita actual siga activa.
               Si necesitas cambiar fecha u hora, puedes gestionarlo desde los correos de confirmaci&oacute;n.
@@ -751,7 +752,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
         <div className={cn("min-h-[8rem]", className)} aria-hidden />
       ) : (
         <>
-          <div className={cn("space-y-4 lg:hidden", className)}>
+          <div className={cn("space-y-4", !embedded && "lg:hidden", className)}>
             <AnimatePresence mode="wait">
               {showSuccess && selectedDate && selectedTime ? (
                 <GlassCard key="success" className="p-6">
@@ -765,9 +766,9 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                   exit={{ opacity: 0, y: -8 }}
                 >
                   <BookingWizard
-                    title="Reserva tu demo"
+                    title="Reserva tu cita"
                     subtitle="Selecciona un día, elige hora y confirma tu videollamada"
-                    confirmCtaLabel="Confirmar reserva"
+                    confirmCtaLabel="Confirmar cita"
                     confirmingLabel="Confirmando..."
                     initialDate={selectedDate}
                     initialTime={selectedTime}
@@ -789,16 +790,16 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                   <Avatar key={m.initials} initials={m.initials} size="xs" variant={m.variant} />
                 ))}
               </AvatarGroup>
-              <span>+120 demos realizadas este mes</span>
+              <span>+120 citas gestionadas este mes</span>
             </div>
           </div>
 
-          <div className={cn("hidden gap-6 lg:grid lg:grid-cols-[1fr_360px]", className)}>
+          <div className={cn("hidden gap-6 lg:grid lg:grid-cols-[1fr_360px]", embedded && "lg:hidden", className)}>
             <GlassCard className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-base font-semibold uppercase tracking-widest text-muted-foreground">
-                    Reserva tu demo
+                    Reserva tu cita
                   </p>
                   <h2 className="mt-0.5 text-xl font-bold text-foreground">
                     Elige día y hora
@@ -956,7 +957,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                           <Avatar key={m.initials} initials={m.initials} size="xs" variant={m.variant} />
                         ))}
                       </AvatarGroup>
-                      <span>+120 demos realizadas este mes</span>
+                      <span>+120 citas gestionadas este mes</span>
                     </div>
                   </motion.div>
                 )}

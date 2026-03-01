@@ -199,7 +199,7 @@ export async function POST(req: Request) {
 
       const subject = "Tu demo esta confirmada"
       const bookingSummary = bookingForInternal
-        ? { ...bookingForInternal, meetingLink }
+        ? { ...bookingForInternal, meetingLink, bookingId: bookingId || undefined }
         : null
       const htmlContent = leadSummaryEmail({
         brandName,

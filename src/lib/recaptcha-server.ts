@@ -66,9 +66,10 @@ export async function verifyRecaptchaToken(params: {
     }
 
     if (!response?.success) {
+      const reason = response?.["error-codes"]?.join(", ") || "Invalid reCAPTCHA"
       return {
         ok: false,
-        reason: response?.["error-codes"]?.join(", ") || "Invalid reCAPTCHA",
+        reason,
         score: response?.score,
       }
     }
@@ -112,9 +113,10 @@ export async function verifyRecaptchaToken(params: {
     }
 
     if (!response?.tokenProperties?.valid) {
+      const reason = response?.tokenProperties?.invalidReason || "Invalid reCAPTCHA token"
       return {
         ok: false,
-        reason: response?.tokenProperties?.invalidReason || "Invalid reCAPTCHA token",
+        reason,
         score: response?.riskAnalysis?.score,
       }
     }

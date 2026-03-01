@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:chat-roi-guard": "node scripts/test-chat-roi-guard.mjs",
+    "test:chat-scroll-guard": "node scripts/test-chat-scroll-guard.mjs",
     "version:prod:patch": "npm version patch --no-git-tag-version",
     "version:prod:minor": "npm version minor --no-git-tag-version",
     "version:prod:major": "npm version major --no-git-tag-version",

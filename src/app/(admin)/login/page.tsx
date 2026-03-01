@@ -59,7 +59,12 @@ export default function AdminLoginPage() {
 
       router.push("/admin/dashboard")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesion")
+      const rawMessage = err instanceof Error ? err.message : "Error al iniciar sesion"
+      if (/browser-error/i.test(rawMessage)) {
+        setError("reCAPTCHA rechazado (browser-error). Revisa que el dominio actual esté autorizado en la clave de Google (incluye localhost y el dominio de producción).")
+      } else {
+        setError(rawMessage)
+      }
     } finally {
       setIsSubmitting(false)
     }
