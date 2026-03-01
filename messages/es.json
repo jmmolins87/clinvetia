@@ -1,0 +1,1384 @@
+{
+  "common": {
+    "cta": {
+      "demo": "Reservar Demo",
+      "roi": "Ver ROI",
+      "contact": "Contacto",
+      "calculate_roi": "Calcular mi ROI",
+      "schedule_demo": "Agendar Demo"
+    }
+  },
+  "nav": {
+    "solucion": "Solución",
+    "escenarios": "Escenarios",
+    "como_funciona": "Cómo funciona",
+    "contacto": "Contacto",
+    "calculadora": "Calculadora ROI"
+  },
+  "dashboard": {
+    "title": "Administración",
+    "subtitle": "Centro de operaciones Clinvetia",
+    "nav": {
+      "home": "Dashboard",
+      "bookings": "Citas",
+      "contacts": "Contactos",
+      "users": "Usuarios",
+      "audit": "Auditoría",
+      "settings": "Ajustes"
+    },
+    "shell": {
+      "panel_title": "Panel de Clinvetia",
+      "panel_description": "Navegación interna y accesos rápidos de gestión.",
+      "quick_management": "Gestión rápida",
+      "manage_bookings": "Gestionar citas",
+      "manage_leads": "Gestionar leads",
+      "config": "Configuración",
+      "internal_user": "Usuario interno",
+      "manage_users": "Gestionar usuarios",
+      "logout": "Cerrar sesión",
+      "logging_out": "Cerrando sesión...",
+      "ops_panel": "Panel de gestión",
+      "ops_description": "Diseño interno orientado a operación diaria y seguimiento de agenda.",
+      "ops_footer": "Operaciones, gestión de citas y seguimiento comercial"
+    },
+    "edit_user": {
+      "title": "Editar usuario",
+      "description": "Actualiza tu nombre y rol. No podrás asignar un rol superior al tuyo.",
+      "name": "Nombre",
+      "role": "Rol",
+      "cancel": "Cancelar",
+      "save": "Guardar cambios",
+      "saving": "Guardando...",
+      "success_title": "Usuario actualizado",
+      "success_desc": "Los cambios se han guardado correctamente.",
+      "error_name_length": "El nombre debe tener entre 2 y 80 caracteres"
+    },
+    "overview": {
+      "demo_mode": "Modo demo",
+      "prod_mode": "Producción",
+      "ops_badge": "Operaciones",
+      "title": "Dashboard de gestión de citas",
+      "subtitle": "Vista operativa para aceptar, cancelar y supervisar reservas y leads.",
+      "range_7d": "7d",
+      "range_30d": "30d",
+      "kpi_total": "Total citas",
+      "kpi_total_desc": "Base de operaciones",
+      "kpi_ratio": "Aceptación",
+      "kpi_ratio_desc": "Confirmadas / total",
+      "kpi_pending": "Pendientes",
+      "kpi_pending_desc": "Requieren decisión",
+      "kpi_leads": "Leads recientes",
+      "status_dist": "Distribución de estados",
+      "real_time": "En tiempo real",
+      "total_appointments": "Total de citas",
+      "confirmed": "Confirmadas",
+      "pending": "Pendientes",
+      "cancelled": "Canceladas",
+      "expired": "Expiradas",
+      "ops_load": "Carga operativa",
+      "recent_bookings": "Reservas recientes",
+      "see_all": "Ver todas",
+      "loading_bookings": "Cargando citas...",
+      "no_bookings": "Sin reservas",
+      "commercial_activity": "Actividad comercial",
+      "summary": "Resumen",
+      "ops_funnel": "Embudo operativo",
+      "leads": "Leads",
+      "visual_trend": "Tendencia visual",
+      "chart_bookings": "Citas",
+      "chart_leads": "Leads",
+      "recent_leads": "Leads recientes",
+      "open": "Abrir",
+      "loading_leads": "Cargando leads...",
+      "no_leads": "Sin contactos",
+      "ops_table": "Tabla rápida de operación",
+      "suggested_action": "Acción sugerida",
+      "col_block": "Bloque",
+      "col_volume": "Volumen",
+      "col_status": "Estado",
+      "col_action": "Acción",
+      "review": "Revisar",
+      "view_cancelled": "Ver canceladas",
+      "open_leads": "Abrir leads",
+      "view_expired": "Ver expiradas",
+      "quick_access": "Accesos rápidos",
+      "manage_bookings": "Gestionar citas",
+      "manage_bookings_desc": "Aceptar, cancelar y revisar agenda",
+      "manage_leads": "Gestionar leads",
+      "manage_leads_desc": "Seguimiento de formularios",
+      "audit": "Auditoría de acciones",
+      "audit_desc": "Trazabilidad interna",
+      "stats_table_bookings": "Tabla de estadísticas (citas)",
+      "stats_table_activity": "Tabla de estadísticas (actividad)",
+      "col_metric": "Métrica",
+      "col_value": "Valor",
+      "col_pct": "% total",
+      "col_reading": "Lectura",
+      "total": "Total",
+      "ops_ok": "Operativo",
+      "col_indicator": "Indicador",
+      "col_obs": "Observación",
+      "ratio_conf": "Ratio confirmación",
+      "ratio_conf_desc": "Confirmadas sobre el total",
+      "pending_load": "Carga pendiente",
+      "pending_load_yes": "Hay citas por revisar",
+      "pending_load_no": "Sin cola pendiente",
+      "cancelations": "Cancelaciones",
+      "cancelations_yes": "Conviene seguimiento comercial",
+      "cancelations_no": "Sin cancelaciones",
+      "status_ok": "OK",
+      "status_atencion": "Atención",
+      "status_seguimiento": "Seguimiento",
+      "status_higiene": "Higiene",
+      "status_nuevo": "Nuevo"
+    },
+    "bookings": {
+      "title": "Reservas",
+      "loading": "Cargando citas...",
+      "no_bookings": "Sin reservas para los filtros seleccionados",
+      "total": "Total",
+      "confirmed": "Confirmadas",
+      "pending": "Pendientes",
+      "cancelled": "Canceladas",
+      "expired": "Expiradas",
+      "filters": {
+        "all_dates": "Todas las fechas",
+        "today": "Hoy",
+        "tomorrow": "Mañana",
+        "week": "Próximos 7 días",
+        "all_status": "Todas"
+      },
+      "card": {
+        "appointment": "Cita",
+        "contact": "Contacto",
+        "no_contact": "Sin contacto aún",
+        "clinic": "Clínica",
+        "phone": "Tel",
+        "pending_data": "Pendiente de datos",
+        "updating": "Actualizando...",
+        "accept": "Aceptar",
+        "reschedule": "Reagendar",
+        "cancel": "Cancelar",
+        "delete_expired": "Eliminar cita expirada",
+        "delete_cancelled": "Eliminar cita cancelada"
+      },
+      "delete_dialog": {
+        "title": "Confirmar eliminación",
+        "desc_fallback": "Confirma la eliminación de la cita.",
+        "cancel": "Cancelar",
+        "action": "Eliminar cita"
+      },
+      "reschedule_dialog": {
+        "title": "Reagendar cita",
+        "description": "Selecciona una nueva fecha y hora. Se enviará un correo de confirmación al cliente.",
+        "wizard_title": "Reagendar cita",
+        "wizard_subtitle": "Elige un nuevo día, revisa los horarios y confirma la nueva fecha",
+        "wizard_confirm": "Confirmar reagendado",
+        "wizard_loading": "Reagendando...",
+        "wizard_error_load": "No se pudieron cargar los horarios",
+        "close": "Cerrar",
+        "error_select": "Selecciona una cita para reagendar"
+      },
+      "pagination": {
+        "prev": "Anterior",
+        "next": "Siguiente"
+      },
+      "toast": {
+        "error_load": "No se pudieron cargar las citas",
+        "error_update": "No se pudo actualizar la cita",
+        "error_delete": "No se pudo eliminar la cita",
+        "error_reschedule": "No se pudo reagendar la cita"
+      }
+    },
+    "contacts": {
+      "title": "Contactos",
+      "loading": "Cargando contactos...",
+      "no_contacts": "Sin contactos",
+      "delete_dialog": {
+        "title": "Eliminar contacto",
+        "description_fallback": "Confirma la eliminación del contacto.",
+        "cancel": "Cancelar",
+        "action": "Eliminar contacto"
+      },
+      "card": {
+        "delete": "Eliminar",
+        "email": "Correo",
+        "phone": "Teléfono",
+        "roi": "ROI",
+        "demo": "Demo",
+        "no_demo": "Sin demo",
+        "status": "Estado",
+        "patients_month": "Pacientes/mes",
+        "ticket": "Ticket",
+        "conv_loss": "Pérdida conv."
+      },
+      "pagination": {
+        "prev": "Anterior",
+        "next": "Siguiente"
+      },
+      "toast": {
+        "error_load": "No se pudieron cargar los contactos",
+        "error_delete": "No se pudo eliminar el contacto"
+      }
+    },
+    "users": {
+      "title": "Usuarios",
+      "loading": "Cargando usuarios...",
+      "no_users": "Sin usuarios",
+      "list_title": "Listado",
+      "create_title": "Crear usuario",
+      "pending_title": "Solicitudes pendientes",
+      "loading_pending": "Cargando solicitudes...",
+      "no_pending": "No hay invitaciones ni resets pendientes.",
+      "role_restricted": "Tu rol no puede crear usuarios.",
+      "edit_dialog": {
+        "title": "Editar usuario",
+        "description": "Actualiza el nombre y el rol del usuario. No podrás asignar un rol superior al tuyo.",
+        "name": "Nombre",
+        "role": "Rol",
+        "cancel": "Cancelar",
+        "save": "Guardar cambios",
+        "saving": "Guardando..."
+      },
+      "delete_dialog": {
+        "title": "Confirmar eliminación",
+        "fallback": "Confirma la eliminación del usuario.",
+        "cancel": "Cancelar",
+        "action": "Eliminar usuario"
+      },
+      "reset_section": {
+        "title": "Reset password",
+        "description": "Se generará una nueva contraseña temporal y se enviará un correo al usuario para que confirme el cambio.",
+        "submit": "Enviar email de verificación",
+        "submitting": "Enviando...",
+        "cancel": "Cancelar"
+      },
+      "form": {
+        "name": "Nombre",
+        "email": "Email",
+        "role": "Rol",
+        "submit": "Enviar invitación",
+        "submitting": "Enviando invitación...",
+        "required": "Este campo es obligatorio",
+        "min_chars": "Mínimo 2 caracteres",
+        "max_chars": "Máximo 80 caracteres",
+        "invalid_email": "Email no válido"
+      },
+      "card": {
+        "edit": "Editar",
+        "reset": "Reset password",
+        "deactivate": "Desactivar",
+        "activate": "Activar",
+        "delete": "Eliminar",
+        "updating": "Actualizando...",
+        "invite": "Invitación",
+        "resend": "Reenviar",
+        "resending": "Enviando...",
+        "cancel": "Cancelar",
+        "canceling": "Cancelando..."
+      },
+      "pagination": {
+        "prev": "Anterior",
+        "next": "Siguiente"
+      },
+      "toast": {
+        "update_success_title": "Usuario actualizado",
+        "update_success_desc": "Los cambios se han guardado correctamente.",
+        "update_error_title": "No se pudo actualizar",
+        "reset_logout_title": "Cambio de contraseña solicitado",
+        "reset_logout_desc": "Se cerrará tu sesión porque has solicitado un cambio de contraseña.",
+        "error_load": "Error al cargar usuarios",
+        "error_load_pending": "Error al cargar solicitudes pendientes",
+        "error_create": "No se pudo crear el usuario",
+        "error_delete": "No se pudo eliminar",
+        "error_reset": "No se pudo resetear",
+        "error_pending": "No se pudo actualizar la solicitud"
+      }
+    },
+    "audit": {
+      "title": "Auditoría",
+      "loading": "Cargando auditoría...",
+      "no_events": "Sin eventos",
+      "view_pages": "Ver por páginas",
+      "view_list": "Ver en lista",
+      "pagination": {
+        "prev": "Anterior",
+        "next": "Siguiente"
+      }
+    }
+  },
+  "hero": {
+    "badge": "Nueva Generación de IA Veterinaria",
+    "title_prefix": "Sistema de ",
+    "title_highlight": "Atención Inteligente"
+  },
+  "problems": {
+    "badge": "El problema",
+    "title": "¿Te resulta familiar?",
+    "subtitle": "Estas situaciones ocurren cada día en clínicas veterinarias.",
+    "items": {
+      "night_emergencies": {
+        "title": "Urgencias nocturnas perdidas",
+        "description": "Un dueño escribe a las 23h. Si tú no estás, alguien más la atiende."
+      },
+      "overwhelmed_reception": {
+        "title": "Recepción desbordada",
+        "description": "Tu equipo atiende consultas... Cada interrupción suma minutos."
+      },
+      "missed_appointments": {
+        "title": "Citas que se escapan",
+        "description": "Tardas 2 horas en responder... Cliente perdido."
+      },
+      "manual_reminders": {
+        "title": "Recordatorios manuales",
+        "description": "Todo requiere llamadas... depende de la memoria."
+      }
+    }
+  },
+  "solution": {
+    "badge": "La solución",
+    "title": "Sistema de Atención Inteligente",
+    "description": "ClinvetIA no solo responde. Entiende el contexto, verifica tu disponibilidad y cierra la cita sin que nadie intervenga.",
+    "features": {
+      "understand": {
+        "title": "Comprende consultas veterinarias",
+        "description": "Interpreta síntomas, edad, raza y contexto"
+      },
+      "agenda": {
+        "title": "Verifica agenda en tiempo real",
+        "description": "Huecos disponibles, cirugías, bloques"
+      },
+      "booking": {
+        "title": "Agenda citas automáticamente",
+        "description": "Sin intervención de tu equipo"
+      },
+      "reminders": {
+        "title": "Recordatorios proactivos",
+        "description": "Wapp, email, SMS automatizados"
+      }
+    },
+    "stat": "de las consultas llegan fuera de horario. ClinvetIA las atiende",
+    "immediately": "inmediatamente",
+    "mock": {
+      "example": "“Hola, Toby no quiere comer desde ayer y noto que tiene la tripa muy hinchada y dura al tacto. Me preocupa.”",
+      "triage": "Triaje IA",
+      "triage_val": "Síntomas de dolor abdominal y anorexia. Posible obstrucción. Prioridad: Alta.",
+      "agenda": "Agenda",
+      "agenda_val": "Hueco de urgencia con el Dr. García a las 16:30. ¿Te va bien?",
+      "confirm": "✓ Cita confirmada para las 16:30. ¡Toby ya está en agenda!"
+    }
+  },
+  "flow": {
+    "badge": "El flujo",
+    "title": "Flujo sin fricciones",
+    "subtitle": "Desde que el dueño contacta hasta que la cita está confirmada.",
+    "steps": {
+      "step1": {
+        "title": "Dueño consulta",
+        "description": "WhatsApp 24/7"
+      },
+      "step2": {
+        "title": "Sistema clasifica",
+        "description": "Triaje automático"
+      },
+      "step3": {
+        "title": "Propone opciones",
+        "description": "Huecos disponibles"
+      },
+      "step4": {
+        "title": "Confirma y recuerda",
+        "description": "Cita cerrada + recordatorio"
+      }
+    }
+  },
+  "benefits": {
+    "badge": "Beneficios",
+    "title": "Beneficios operativos",
+    "subtitle": "Más tiempo para lo que importa: tus pacientes.",
+    "items": {
+      "emergencies": {
+        "title": "Urgencias 24/7",
+        "description": "Nunca más una urgencia sin atender"
+      },
+      "calls": {
+        "title": "Menos llamadas repetitivas",
+        "description": "El sistema hace el trabajo pesado"
+      },
+      "owners": {
+        "title": "Dueños tranquilos",
+        "description": "Respuesta inmediata, siempre"
+      }
+    }
+  },
+  "use_cases": {
+    "badge": "Casos reales",
+    "title": "Escenarios de uso",
+    "subtitle": "ClinvetIA se adapta a todo tipo de clínicas y necesidades.",
+    "items": {
+      "night": "Urgencias Nocturnas",
+      "preventive": "Medicina Preventiva",
+      "chronic": "Tratamientos Crónicos",
+      "services": "Múltiples Servicios"
+    }
+  },
+  "roi": {
+    "badge": "El coste de no actuar",
+    "title": "¿Cuántos clientes pierdes?",
+    "items": {
+      "immediate": "esperan respuesta inmediata",
+      "lost": "se van tras 24h",
+      "increase": "aumento en consultas"
+    },
+    "footer": "Tu equipo se enfoca en las mascotas, no en el teléfono."
+  },
+  "cta_final": {
+    "title": "¿Listo para transformar la atención de tu clínica?",
+    "description": "Reserva una demo personalizada y descubre cómo ClinvetIA puede aumentar tu capacidad de atención."
+  },
+  "contact": {
+    "badge": "Contacto",
+    "subtitle": "Nuestro equipo está listo para ayudarte a transformar tu gestión veterinaria.",
+    "loading": "Cargando...",
+    "form": {
+      "name": "Nombre completo *",
+      "name_placeholder": "Dr. Juan García",
+      "email": "Email profesional *",
+      "email_placeholder": "juan@clinica.com",
+      "phone": "Teléfono *",
+      "phone_placeholder": "+34 612 345 678",
+      "clinic": "Nombre de la clínica *",
+      "clinic_placeholder": "Clínica Veterinaria Central",
+      "message": "Mensaje *",
+      "message_placeholder": "Cuéntanos sobre tu clínica...",
+      "submit": "Enviar solicitud",
+      "submitting": "Enviando...",
+      "chat_fix": "Corregir datos por chat"
+    },
+    "validation": {
+      "required": "Este campo es obligatorio",
+      "invalid_email": "Email no válido"
+    },
+    "success": {
+      "title": "¡Mensaje enviado!",
+      "description": "Nuestro equipo te contactará en menos de 24 horas.",
+      "back_home": "Volver al inicio"
+    },
+    "summaries": {
+      "roi_title": "Resumen ROI",
+      "roi_ready": "Listo",
+      "patients": "Pacientes/mes",
+      "ticket": "Ticket medio",
+      "conv_loss": "Pérdida de conversión",
+      "monthly_loss": "Pérdida mensual",
+      "recoverable": "Recuperable (70%)",
+      "modify_roi": "Modificar ROI",
+      "booking_title": "Tu Reserva Demo",
+      "booking_confirmed": "Confirmada",
+      "date_time": "Fecha y hora",
+      "custom_demo": "Demo personalizada con experto",
+      "modify_booking": "Modificar cita",
+      "expired_title": "Reserva expirada",
+      "expired_desc": "El tiempo de tu reserva ha terminado. Vuelve a reservar una demo para continuar.",
+      "book_now": "Reservar demo ahora",
+      "no_booking_title": "Sin reserva previa",
+      "no_booking_desc": "No hemos detectado una reserva de demo activa para tu sesión.",
+      "active_until": "Activa hasta",
+      "client_data": "Datos del cliente"
+    },
+    "dialogs": {
+      "roi_needed": {
+        "title": "Para seguir, hagamos tu cálculo de ROI",
+        "why_title": "¿Por qué lo pedimos?",
+        "why_desc": "Queremos que el tiempo de tu llamada sea súper aprovechado, con cifras reales y una evaluación hecha a tu medida.",
+        "back": "Volver al inicio",
+        "go_calc": "Ir a la calculadora"
+      },
+      "active_demo": {
+        "title": "Ya existe una demo activa",
+        "desc_duplicate": "Ya hemos recibido tus datos para esta demo. Gestiona cambios desde el correo de confirmación.",
+        "desc_active_email": "Este correo ya tiene una demo activa. Para evitar duplicados, espera a que termine o gestiona cambios desde el correo de confirmación.",
+        "desc_validation_error": "No pudimos validar si tu correo ya tiene una demo activa. Inténtalo de nuevo.",
+        "understood": "Entendido",
+        "back_demo": "Volver a demo"
+      },
+      "expired": {
+        "title": "Tu reserva ha expirado",
+        "description": "Para continuar, vuelve a reservar una demo y selecciona un nuevo horario.",
+        "go_demo": "Ir a demo",
+        "toast_title": "La reserva ha expirado",
+        "toast_desc": "Vuelve a reservar una demo para continuar."
+      },
+      "error": {
+        "title": "No pudimos enviar tu mensaje",
+        "desc_session": "No pudimos validar tu sesión. Vuelve a la calculadora y repite el proceso.",
+        "desc_fallback": "Ocurrió un problema al enviar el formulario. Inténtalo de nuevo.",
+        "understood": "Entendido",
+        "go_calc": "Ir a la calculadora"
+      },
+      "modify": {
+        "title": "Modificar reserva",
+        "description": "Selecciona una nueva fecha y hora para tu demo.",
+        "wizard_title": "Modificar reserva",
+        "wizard_subtitle": "Elige un nuevo día, revisa los horarios y confirma la nueva fecha",
+        "wizard_confirm": "Confirmar cambio",
+        "wizard_loading": "Actualizando..."
+      }
+    },
+    "duplicate_card": {
+      "title": "Ya hemos recibido tus datos para esta demo"
+    }
+  },
+  "booking": {
+    "section": {
+      "badge": "Sin compromiso · Gratuita",
+      "highlight": "demo personalizada"
+    },
+    "calendar": {
+      "months": {
+        "0": "Enero",
+        "1": "Febrero",
+        "2": "Marzo",
+        "3": "Abril",
+        "4": "Mayo",
+        "5": "Junio",
+        "6": "Julio",
+        "7": "Agosto",
+        "8": "Septiembre",
+        "9": "Octubre",
+        "10": "Noviembre",
+        "11": "Diciembre"
+      },
+      "week_days": {
+        "0": "L",
+        "1": "M",
+        "2": "X",
+        "3": "J",
+        "4": "V",
+        "5": "S",
+        "6": "D"
+      },
+      "prev_month": "Mes anterior",
+      "next_month": "Mes siguiente",
+      "available": "Disponible",
+      "selected": "Seleccionado",
+      "unavailable": "No disponible"
+    },
+    "wizard": {
+      "title": "Reserva tu demo",
+      "subtitle": "Selecciona un día, elige hora y confirma tu videollamada",
+      "confirm_cta": "Confirmar reserva",
+      "confirming": "Confirmando...",
+      "duration_label": "Duración de la sesión",
+      "social_proof": "+120 demos realizadas este mes",
+      "choose_time": "Elige día y hora",
+      "available_times": "Horarios disponibles",
+      "error_load_times": "No se pudieron cargar los horarios",
+      "no_times": "No hay horarios disponibles para este día.",
+      "select_day_hint": "Selecciona un día para ver los horarios disponibles",
+      "continue": "Continuar"
+    },
+    "confirmation": {
+      "title": "Confirmar reserva",
+      "confirm_cta": "Confirmar reserva",
+      "confirming": "Confirmando...",
+      "duration_details": "{duration} minutos · Videollamada",
+      "change_link": "Cambiar fecha u hora"
+    },
+    "success": {
+      "title": "¡Demo reservada!",
+      "description": "Recibirás un email de confirmación con el enlace a la videollamada.",
+      "badge": "Confirmación enviada"
+    },
+    "duplicate_dialog": {
+      "title": "Ya tienes una demo activa reservada",
+      "back_home": "Volver al inicio",
+      "go_contact": "Ir a contacto"
+    }
+  },
+  "calculator": {
+    "badge": "Calculadora de rentabilidad",
+    "highlight": "cada mes",
+    "sliders": {
+      "patients": "Pacientes / mes",
+      "patients_hint": "Consultas gestionadas al mes.",
+      "ticket": "Ticket Medio",
+      "ticket_hint": "Ingreso medio por visita.",
+      "loss": "% Pérdida de conversión",
+      "loss_hint": "% consultas perdidas."
+    },
+    "formula": {
+      "title": "Cómo se calcula el ROI",
+      "gross_income": "Ingresos brutos",
+      "monthly_loss": "Pérdida mensual",
+      "recovery": "Recuperación (70%)",
+      "monthly_cost": "Coste mensual",
+      "flat_rate": "Tarifa plana",
+      "net_benefit": "Beneficio neto",
+      "recovered_minus_cost": "Recuperado − Coste"
+    },
+    "result": {
+      "calculating": "Calculando...",
+      "positive": "ROI positivo — muy rentable",
+      "adjust": "Ajusta los valores"
+    },
+    "metrics": {
+      "monthly_loss": "Pérdida mensual",
+      "recoverable": "Recuperable",
+      "net_benefit": "Beneficio neto",
+      "payback": "Payback"
+    },
+    "cta_card": {
+      "title": "¿Quieres ver estos números en tu clínica?",
+      "description": "Analizamos tu caso concreto en una llamada de 30 min. Recibirás tu proyección real sin compromiso.",
+      "badge": "Demo gratuita",
+      "button": "Hablar con el equipo"
+    },
+    "dialog": {
+      "description": "Obtendrás un feedback personalizado mucho más exacto.",
+      "patients": "Pacientes/mes",
+      "ticket": "Ticket medio",
+      "loss": "Pérdida",
+      "projected_roi": "ROI proyectado:",
+      "cancel": "Cancelar",
+      "continue": "Continuar",
+      "creating": "Creando acceso..."
+    }
+  },
+  "solution_page": {
+    "hero": {
+      "badge": "Inteligencia Artificial Veterinaria",
+      "title_line1": "Sistema de Atención",
+      "title_line2": "Inteligente para Veterinarias",
+      "description": "Atiende consultas sobre mascotas con criterio veterinario, clasifica urgencias y agenda citas sin fricción."
+    },
+    "concept": {
+      "highlight": "atiende consultas de dueños sobre sus mascotas en lenguaje natural",
+      "warning": "Cada consulta sin responder es un cliente que se va a otra clínica."
+    },
+    "features_section": {
+      "description": "Automatiza la atención al cliente mientras mantienes el control y la calidad veterinaria.",
+      "items": {
+        "chat": {
+          "title": "Consulta Inteligente",
+          "description": "Responde consultas sobre síntomas, vacunas y disponibilidad 24/7 en lenguaje natural."
+        },
+        "triage": {
+          "title": "Clasificación de Urgencias",
+          "description": "Diferencia de síntomas, accidentes y emergencias de consultas rutinarias."
+        },
+        "data": {
+          "title": "Recogida de Datos",
+          "description": "Recoge información clave: mascota, síntomas, historial y disponibilidad."
+        },
+        "booking": {
+          "title": "Propuesta de Cita",
+          "description": "Sugiere el tipo de cita correcto: urgencia, vacunación, cirugía o revisión."
+        },
+        "reminders": {
+          "title": "Recordatorios Automáticos",
+          "description": "Envía recordatorios por WhatsApp o email para reducir ausencias."
+        }
+      }
+    },
+    "flow_section": {
+      "title": "Flujo sin fricciones",
+      "description": "Desde la consulta del dueño hasta la cita confirmada, sin intervención manual.",
+      "steps": {
+        "step1": {
+          "title": "Consulta del dueño",
+          "description": "El dueño contacta por WhatsApp o web con su duda o necesidad."
+        },
+        "step2": {
+          "title": "Clasificación IA",
+          "description": "ClinvetIA analiza el mensaje y clasifica: urgencia, sintomatología o consulta general."
+        },
+        "step3": {
+          "title": "Propuesta de cita",
+          "description": "El sistema propone la cita más adecuada según disponibilidad y tipo de atención."
+        },
+        "step4": {
+          "title": "Confirmación",
+          "description": "El dueño confirma y la cita se registra automáticamente en el sistema."
+        }
+      }
+    },
+    "safety": {
+      "highlight": "veterinario",
+      "items": {
+        "item1": "Identifica síntomas graves y deriva urgencias",
+        "item2": "No diagnostica: guía y propone cita",
+        "item3": "Confirma datos antes de agendar",
+        "item4": "Mantiene tono profesional siempre"
+      }
+    }
+  },
+  "how_it_works": {
+    "hero": {
+      "badge": "Cómo funciona",
+      "highlight": "criterio veterinario",
+      "subtitle": "Un flujo claro para atender consultas sobre mascotas, clasificar urgencias y agendar citas sin sobrecargar al equipo."
+    },
+    "steps_section": {
+      "title": "El flujo en 4 pasos",
+      "steps": {
+        "step1": {
+          "title": "Atender y clasificar",
+          "text": "Responde consultas sobre mascotas, identifica si es urgencia o rutina, y mantiene el tono profesional veterinario."
+        },
+        "step2": {
+          "title": "Recoger información clave",
+          "text": "Pregunta lo esencial: síntomas, mascota (especie, edad), historial de vacunas, y disponibilidad del dueño."
+        },
+        "step3": {
+          "title": "Proponer cita veterinaria",
+          "text": "Sugiere cita urgente, vacunación, revisión o cirugía según el caso, siempre con confirmación."
+        },
+        "step4": {
+          "title": "Confirmar y recordar",
+          "text": "Envía confirmación con detalles (ayuno si aplica, qué traer) y programa recordatorio 24h antes."
+        }
+      }
+    },
+    "data_section": {
+      "title": "Qué información recoge y por qué",
+      "subtitle": "Solo lo necesario para atender bien a la mascota y optimizar la agenda de tu clínica.",
+      "items": {
+        "symptoms": {
+          "title": "Síntomas y motivo",
+          "text": "Para clasificar urgencia (vómitos, accidentes) vs. rutina (vacunas, baño)."
+        },
+        "pet_data": {
+          "title": "Datos de la mascota",
+          "text": "Especie, raza, edad, peso, alergias conocidas y historial de vacunas."
+        },
+        "availability": {
+          "title": "Disponibilidad del dueño",
+          "text": "Para proponer horarios compatibles con el tipo de consulta."
+        },
+        "confirmations": {
+          "title": "Confirmaciones previas",
+          "text": "Ayuno, medicación actual, comportamiento de la mascota antes de agendar cirugía."
+        }
+      }
+    },
+    "control_section": {
+      "title": "Control y supervisión",
+      "items": {
+        "0": "El veterinario decide qué casos revisar y cuándo intervenir directamente.",
+        "1": "Síntomas graves o casos complejos se derivan inmediatamente.",
+        "2": "El sistema no diagnostica: guía al dueño y agenda con el profesional.",
+        "3": "El tono se adapta a dueños preocupados, con empatía y profesionalidad."
+      },
+      "notice_title": "Aviso Importante",
+      "notice_text": "Cada consulta sin responder es un cliente que se va a otra clínica."
+    },
+    "faq_section": {
+      "title": "Preguntas frecuentes",
+      "items": {
+        "0": {
+          "q": "¿El sistema diagnostica a las mascotas?",
+          "a": "No. El sistema recoge síntomas, clasifica urgencias y agenda cita con el veterinario. No sustituye el diagnóstico profesional."
+        },
+        "1": {
+          "q": "¿Qué pasa con urgencias reales?",
+          "a": "Las urgencias graves se priorizan y derivan inmediatamente. El sistema identifica síntomas críticos y propone cita urgente o deriva a atención 24h."
+        },
+        "2": {
+          "q": "¿Se adapta al protocolo de mi clínica?",
+          "a": "Sí. Defines tu protocolo de triaje, preguntas clave por tipo de consulta (urgencia, vacuna, cirugía) y tono de comunicación."
+        },
+        "3": {
+          "q": "¿Funciona para recordatorios de vacunas?",
+          "a": "Sí. Envía recordatorios automáticos basados en el calendario de vacunación y desparasitación de cada mascota."
+        },
+        "4": {
+          "q": "¿Puedo revisar las conversaciones?",
+          "a": "Sí. Tienes visibilidad completa y puedes intervenir en cualquier momento, especialmente en casos sensibles."
+        },
+        "5": {
+          "q": "¿Sirve para clínicas pequeñas?",
+          "a": "Sí. Está diseñado para veterinarias independientes donde cada consulta cuenta y el equipo está saturado."
+        }
+      }
+    },
+    "cta": {
+      "title": "¿Tu clínica vive alguna de estas situaciones?",
+      "description": "Descubre cómo ClinvetIA puede transformar la atención de tu clínica."
+    }
+  },
+  "scenarios_page": {
+    "hero": {
+      "badge": "Casos de uso reales",
+      "highlight": "reales",
+      "subtitle": "El sistema se adapta al ritmo de tu clínica veterinaria."
+    },
+    "labels": {
+      "problem": "Problema",
+      "message": "Mensaje",
+      "system": "Sistema",
+      "result": "Resultado"
+    },
+    "cases": {
+      "midnight_emergency": {
+        "title": "Urgencia de medianoche",
+        "subtitle": "Vómitos y decaimiento",
+        "description": "Un dueño preocupado escribe a las 2 AM porque su perro no para de vomitar.",
+        "mensaje": "\"Mi perro lleva vomitando toda la noche, ¿qué hago?\"",
+        "sistema": "El sistema detecta la urgencia, hace preguntas clave y agenda una cita prioritaria.",
+        "resultado": "El perro es atendido a primera hora, evitando complicaciones."
+      },
+      "post_op": {
+        "title": "Post-operatorio",
+        "subtitle": "Seguimiento de cirugía",
+        "description": "Tras una cirugía, el sistema envía recordatorios para la medicación y seguimiento.",
+        "mensaje": "\"¿Cuándo le toca el antiinflamatorio?\"",
+        "sistema": "Envía recordatorios de medicación y agenda la revisión post-operatoria.",
+        "resultado": "Recuperación exitosa y el dueño se siente acompañado."
+      },
+      "chronic_disease": {
+        "title": "Enfermedad crónica",
+        "subtitle": "Control de diabetes",
+        "description": "Un gato diabético necesita controles periódicos de glucosa.",
+        "mensaje": "\"Se me ha olvidado la cita de este mes para el control de Tico.\"",
+        "sistema": "Agenda la cita de control y envía recordatorios automáticos.",
+        "resultado": "Control riguroso de la enfermedad y mejora de la calidad de vida."
+      },
+      "vaccination": {
+        "title": "Vacunación",
+        "subtitle": "Recordatorio de vacunas",
+        "description": "El sistema avisa de que a un cachorro le toca la siguiente dosis de la vacuna.",
+        "mensaje": "\"¡No me acordaba! ¿Cuándo podemos ir?\"",
+        "sistema": "Envía un recordatorio y ofrece varias opciones de cita para la vacunación.",
+        "resultado": "El cachorro completa su pauta de vacunación a tiempo."
+      },
+      "early_detection": {
+        "title": "Consulta Preventiva",
+        "subtitle": "Detección Temprana",
+        "description": "En una revisión anual, se detecta un bulto y se recomienda ecografía.",
+        "mensaje": "\"Le noté un bultito al perro, ¿debería preocuparme?\"",
+        "sistema": "Agenda una consulta para evaluación y posible ecografía.",
+        "resultado": "Diagnóstico temprano y tratamiento eficaz."
+      },
+      "multi_service": {
+        "title": "Múltiples Servicios",
+        "subtitle": "Peluquería y Consulta",
+        "description": "Un cliente agenda peluquería, y el sistema detecta que la vacuna está próxima.",
+        "mensaje": "\"Quiero cita para peluquería.\"",
+        "sistema": "Ofrece añadir la vacunación en la misma visita.",
+        "resultado": "Ahorro de tiempo para el cliente y servicio más completo."
+      },
+      "proactive_comm": {
+        "title": "Análisis de Resultados",
+        "subtitle": "Comunicación Proactiva",
+        "description": "Los resultados de un análisis llegan, y el sistema avisa al dueño.",
+        "mensaje": "\"¿Están ya los resultados de las analíticas?\"",
+        "sistema": "Notifica al dueño y agenda una llamada para explicar los resultados.",
+        "resultado": "Dueño informado y tranquilo, sin necesidad de llamar a la clínica."
+      },
+      "new_puppy": {
+        "title": "Primera Visita",
+        "subtitle": "Nuevo Cachorro",
+        "description": "Un nuevo cliente pregunta por la primera visita de su cachorro.",
+        "mensaje": "\"Hemos adoptado un cachorro, ¿cuándo tenemos que ir?\"",
+        "sistema": "Guía sobre la primera visita, vacunas y agenda la cita.",
+        "resultado": "Cliente fidelizado desde el primer día."
+      }
+    }
+  },
+  "legal": {
+    "cookies": {
+      "badge": "Cookies",
+      "title": "Política de Cookies",
+      "description": "Transparencia total sobre la tecnología que utilizamos para que nuestra web funcione.",
+      "sections": {
+        "0": {
+          "title": "¿Qué son las Cookies?",
+          "content": "Las cookies son pequeños archivos de texto que los sitios web almacenan en tu dispositivo para recordar tus preferencias y ofrecerte una navegación más fluida."
+        },
+        "1": {
+          "title": "Cookies Necesarias"
+        },
+        "2": {
+          "title": "Cookies de Rendimiento"
+        },
+        "3": {
+          "title": "Control"
+        }
+      }
+    },
+    "privacy": {
+      "badge": "Privacidad",
+      "title": "Política de Privacidad",
+      "sections": {
+        "0": {
+          "title": "Recogida de Datos"
+        },
+        "1": {
+          "title": "Uso de la Información"
+        },
+        "2": {
+          "title": "Tus Derechos"
+        }
+      }
+    },
+    "security": {
+      "badge": "Seguridad",
+      "sections": {
+        "0": {
+          "title": "Cifrado"
+        }
+      }
+    },
+    "terms": {
+      "badge": "Términos",
+      "sections": {
+        "1": {
+          "title": "Responsabilidad"
+        }
+      }
+    }
+  },
+  "login": {
+    "title": "Acceso al panel",
+    "email": "Email",
+    "password": "Password",
+    "show_password": "Mostrar contraseña",
+    "hide_password": "Ocultar contraseña",
+    "submit": "Entrar",
+    "submitting": "Entrando...",
+    "notices": {
+      "reset_requested": {
+        "title": "Sesión cerrada",
+        "description": "Se solicitó un cambio de contraseña. Inicia sesión cuando hayas confirmado el cambio."
+      },
+      "reset_confirmed": {
+        "title": "Cambio confirmado",
+        "description": "La contraseña se ha actualizado. Ya puedes iniciar sesión con la nueva contraseña."
+      }
+    }
+  },
+  "confirm_action": {
+    "badge": "Verificación",
+    "title": "Confirmar solicitud",
+    "subtitle": "Confirma la solicitud para activar el usuario o aplicar el cambio de password.",
+    "submitting": "Confirmando...",
+    "submit": "Confirmar solicitud",
+    "go_login": "Ir al login",
+    "redirecting": "Redirigiendo al login...",
+    "messages": {
+      "invite_success": "Usuario activado correctamente. Ya puedes iniciar sesión con las credenciales recibidas.",
+      "reset_success": "Cambio de password confirmado correctamente.",
+      "error_invalid_token": "Este enlace ya no es válido. Solicita un nuevo correo de confirmación.",
+      "error_already_used": "Este correo ya fue utilizado o ya no es válido. Si solicitaste un nuevo cambio, usa el último correo recibido.",
+      "error_expired": "Este correo ha expirado. Solicita un nuevo enlace de confirmación."
+    }
+  },
+  "exit_intent": {
+    "title": "Antes de irte, un detalle",
+    "description": "Si completas la calculadora, podremos darte una experiencia mucho mejor y una evaluación más precisa de tu clínica. Es rápido y vale la pena.",
+    "quote": "Así nos aseguramos de que recibas recomendaciones ajustadas a tus datos reales.",
+    "btn_exit": "Salir de todos modos",
+    "btn_stay": "Seguir calculando"
+  },
+  "not_found": {
+    "go_home": "Ir al inicio",
+    "go_back": "Volver atrás"
+  },
+  "cookie_consent": {
+    "title": "Preferencias de cookies",
+    "description": "Usamos cookies necesarias para el funcionamiento del sitio y opcionales para mejorar tu experiencia.",
+    "intro_text": "Puedes aceptar todas, rechazarlas o personalizar tus preferencias.",
+    "categories": {
+      "necessary": {
+        "title": "Necesarias",
+        "description": "Siempre activas"
+      },
+      "analytics": {
+        "title": "Analíticas",
+        "description": "Ayudan a mejorar el sitio"
+      },
+      "marketing": {
+        "title": "Marketing",
+        "description": "Personalizan contenidos"
+      }
+    },
+    "buttons": {
+      "back": "Volver",
+      "save": "Guardar",
+      "reject_all": "Cancelar todas",
+      "customize": "Personalizar",
+      "accept_all": "Aceptar todas"
+    }
+  },
+  "runtime_text": {
+    "k0001": "Solución",
+    "k0002": "Escenarios",
+    "k0003": "Cómo funciona",
+    "k0004": "Contacto",
+    "k0005": "Calculadora ROI",
+    "k0006": "Reservar demo",
+    "k0007": "Reservar Demo",
+    "k0008": "Calcular ROI",
+    "k0009": "Calcular mi ROI",
+    "k0010": "Ver ROI",
+    "k0011": "Tema",
+    "k0012": "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
+    "k0013": "Producto",
+    "k0014": "Compañía",
+    "k0015": "Legal",
+    "k0016": "Privacidad",
+    "k0017": "Términos de uso",
+    "k0018": "Cookies",
+    "k0019": "Seguridad",
+    "k0020": "Todos los derechos reservados.",
+    "k0021": "Hecho con",
+    "k0023": "Nueva Generación de IA Veterinaria",
+    "k0024": "Sistema de ",
+    "k0025": "Atención Inteligente",
+    "k0026": "No es un chatbot. Es un sistema que entiende consultas, clasifica urgencias,",
+    "k0027": "verifica disponibilidad y agenda citas.",
+    "k0028": "El problema",
+    "k0029": "¿Te resulta familiar?",
+    "k0030": "Estas situaciones ocurren cada día en clínicas veterinarias.",
+    "k0031": "Urgencias nocturnas perdidas",
+    "k0032": "Un dueño escribe a las 23h. Si tú no estás, alguien más la atiende.",
+    "k0033": "Recepción desbordada",
+    "k0034": "Tu equipo atiende consultas... Cada interrupción suma minutos.",
+    "k0035": "Citas que se escapan",
+    "k0036": "Tardas 2 horas en responder... Cliente perdido.",
+    "k0037": "Recordatorios manuales",
+    "k0038": "Todo requiere llamadas... depende de la memoria.",
+    "k0039": "La solución",
+    "k0040": "Sistema de Atención Inteligente",
+    "k0041": "ClinvetIA no solo responde. Entiende el contexto, verifica tu disponibilidad y cierra la cita sin que nadie intervenga.",
+    "k0042": "Comprende consultas veterinarias",
+    "k0043": "Interpreta síntomas, edad, raza y contexto",
+    "k0044": "Verifica agenda en tiempo real",
+    "k0045": "Huecos disponibles, cirugías, bloques",
+    "k0046": "Agenda citas automáticamente",
+    "k0047": "Sin intervención de tu equipo",
+    "k0048": "Recordatorios proactivos",
+    "k0049": "Wapp, email, SMS automatizados",
+    "k0050": "de las consultas llegan fuera de horario. ClinvetIA las atiende",
+    "k0051": "inmediatamente",
+    "k0052": "“Hola, Toby no quiere comer desde ayer y noto que tiene la tripa muy hinchada y dura al tacto. Me preocupa.”",
+    "k0053": "Triaje IA",
+    "k0054": "Síntomas de dolor abdominal y anorexia. Posible obstrucción. Prioridad: Alta.",
+    "k0055": "Agenda",
+    "k0056": "Hueco de urgencia con el Dr. García a las 16:30. ¿Te va bien?",
+    "k0057": "✓ Cita confirmada para las 16:30. ¡Toby ya está en agenda!",
+    "k0058": "El flujo",
+    "k0059": "Flujo sin fricciones",
+    "k0060": "Desde que el dueño contacta hasta que la cita está confirmada.",
+    "k0061": "Dueño consulta",
+    "k0062": "WhatsApp 24/7",
+    "k0063": "Sistema clasifica",
+    "k0064": "Triaje automático",
+    "k0065": "Propone opciones",
+    "k0066": "Huecos disponibles",
+    "k0067": "Confirma y recuerda",
+    "k0068": "Cita cerrada + recordatorio",
+    "k0069": "Beneficios",
+    "k0070": "Beneficios operativos",
+    "k0071": "Más tiempo para lo que importa: tus pacientes.",
+    "k0072": "Urgencias 24/7",
+    "k0073": "Nunca más una urgencia sin atender",
+    "k0074": "Menos llamadas repetitivas",
+    "k0075": "El sistema hace el trabajo pesado",
+    "k0076": "Dueños tranquilos",
+    "k0077": "Respuesta inmediata, siempre",
+    "k0078": "Casos reales",
+    "k0079": "Escenarios de uso",
+    "k0080": "ClinvetIA se adapta a todo tipo de clínicas y necesidades.",
+    "k0081": "Urgencias Nocturnas",
+    "k0082": "Medicina Preventiva",
+    "k0083": "Tratamientos Crónicos",
+    "k0084": "Múltiples Servicios",
+    "k0085": "El coste de no actuar",
+    "k0086": "¿Cuántos clientes pierdes?",
+    "k0087": "esperan respuesta inmediata",
+    "k0088": "se van tras 24h",
+    "k0089": "aumento en consultas",
+    "k0090": "Tu equipo se enfoca en las mascotas, no en el teléfono.",
+    "k0091": "¿Listo para transformar la atención de tu clínica?",
+    "k0092": "Reserva una demo personalizada y descubre cómo ClinvetIA puede aumentar tu capacidad de atención.",
+    "k0093": "Agendar Demo",
+    "k0094": "Error",
+    "k0095": "Página no encontrada",
+    "k0096": "La página que buscas no existe o fue movida.",
+    "k0097": "Ir al inicio",
+    "k0098": "Volver atrás",
+    "k0099": "Ir al inicio de Clinvetia",
+    "k0100": "Navegación principal",
+    "k0101": "Abrir menú",
+    "k0102": "Cerrar menú",
+    "k0103": "Inicio Clinvetia",
+    "k0104": "Pie de página de Clinvetia",
+    "k0105": "¿Tu clínica vive alguna de estas situaciones?",
+    "k0106": "¿Hablamos?",
+    "k0107": "Reserva una demo personalizada.",
+    "k0108": "Reserva tu demo",
+    "k0109": "Reserva una demo y empieza en 30 minutos.",
+    "k0110": "Descubre cómo Clinvetia puede transformar la atención de tu clínica.",
+    "k0111": "Descubre cómo ClinvetIA puede transformar la atención de tu clínica.",
+    "k0112": "Configuramos tu clínica en 30 minutos. Sin compromiso.",
+    "k0113": "Selecciona un día, elige hora y confirma tu videollamada",
+    "k0114": "Demo reservada:",
+    "k0115": "Vuelve a reservar una demo para continuar.",
+    "k0116": "Ya tienes una demo reservada activa",
+    "k0117": "No pudimos validar tu sesión. Vuelve a la calculadora y repite el proceso.",
+    "k0118": "No pudimos validar si tu correo ya tiene una demo activa. Inténtalo de nuevo.",
+    "k0119": "Hemos detectado una demo activa para este correo.",
+    "k0120": "Ya hemos recibido tus datos para esta demo. Gestiona cambios desde el correo de confirmación.",
+    "k0121": "Nombre de la clínica *",
+    "k0122": "Teléfono *",
+    "k0123": "Cuéntanos sobre tu clínica...",
+    "k0124": "Cuéntanos sobre tu clínica y cómo podemos ayudarte...",
+    "k0125": "Email no válido",
+    "k0126": "Ocurrió un problema al enviar el formulario. Inténtalo de nuevo.",
+    "k0127": "¿Qué son las Cookies?",
+    "k0128": "Política de Cookies",
+    "k0129": "Política de Cookies · Clinvetia",
+    "k0130": "Política de Privacidad · Clinvetia",
+    "k0131": "Seguridad · Clinvetia",
+    "k0132": "Términos de Uso",
+    "k0133": "Términos de Uso · Clinvetia",
+    "k0134": "Solución — Clinvetia",
+    "k0135": "Escenarios — Clinvetia",
+    "k0136": "Cómo funciona — Clinvetia",
+    "k0137": "Contacto — Clinvetia",
+    "k0138": "Demo — Clinvetia",
+    "k0139": "Auditoría",
+    "k0140": "Cerrar sesión",
+    "k0141": "Cerrando sesión...",
+    "k0142": "Sesión cerrada",
+    "k0143": "Se solicitó un cambio de contraseña. Inicia sesión cuando hayas confirmado el cambio.",
+    "k0144": "La contraseña se ha actualizado. Ya puedes iniciar sesión con la nueva contraseña.",
+    "k0145": "Error al iniciar sesion",
+    "k0146": "Error al confirmar",
+    "k0147": "Mostrar contraseña",
+    "k0148": "Ocultar contraseña",
+    "k0149": "Protección de Datos",
+    "k0150": "Protección de IA",
+    "k0151": "Copias de Seguridad",
+    "k0152": "Compartición con Terceros",
+    "k0153": "Recopilación de Datos",
+    "k0154": "Uso de la Información",
+    "k0155": "Aceptación de los Términos",
+    "k0156": "Tu privacidad es nuestra prioridad",
+    "k0157": "Seguridad de nivel empresarial",
+    "k0158": "Información detallada sobre cómo protegemos y gestionamos tus datos personales.",
+    "k0159": "Detalles sobre nuestras medidas de seguridad y protección de la infraestructura.",
+    "k0160": "Información sobre cómo utilizamos las cookies para mejorar tu experiencia.",
+    "k0161": "Términos y condiciones legales para el uso de la plataforma Clinvetia.",
+    "k0162": "Transparencia total sobre la tecnología que utilizamos para que nuestra web funcione.",
+    "k0163": "Las cookies son pequeños archivos de texto que los sitios web almacenan en tu dispositivo para recordar tus preferencias y ofrecerte una navegación más fluida.",
+    "k0164": "Estas son esenciales para que la web funcione. Incluyen la autenticación de sesión, tus preferencias de tema (Light/Dark) y el idioma seleccionado.",
+    "k0165": "Utilizamos cookies analíticas anónimas para entender cómo los usuarios interactúan con nuestra plataforma, lo que nos permite optimizar la velocidad y el diseño.",
+    "k0166": "Puedes configurar tu navegador para bloquear o alertarte sobre estas cookies, pero algunas partes de la web podrían no funcionar correctamente.",
+    "k0167": "En Clinvetia nos tomamos muy en serio la seguridad de los datos de tu clínica y tus pacientes.",
+    "k0168": "Protegemos el corazón de tu clínica con la tecnología de defensa más avanzada.",
+    "k0169": "Implementamos medidas de seguridad de nivel empresarial, incluyendo cifrado de extremo a extremo y auditorías periódicas, para garantizar que la información de tus pacientes esté siempre a salvo.",
+    "k0170": "Toda la comunicación entre tu clínica y nuestros servidores se realiza a través de protocolos TLS 1.3 con cifrado de nivel bancario AES-256.",
+    "k0171": "Nuestros servidores están alojados en centros de datos con certificación ISO 27001 y vigilancia física 24/7, garantizando una disponibilidad del 99.9%.",
+    "k0172": "Nuestros modelos de IA están aislados por cliente. Los datos de una clínica nunca se utilizan para responder consultas de otra.",
+    "k0173": "Realizamos backups automáticos cada hora. Tus datos están replicados en múltiples ubicaciones geográficas para garantizar la recuperación ante cualquier desastre.",
+    "k0174": "Si detectas cualquier fallo de seguridad, por favor infórmanos de inmediato a security@clinvetia.com. Recompensamos los reportes responsables.",
+    "k0175": "Clinvetia nunca vende tus datos a terceros. Solo compartimos información con proveedores de servicios esenciales (como servicios de mensajería) bajo estrictos contratos de confidencialidad.",
+    "k0176": "Regulamos la relación entre Clinvetia y tu centro veterinario para garantizar el mejor servicio.",
+    "k0177": "Al acceder y utilizar Clinvetia, aceptas cumplir con estos términos de servicio. Si no estás de acuerdo con alguna parte, no debes utilizar la plataforma.",
+    "k0178": "Clinvetia proporciona herramientas de IA para la gestión veterinaria. Te comprometes a usar el servicio de manera responsable y profesional, respetando siempre el criterio médico veterinario.",
+    "k0179": "El sistema de IA es una herramienta de apoyo. La responsabilidad final sobre diagnósticos, tratamientos y atención médica recae siempre en el profesional veterinario colegiado.",
+    "k0180": "Puedes cancelar tu suscripción en cualquier momento. El acceso al servicio se mantendrá activo hasta el final del periodo de facturación actual.",
+    "k0181": "Todo el software, algoritmos y diseños de Clinvetia son propiedad exclusiva de la empresa. Se concede una licencia de uso limitada y no transferible por la duración del contrato.",
+    "k0182": "Clasificación de Urgencias",
+    "k0183": "Clasificación IA",
+    "k0184": "Consulta del dueño",
+    "k0185": "Propuesta de Cita",
+    "k0186": "Propuesta de cita",
+    "k0187": "Proponer cita veterinaria",
+    "k0188": "Recoger información clave",
+    "k0189": "Recordatorios Automáticos",
+    "k0190": "Análisis de Resultados",
+    "k0191": "Comunicación Proactiva",
+    "k0192": "Urgencia de medianoche",
+    "k0193": "Vómitos y decaimiento",
+    "k0194": "Seguimiento de cirugía",
+    "k0195": "Enfermedad crónica",
+    "k0196": "Detección Temprana",
+    "k0197": "Peluquería y Consulta",
+    "k0198": "Vacunación",
+    "k0199": "Pérdida mensual",
+    "k0200": "Pérdida",
+    "k0201": "% Pérdida de conversión",
+    "k0202": "Recuperación (70%)",
+    "k0203": "No diagnostica: guía y propone cita",
+    "k0204": "Síntomas y motivo",
+    "k0205": "Datos de la mascota",
+    "k0206": "Disponibilidad del dueño",
+    "k0207": "Cancelación",
+    "k0208": "Confirmación",
+    "k0209": "Elige un nuevo día, revisa los horarios y confirma la nueva fecha",
+    "k0210": "Estado inicial — ningún día seleccionado. El panel de horarios muestra el placeholder.",
+    "k0211": "Glass (solucion, escenarios)",
+    "k0212": "Variante glass con badge opcional sobre el título.",
+    "k0213": "Variante **glass** con `GlassCard` y gradiente primary→secondary. Usada en `/solucion` y `/escenarios`.",
+    "k0214": "CTA con un único botón de acción.",
+    "k0215": "Versión completa con encabezado de sección, badge y descripción — lista para integrar en cualquier página.",
+    "k0216": "ClinvetIA analiza el mensaje y clasifica: urgencia, sintomatología o consulta general.",
+    "k0217": "El dueño contacta por WhatsApp o web con su duda o necesidad.",
+    "k0218": "El dueño confirma y la cita se registra automáticamente en el sistema.",
+    "k0219": "El sistema propone la cita más adecuada según disponibilidad y tipo de atención.",
+    "k0220": "El sistema detecta la urgencia, hace preguntas clave y agenda una cita prioritaria.",
+    "k0221": "Responde consultas sobre síntomas, vacunas y disponibilidad 24/7 en lenguaje natural.",
+    "k0222": "Diferencia de síntomas, accidentes y emergencias de consultas rutinarias.",
+    "k0223": "Recoge información clave: mascota, síntomas, historial y disponibilidad.",
+    "k0224": "Sugiere el tipo de cita correcto: urgencia, vacunación, cirugía o revisión.",
+    "k0225": "Envía recordatorios por WhatsApp o email para reducir ausencias.",
+    "k0226": "Pregunta lo esencial: síntomas, mascota (especie, edad), historial de vacunas, y disponibilidad del dueño.",
+    "k0227": "Ayuno, medicación actual, comportamiento de la mascota antes de agendar cirugía.",
+    "k0228": "Síntomas graves o casos complejos se derivan inmediatamente.",
+    "k0229": "El tono se adapta a dueños preocupados, con empatía y profesionalidad.",
+    "k0230": "El veterinario decide qué casos revisar y cuándo intervenir directamente.",
+    "k0231": "El sistema no diagnostica: guía al dueño y agenda con el profesional.",
+    "k0232": "Las urgencias graves se priorizan y derivan inmediatamente. El sistema identifica síntomas críticos y propone cita urgente o deriva a atención 24h.",
+    "k0233": "No. El sistema recoge síntomas, clasifica urgencias y agenda cita con el veterinario. No sustituye el diagnóstico profesional.",
+    "k0234": "Sí. Defines tu protocolo de triaje, preguntas clave por tipo de consulta (urgencia, vacuna, cirugía) y tono de comunicación.",
+    "k0235": "Sí. Envía recordatorios automáticos basados en el calendario de vacunación y desparasitación de cada mascota.",
+    "k0236": "Sí. Tienes visibilidad completa y puedes intervenir en cualquier momento, especialmente en casos sensibles.",
+    "k0237": "Sí. Está diseñado para veterinarias independientes donde cada consulta cuenta y el equipo está saturado.",
+    "k0238": "¿El sistema diagnostica a las mascotas?",
+    "k0239": "¿Qué pasa con urgencias reales?",
+    "k0240": "¿Se adapta al protocolo de mi clínica?",
+    "k0241": "¿Funciona para recordatorios de vacunas?",
+    "k0242": "¿Puedo revisar las conversaciones?",
+    "k0243": "¿Sirve para clínicas pequeñas?",
+    "k0244": "¿Están ya los resultados de las analíticas?",
+    "k0245": "¿Cuándo le toca el antiinflamatorio?",
+    "k0246": "¡No me acordaba! ¿Cuándo podemos ir?",
+    "k0247": "Mi perro lleva vomitando toda la noche, ¿qué hago?",
+    "k0248": "Le noté un bultito al perro, ¿debería preocuparme?",
+    "k0249": "Quiero cita para peluquería.",
+    "k0250": "Hemos adoptado un cachorro, ¿cuándo tenemos que ir?",
+    "k0251": "Se me ha olvidado la cita de este mes para el control de Tico.",
+    "k0252": "Un dueño preocupado escribe a las 2 AM porque su perro no para de vomitar.",
+    "k0253": "Tras una cirugía, el sistema envía recordatorios para la medicación y seguimiento.",
+    "k0254": "Un gato diabético necesita controles periódicos de glucosa.",
+    "k0255": "En una revisión anual, se detecta un bulto y se recomienda ecografía.",
+    "k0256": "Un cliente agenda peluquería, y el sistema detecta que la vacuna está próxima.",
+    "k0257": "Los resultados de un análisis llegan, y el sistema avisa al dueño.",
+    "k0258": "Recuperación exitosa y el dueño se siente acompañado.",
+    "k0259": "Cliente fidelizado desde el primer día.",
+    "k0260": "Diagnóstico temprano y tratamiento eficaz.",
+    "k0261": "Dueño informado y tranquilo, sin necesidad de llamar a la clínica.",
+    "k0262": "Ahorro de tiempo para el cliente y servicio más completo.",
+    "k0263": "El cachorro completa su pauta de vacunación a tiempo.",
+    "k0264": "Guía sobre la primera visita, vacunas y agenda la cita.",
+    "k0265": "Agenda una consulta para evaluación y posible ecografía.",
+    "k0266": "Agenda la cita de control y envía recordatorios automáticos.",
+    "k0267": "Envía recordatorios de medicación y agenda la revisión post-operatoria.",
+    "k0268": "Envía un recordatorio y ofrece varias opciones de cita para la vacunación.",
+    "k0269": "Notifica al dueño y agenda una llamada para explicar los resultados.",
+    "k0270": "Ofrece añadir la vacunación en la misma visita.",
+    "k0271": "¿Listo para transformar tu clínica?",
+    "k0272": "Un solo botón",
+    "k0273": "Clínica Veterinaria Central",
+    "k0274": "Dr. Juan García",
+    "k0275": "Este correo ha expirado. Solicita un nuevo enlace de confirmación.",
+    "k0276": "Este correo ya fue utilizado o ya no es válido. Si solicitaste un nuevo cambio, usa el último correo recibido.",
+    "k0277": "Este correo ya tiene una demo activa. Para evitar duplicados, espera a que termine o gestiona cambios desde el correo de confirmación.",
+    "k0278": "Este enlace ya no es válido. Solicita un nuevo correo de confirmación.",
+    "k0279": "Usuario activado correctamente. Ya puedes iniciar sesión con las credenciales recibidas.",
+    "k0280": "Abrir chat",
+    "k0281": "Cerrar chat",
+    "k0282": "Chat ClinvetIA",
+    "k0283": "Respuestas rápidas con contexto de tu clínica.",
+    "k0284": "Hola, soy tu asistente. ¿Quieres que revisemos los números de tu ROI?",
+    "k0285": "Sí, ¿qué información necesitas?",
+    "k0286": "Escribe tu mensaje...",
+    "k0287": "Abrir navegación",
+    "k0288": "Cambiar tema",
+    "k0289": "Completa asunto y mensaje",
+    "k0290": "Debes indicar destinatario, asunto y contenido antes de enviar.",
+    "k0291": "Correo enviado",
+    "k0292": "Se envió la respuesta a",
+    "k0293": "desde info@clinvetia.com.",
+    "k0294": "Error al enviar correo",
+    "k0295": "Error al cargar datos",
+    "k0296": "Error al cargar reservas",
+    "k0297": "Error al cargar contactos",
+    "k0298": "Error al cargar auditoria",
+    "k0299": "No se pudo enviar el correo",
+    "k0300": "No se pudo enviar el mensaje",
+    "k0301": "No se pudo cargar el dashboard",
+    "k0302": "No se pudo actualizar el usuario",
+    "k0303": "No se pudo confirmar la reserva",
+    "k0304": "No se pudo modificar la reserva",
+    "k0305": "No se pudo completar la acción",
+    "k0306": "No se pudo confirmar la solicitud",
+    "k0307": "No se pudo crear tu sesión. Inténtalo de nuevo.",
+    "k0308": "Enviando...",
+    "k0309": "Actualizando...",
+    "k0310": "Reagendando...",
+    "k0311": "Guardando...",
+    "k0312": "Creando acceso...",
+    "k0313": "Cargando...",
+    "k0314": "Enviar correo",
+    "k0315": "Asunto del correo",
+    "k0316": "Escribe el mensaje para el cliente...",
+    "k0317": "Envío corporativo desde",
+    "k0318": "Responder cliente por correo",
+    "k0319": "Seguimiento de tu solicitud en Clinvetia",
+    "k0320": "Datos del usuario",
+    "k0321": "Resumen de demo",
+    "k0322": "Correos enviados",
+    "k0323": "Sin nombre",
+    "k0324": "Sin email",
+    "k0325": "Sin teléfono",
+    "k0326": "Sin mensaje",
+    "k0327": "Información de contacto",
+    "k0328": "¿Prefieres hablar ahora?",
+    "k0329": "Reservar llamada",
+    "k0330": "Barcelona, España",
+    "k0331": "Lun-Vie: 9:00 - 18:00",
+    "k0332": "Sáb: 10:00 - 14:00",
+    "k0333": "Aún no tenemos tus datos de contacto asociados a esta reserva.",
+    "k0334": "Resumen de tus datos",
+    "k0335": "Reservar nueva demo",
+    "k0336": "Para continuar, vuelve a reservar una demo y selecciona un nuevo horario disponible.",
+    "k0337": "Completa tus datos",
+    "k0338": "Este contador solo aplica al formulario de contacto.",
+    "k0339": "¿Cuánto dinero pierdes",
+    "k0340": "¿Enviar estos datos a",
+    "k0341": "Tu ROI con ClinvetIA",
+    "k0342": "Ajusta los valores a tu clínica y descubre el ROI real que obtendrías con",
+    "k0343": "invertido, recuperas",
+    "k0344": "Citas pendientes",
+    "k0345": "Citas canceladas",
+    "k0346": "Citas expiradas",
+    "k0347": "Cifrado de Datos",
+    "k0348": "Clínica:",
+    "k0349": "Clinvetia - Software Veterinario con IA",
+    "k0350": "Clinvetia — Software veterinario con IA",
+    "k0351": "Clinvetia automatiza la gestión de tu clínica veterinaria con agentes de inteligencia artificial. Comprende consultas, clasifica urgencias y agenda citas automáticamente.",
+    "k0352": "Clinvetia Logo",
+    "k0353": "Datos del formulario (mensaje)",
+    "k0354": "Demo personalizada con",
+    "k0355": "Error al actualizar usuario",
+    "k0356": "Error al cargar auditoria",
+    "k0357": "Error al cargar contactos",
+    "k0358": "Error al cargar reservas",
+    "k0359": "Google Meet:",
+    "k0360": "Historial de correos",
+    "k0361": "No disponible para tu rol",
+    "k0362": "Página",
+    "k0363": "Pérdida conv.:",
+    "k0364": "Pérdida:",
+    "k0365": "Reset password",
+    "k0366": "Schedule una llamada de 15 minutos con nuestro equipo.",
+    "k0367": "Selecciona un día",
+    "k0368": "Situaciones veterinarias",
+    "k0369": "Total registrados",
+    "k0370": "Última actualización:"
+  }
+}

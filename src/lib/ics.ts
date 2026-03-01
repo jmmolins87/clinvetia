@@ -22,6 +22,7 @@ export function buildICS(params: {
   summary: string
   description: string
   location: string
+  url?: string
   organizerEmail: string
   attendeeEmail: string
 }) {
@@ -43,6 +44,7 @@ export function buildICS(params: {
     `SUMMARY:${params.summary}`,
     `DESCRIPTION:${params.description}`,
     `LOCATION:${params.location}`,
+    ...(params.url ? [`URL:${params.url}`] : []),
     `ORGANIZER:MAILTO:${params.organizerEmail}`,
     `ATTENDEE;ROLE=REQ-PARTICIPANT;RSVP=TRUE:MAILTO:${params.attendeeEmail}`,
     "END:VEVENT",

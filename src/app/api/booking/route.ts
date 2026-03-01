@@ -42,6 +42,17 @@ export async function POST(req: Request) {
 
     await dbConnect()
 
+    const existingContact = parsed.sessionToken
+      ? await Contact.findOne({ sessionToken: parsed.sessionToken }).select("_id").lean()
+      : null
+    const isRegisteredClient = Boolean(existingContact)
+    if (!isRegisteredClient && parsed.duration !== 30) {
+      return NextResponse.json(
+        { error: "Para nuevos clientes, la demo disponible es de 30 minutos." },
+        { status: 403 }
+      )
+    }
+
     const date = new Date(`${parsed.date}T00:00:00.000Z`)
     if (Number.isNaN(date.getTime())) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 })

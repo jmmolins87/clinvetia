@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { dbConnect } from "@/lib/db"
 import { Booking } from "@/models/Booking"
+import { clearRoiForBookingContext } from "@/lib/roi-cleanup"
 
 const expireSchema = z.object({
   bookingId: z.string().min(1),
@@ -23,6 +24,13 @@ export async function POST(req: Request) {
     if (booking.accessToken !== parsed.accessToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
+
+    const bookingId = String(booking._id)
+    await clearRoiForBookingContext({
+      bookingId,
+      bookingSessionToken: booking.sessionToken ?? null,
+      contactSessionToken: null,
+    })
 
     booking.status = "expired"
     booking.sessionToken = null

@@ -11,6 +11,25 @@ const BookingSchema = new Schema(
     expiresAt: { type: Date, required: true },
     formExpiresAt: { type: Date, required: true },
     demoExpiresAt: { type: Date, required: true },
+    googleMeetLink: { type: String, default: null },
+    emailEvents: {
+      type: [
+        new Schema(
+          {
+            category: { type: String, required: true },
+            subject: { type: String, required: true },
+            intendedRecipient: { type: String, default: null },
+            deliveredTo: { type: String, required: true },
+            status: { type: String, enum: ["sent", "failed"], required: true },
+            error: { type: String, default: null },
+            message: { type: String, default: null },
+            sentAt: { type: Date, required: true },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 )

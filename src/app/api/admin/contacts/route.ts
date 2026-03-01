@@ -5,6 +5,7 @@ import { Contact } from "@/models/Contact"
 import { Booking } from "@/models/Booking"
 import { dbConnect } from "@/lib/db"
 import { canManageRole, isAdminRole, type AdminRole } from "@/lib/admin-roles"
+import { clearRoiForLeadContext } from "@/lib/roi-cleanup"
 
 export async function GET(req: Request) {
   const auth = await requireAdmin(req)
@@ -77,6 +78,11 @@ export async function DELETE(req: Request) {
   if (!contact) {
     return NextResponse.json({ error: "Contact not found" }, { status: 404 })
   }
+  await clearRoiForLeadContext({
+    contactId: String(contact._id),
+    bookingId: contact.bookingId ? String(contact.bookingId) : null,
+    sessionToken: contact.sessionToken ? String(contact.sessionToken) : null,
+  })
   await Contact.deleteOne({ _id: contact._id })
   return NextResponse.json({ ok: true })
 }

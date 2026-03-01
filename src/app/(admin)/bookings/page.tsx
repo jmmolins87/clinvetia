@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation"
 import { Trash2 } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Icon } from "@/components/ui/icon"
 import { Toggle } from "@/components/ui/toggle"
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -31,6 +35,18 @@ type BookingRow = {
   telefono?: string
   clinica?: string
   email?: string
+  mensaje?: string
+  googleMeetLink?: string | null
+  emailEvents?: Array<{
+    category: string
+    subject: string
+    intendedRecipient?: string | null
+    deliveredTo: string
+    status: "sent" | "failed"
+    error?: string | null
+    message?: string | null
+    sentAt: string
+  }>
 }
 
 export default function AdminBookingsPage() {
@@ -44,6 +60,11 @@ export default function AdminBookingsPage() {
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "tomorrow" | "week">("all")
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const [rescheduleBooking, setRescheduleBooking] = useState<BookingRow | null>(null)
+  const [cancelDialogBooking, setCancelDialogBooking] = useState<BookingRow | null>(null)
+  const [cancelEmailSubject, setCancelEmailSubject] = useState("")
+  const [cancelEmailMessage, setCancelEmailMessage] = useState("")
+  const [cancelEmailMailbox, setCancelEmailMailbox] = useState<"shared" | "self">("shared")
+  const [isCancellingWithEmail, setIsCancellingWithEmail] = useState(false)
   const [deleteBookingTarget, setDeleteBookingTarget] = useState<BookingRow | null>(null)
   const [page, setPage] = useState(1)
   const listRef = useRef<HTMLDivElement | null>(null)
@@ -137,6 +158,85 @@ export default function AdminBookingsPage() {
       })
     } finally {
       setUpdatingId(null)
+    }
+  }
+
+  const openCancelDialog = (booking: BookingRow) => {
+    const formattedDate = new Date(booking.date).toLocaleDateString("es-ES")
+    const customerName = booking.nombre?.trim() || "equipo"
+    setCancelDialogBooking(booking)
+    setCancelEmailMailbox("shared")
+    setCancelEmailSubject("Actualización de tu cita demo en Clinvetia")
+    setCancelEmailMessage(
+      `Hola ${customerName},\n\nTu cita demo del ${formattedDate} a las ${booking.time} ha sido cancelada.\n\nMotivo de la cancelación:\n\n\nSi lo prefieres, podemos ayudarte a reagendar una nueva fecha.\n\nUn saludo,\nEquipo Clinvetia`
+    )
+  }
+
+  const submitCancellationWithEmail = async () => {
+    if (!cancelDialogBooking) return
+    if (!cancelDialogBooking.email) {
+      toast({
+        variant: "destructive",
+        title: "No se puede enviar el correo",
+        description: "Esta cita no tiene un email asociado para notificar la cancelación.",
+      })
+      return
+    }
+    const subject = cancelEmailSubject.trim()
+    const message = cancelEmailMessage.trim()
+    if (subject.length < 3 || message.length < 10) {
+      toast({
+        variant: "destructive",
+        title: "Completa el correo de cancelación",
+        description: "Añade asunto y un motivo más detallado antes de continuar.",
+      })
+      return
+    }
+
+    setUpdatingId(cancelDialogBooking.id)
+    setIsCancellingWithEmail(true)
+    try {
+      const emailRes = await fetch("/api/admin/customer-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mailbox: cancelEmailMailbox,
+          to: cancelDialogBooking.email,
+          customerName: cancelDialogBooking.nombre || undefined,
+          subject,
+          message,
+        }),
+      })
+      if (!emailRes.ok) {
+        const payload = await emailRes.json().catch(() => null)
+        throw new Error(payload?.error || "No se pudo enviar el correo de cancelación")
+      }
+
+      const statusRes = await fetch("/api/admin/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "status", id: cancelDialogBooking.id, status: "cancelled" }),
+      })
+      if (!statusRes.ok) {
+        const payload = await statusRes.json().catch(() => null)
+        throw new Error(payload?.error || "No se pudo cancelar la cita")
+      }
+
+      await loadBookings()
+      setCancelDialogBooking(null)
+      toast({
+        title: "Cita cancelada",
+        description: "Se envió el correo personalizado al cliente y la cita quedó cancelada.",
+      })
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "No se pudo cancelar la cita",
+        description: err instanceof Error ? err.message : "No se pudo cancelar la cita",
+      })
+    } finally {
+      setUpdatingId(null)
+      setIsCancellingWithEmail(false)
     }
   }
 
@@ -234,6 +334,14 @@ export default function AdminBookingsPage() {
     if (status === "cancelled") return "border-secondary/20 bg-secondary/5"
     if (status === "expired") return "border-destructive/20 bg-destructive/5"
     return "border-white/10 bg-white/5"
+  }
+
+  const statusLabel = (status: string) => {
+    if (status === "confirmed") return "Confirmada"
+    if (status === "pending") return "Pendiente"
+    if (status === "cancelled") return "Cancelada"
+    if (status === "expired") return "Expirada"
+    return status
   }
 
   const openRescheduleDialog = (booking: BookingRow) => {
@@ -358,6 +466,87 @@ export default function AdminBookingsPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog
+        open={Boolean(cancelDialogBooking)}
+        onOpenChange={(open) => {
+          if (!open && !isCancellingWithEmail) {
+            setCancelDialogBooking(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Cancelar cita y notificar al cliente</DialogTitle>
+            <DialogDescription>
+              Redacta un correo personalizado explicando el motivo de la cancelación. Al confirmar, se enviará el correo y la cita pasará a cancelada.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="cancel-email-mailbox" className="text-sm font-medium">Enviar desde</label>
+              <Select
+                id="cancel-email-mailbox"
+                value={cancelEmailMailbox}
+                onChange={(e) => setCancelEmailMailbox(e.target.value as "shared" | "self")}
+                disabled={isCancellingWithEmail}
+                className="h-10 rounded-xl px-3 pr-10"
+              >
+                <option value="shared">info@clinvetia.com</option>
+                <option value="self">Mi correo de usuario</option>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="cancel-email-subject" className="text-sm font-medium">Asunto</label>
+              <Input
+                id="cancel-email-subject"
+                value={cancelEmailSubject}
+                onChange={(e) => setCancelEmailSubject(e.target.value)}
+                placeholder="Asunto del correo"
+                disabled={isCancellingWithEmail}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="cancel-email-message" className="text-sm font-medium">Motivo de la cancelación</label>
+              <Textarea
+                id="cancel-email-message"
+                value={cancelEmailMessage}
+                onChange={(e) => setCancelEmailMessage(e.target.value)}
+                rows={8}
+                placeholder="Explica el motivo de la cancelación"
+                disabled={isCancellingWithEmail}
+              />
+            </div>
+            {cancelDialogBooking?.email ? (
+              <p className="text-xs text-muted-foreground">
+                Se enviará a: <span className="font-medium text-foreground">{cancelDialogBooking.email}</span>
+              </p>
+            ) : (
+              <p className="text-xs text-destructive">
+                Esta cita no tiene email asociado. No se puede enviar notificación.
+              </p>
+            )}
+          </div>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="ghost"
+              className="w-full sm:flex-1"
+              onClick={() => setCancelDialogBooking(null)}
+              disabled={isCancellingWithEmail}
+            >
+              Cerrar
+            </Button>
+            <Button
+              variant="destructive"
+              className="w-full sm:flex-1"
+              onClick={submitCancellationWithEmail}
+              disabled={isCancellingWithEmail || !cancelDialogBooking?.email}
+            >
+              {isCancellingWithEmail ? "Enviando y cancelando..." : "Enviar y cancelar cita"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-semibold">Reservas</h2>
         {mode && <Badge variant={mode === "superadmin" ? "primary" : "secondary"}>{mode}</Badge>}
@@ -384,16 +573,21 @@ export default function AdminBookingsPage() {
                 { key: "tomorrow", label: "Mañana" },
                 { key: "week", label: "Próximos 7 días" },
               ].map((filter) => (
-                <Toggle
+                <button
                   key={filter.key}
-                  pressed={dateFilter === filter.key}
-                  onPressedChange={() => setDateFilter(filter.key as typeof dateFilter)}
-                  variant={dateFilter === filter.key ? "accent" : "outline"}
-                  size="sm"
-                  className="rounded-full transition-transform hover:scale-[1.02]"
+                  type="button"
+                  onClick={() => setDateFilter(filter.key as typeof dateFilter)}
+                  className={cn(
+                    buttonVariants({
+                      variant: dateFilter === filter.key ? "default" : "outline",
+                      size: "sm",
+                    }),
+                    "w-auto rounded-full",
+                    dateFilter !== filter.key && "border-white/20 text-muted-foreground hover:text-foreground"
+                  )}
                 >
                   {filter.label}
-                </Toggle>
+                </button>
               ))}
             </div>
 
@@ -433,7 +627,9 @@ export default function AdminBookingsPage() {
         )}
         {!loading && (
           <div ref={listRef} className="space-y-5 mb-4">
-            {pagedBookings.map((booking, index) => (
+            {pagedBookings.map((booking, index) => {
+              const meetLink = booking.googleMeetLink || `https://meet.google.com/new#booking-${booking.id}`
+              return (
               <div
                 key={booking.id}
                 ref={index === 0 ? itemRef : undefined}
@@ -447,17 +643,37 @@ export default function AdminBookingsPage() {
                     </div>
                     <div className="text-xs text-muted-foreground">{booking.duration} min</div>
                     <div className="text-xs text-muted-foreground/80">ID {booking.id.slice(-6)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Google Meet:{" "}
+                      <a
+                        href={meetLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary underline-offset-2 hover:underline break-all"
+                      >
+                        {meetLink}
+                      </a>
+                    </div>
                   </div>
 
-                  <div className="h-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 space-y-2">
+                  <div className="h-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 space-y-3">
                     <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Contacto</div>
-                    <div className="text-sm font-semibold">{booking.nombre || "Sin contacto aún"}</div>
-                    <div className="space-y-1 text-xs text-muted-foreground">
-                      {booking.clinica && <div>Clínica: {booking.clinica}</div>}
-                      {booking.telefono && <div>Tel: {booking.telefono}</div>}
-                      {booking.email && <div className="break-all">{booking.email}</div>}
-                      {!booking.clinica && !booking.telefono && !booking.email && <div>Pendiente de datos</div>}
+                    <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2 text-sm font-semibold">
+                      {booking.nombre || "Sin contacto aún"}
                     </div>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      {booking.clinica && <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2">Clínica: {booking.clinica}</div>}
+                      {booking.telefono && <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2">Tel: {booking.telefono}</div>}
+                      {booking.email && <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2 break-all">{booking.email}</div>}
+                      {!booking.clinica && !booking.telefono && !booking.email && (
+                        <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2">Pendiente de datos</div>
+                      )}
+                    </div>
+                    {booking.mensaje && (
+                      <div className="rounded-lg border border-white/10 bg-background/50 px-3 py-2 text-sm text-muted-foreground whitespace-pre-wrap">
+                        {booking.mensaje}
+                      </div>
+                    )}
                   </div>
 
                   <div className="h-full rounded-xl border border-white/10 bg-white/5 px-4 py-3">
@@ -491,7 +707,7 @@ export default function AdminBookingsPage() {
                             </Button>
                           ) : null}
                         </div>
-                        <Badge variant={badgeVariantForStatus(booking.status)}>{booking.status}</Badge>
+                        <Badge variant={badgeVariantForStatus(booking.status)}>{statusLabel(booking.status)}</Badge>
                       </div>
                       <div className="border-t border-white/10 sm:hidden" />
 
@@ -524,7 +740,7 @@ export default function AdminBookingsPage() {
                               variant="destructive"
                               size="sm"
                               disabled={booking.status === "cancelled" || updatingId === booking.id}
-                              onClick={() => updateBookingStatus(booking.id, "cancelled")}
+                              onClick={() => openCancelDialog(booking)}
                               className="w-full sm:w-[120px] shrink-0 cursor-pointer px-3"
                             >
                               {updatingId === booking.id ? "Actualizando..." : "Cancelar"}
@@ -539,8 +755,30 @@ export default function AdminBookingsPage() {
                     </div>
                   </div>
                 </div>
+                {booking.emailEvents && booking.emailEvents.length > 0 && (
+                  <div className="mt-4 rounded-xl border border-white/10 bg-background/50 p-3 space-y-2">
+                    {booking.emailEvents && booking.emailEvents.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Historial de correos</div>
+                        {booking.emailEvents
+                          .slice()
+                          .reverse()
+                          .slice(0, 4)
+                          .map((event, eventIndex) => (
+                            <div key={`${booking.id}-email-${eventIndex}`} className="text-xs text-muted-foreground">
+                              <span className={event.status === "sent" ? "text-primary" : "text-destructive"}>
+                                {event.status === "sent" ? "Enviado" : "Error"}
+                              </span>{" "}
+                              · {event.subject} · {new Date(event.sentAt).toLocaleString("es-ES")} · destino:{" "}
+                              <span className="break-all">{event.deliveredTo}</span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
+            )})}
           </div>
         )}
         {!loading && filteredBookings.length > 0 && (

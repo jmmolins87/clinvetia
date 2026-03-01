@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { CalendarDays, Calculator } from "lucide-react"
@@ -26,10 +25,12 @@ const NAV_LINKS = [
 // ── Sub-componentes ───────────────────────────────────────────────────────────
 
 function Logo() {
+  const { t } = useTranslationSkeleton()
+
   return (
     <Link
       href="/"
-      aria-label="Ir al inicio de Clinvetia"
+      aria-label={t("Ir al inicio de Clinvetia")}
       className="group flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Image
@@ -46,10 +47,11 @@ function Logo() {
 
 function NavLinks() {
   const pathname = usePathname()
+  const { t } = useTranslationSkeleton()
   
   return (
     <nav
-      aria-label="Navegación principal"
+      aria-label={t("Navegación principal")}
       className="hidden md:flex items-center gap-0.5"
     >
       {NAV_LINKS.map(({ href, label }) => {
@@ -79,8 +81,7 @@ function NavLinks() {
 
 // ── Navbar ────────────────────────────────────────────────────────────────────
 export function Navbar() {
-  const { trigger } = useTranslationSkeleton()
-  const [langChecked, setLangChecked] = useState(false)
+  const { locale, setLocale } = useTranslationSkeleton()
 
   return (
     <header
@@ -106,10 +107,9 @@ export function Navbar() {
             <SwitchWithLabel
               labelLeft="ES"
               labelRight="EN"
-              checked={langChecked}
+              checked={locale === "en"}
               onCheckedChange={(checked) => {
-                setLangChecked(checked)
-                trigger()
+                setLocale(checked ? "en" : "es")
               }}
             />
           </div>

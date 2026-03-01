@@ -27,8 +27,14 @@ export function GlobalBackground() {
         style={{ animation: 'float 28s infinite ease-in-out 5s', opacity: 0.1 }}
       />
 
-      {/* Malla de puntos global */}
-      <div className="absolute inset-0 bg-[radial-gradient(rgba(var(--white-rgb),0.08)_1px,transparent_1px)] [background-size:40px_40px] dark:bg-[radial-gradient(rgba(var(--white-rgb),0.03)_1px,transparent_1px)]" />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, var(--grid-color) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
       
       {/* Sutil gradiente de profundidad */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background/40" />

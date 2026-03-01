@@ -5,7 +5,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { BrandName } from "@/components/ui/brand-name"
 import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
-import { TranslatableText } from "@/components/providers/translation-skeleton"
+import { TranslatableText, useTranslationSkeleton } from "@/components/providers/translation-skeleton"
 
 // ── Datos ─────────────────────────────────────────────────────────────────────
 
@@ -45,11 +45,13 @@ const SOCIAL_LINKS = [
 // ── Sub-componentes ───────────────────────────────────────────────────────────
 
 function FooterLogo() {
+  const { t } = useTranslationSkeleton()
+
   return (
     <div className="col-span-2 flex flex-col gap-4 md:col-span-1">
       <Link
         href="/"
-        aria-label="Inicio Clinvetia"
+        aria-label={t("Inicio Clinvetia")}
         className="flex w-fit items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span
@@ -123,6 +125,7 @@ function FooterColumn({
 // ── Footer ────────────────────────────────────────────────────────────────────
 export function Footer() {
   const [mounted, setMounted] = useState(false)
+  const { t } = useTranslationSkeleton()
 
   useEffect(() => {
     setMounted(true)
@@ -130,7 +133,7 @@ export function Footer() {
 
   return (
     <footer
-      aria-label="Pie de página de Clinvetia"
+      aria-label={t("Pie de página de Clinvetia")}
       className={cn(
         "border-t border-white/10",
         "bg-white dark:bg-black/40 backdrop-blur-sm",
@@ -163,7 +166,7 @@ export function Footer() {
             <SkeletonWrapper as="span" wrapperClassName="inline-grid" className="h-[1.2em] w-[12em] rounded-md">
               <TranslatableText text="Hecho con" />{" "}
               <span aria-label="amor" className="text-destructive">♥</span>{" "}
-              <TranslatableText text="para veterinarias de habla hispana." />
+              <TranslatableText text="para veterinarias." />
             </SkeletonWrapper>
           </p>
         </div>

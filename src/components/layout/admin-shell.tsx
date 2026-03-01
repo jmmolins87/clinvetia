@@ -3,8 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, CalendarDays, FileClock, Inbox, LayoutGrid, LogOut, Menu, Settings, Users } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { BarChart3, CalendarDays, FileClock, Inbox, LayoutGrid, LogOut, Mail, Menu, Settings, Users } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { BrandName } from "@/components/ui/brand-name"
 import { Button } from "@/components/ui/button"
@@ -37,6 +36,7 @@ const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/admin/bookings", label: "Citas", icon: CalendarDays },
   { href: "/admin/contacts", label: "Contactos", icon: Inbox },
+  { href: "/admin/mail", label: "Correos", icon: Mail },
   { href: "/admin/users", label: "Usuarios", icon: Users },
   { href: "/admin/audit", label: "Auditoría", icon: FileClock },
 ]
@@ -218,8 +218,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <div className="text-xs text-muted-foreground">Administración</div>
                 <div className="truncate text-sm font-semibold">Centro de operaciones Clinvetia</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="shrink-0">{admin?.role || "interno"}</Badge>
+              <div className="flex items-center">
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
@@ -336,8 +335,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex flex-1 min-h-0 items-start gap-5 md:gap-6">
-        <aside className="hidden w-[280px] shrink-0 self-start sticky top-6 lg:block">
-          <div className="max-h-[calc(100vh-3rem)] overflow-y-auto">
+        <aside className="hidden w-[280px] shrink-0 self-start lg:sticky lg:top-6 lg:block lg:h-[calc(100vh-3rem)]">
+          <div className="h-full overflow-y-auto">
               <GlassCard className="flex flex-col p-5">
             <div className="space-y-4 border-b border-white/10 pb-5">
               <div className="space-y-2.5">

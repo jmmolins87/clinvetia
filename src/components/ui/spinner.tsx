@@ -4,10 +4,11 @@ import * as React from "react"
 import { Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Icon } from "@/components/ui/icon"
 
 export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "default" | "lg" | "xl"
-  variant?: "default" | "primary" | "secondary" | "accent"
+  variant?: "default" | "primary" | "secondary" | "accent" | "warning" | "success"
 }
 
 const sizeClasses = {
@@ -22,6 +23,8 @@ const variantClasses = {
   primary: "text-primary",
   secondary: "text-secondary",
   accent: "text-accent",
+  warning: "text-warning",
+  success: "text-success",
 }
 
 export const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
@@ -31,7 +34,10 @@ export const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
       className={cn("flex items-center justify-center", className)}
       {...props}
     >
-      <Loader2
+      <Icon
+        icon={Loader2}
+        size={size === "sm" ? "sm" : size === "default" ? "default" : size === "lg" ? "lg" : "xl"}
+        variant={variant}
         className={cn(
           "animate-spin",
           sizeClasses[size],
@@ -47,7 +53,7 @@ Spinner.displayName = "Spinner"
 // Pantalla completa con efecto glass para estados de carga
 export interface LoadingOverlayProps {
   message?: string
-  variant?: "default" | "primary" | "secondary" | "accent"
+  variant?: "default" | "primary" | "secondary" | "accent" | "warning" | "success"
 }
 
 export function LoadingOverlay({
@@ -71,6 +77,8 @@ export function LoadingOverlay({
           variant === "primary" && "bg-primary",
           variant === "secondary" && "bg-secondary",
           variant === "accent" && "bg-accent",
+          variant === "warning" && "bg-warning",
+          variant === "success" && "bg-success",
           variant === "default" && "bg-muted-foreground"
         )} />
         
@@ -83,6 +91,8 @@ export function LoadingOverlay({
           variant === "primary" && "bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.8)]",
           variant === "secondary" && "bg-secondary shadow-[0_0_15px_rgba(var(--secondary-rgb),0.8)]",
           variant === "accent" && "bg-accent shadow-[0_0_15px_rgba(var(--accent-rgb),0.8)]",
+          variant === "warning" && "bg-warning shadow-[0_0_15px_rgba(var(--warning-rgb),0.8)]",
+          variant === "success" && "bg-success shadow-[0_0_15px_rgba(var(--success-rgb),0.8)]",
           variant === "default" && "bg-muted-foreground"
         )} />
       </div>
@@ -102,7 +112,7 @@ export function LoadingOverlay({
 // ── Loading Dots ────────────────────────────────────────────────────────────────
 export interface LoadingDotsProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "default" | "lg"
-  variant?: "default" | "primary" | "secondary" | "accent"
+  variant?: "default" | "primary" | "secondary" | "accent" | "warning" | "success"
 }
 
 const dotsSizeClasses = {
@@ -116,6 +126,8 @@ const dotsVariantClasses = {
   primary: "bg-primary",
   secondary: "bg-secondary",
   accent: "bg-accent",
+  warning: "bg-warning",
+  success: "bg-success",
 }
 
 export function LoadingDots({
@@ -143,7 +155,7 @@ export function LoadingDots({
 // ── Loading Ring ─────────────────────────────────────────────────────────────────
 export interface LoadingRingProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "default" | "lg" | "xl"
-  variant?: "default" | "primary" | "secondary" | "accent"
+  variant?: "default" | "primary" | "secondary" | "accent" | "warning" | "success"
 }
 
 const ringSizeClasses = {
@@ -158,6 +170,8 @@ const ringVariantClasses = {
   primary: "border-primary/20 border-t-primary",
   secondary: "border-secondary/20 border-t-secondary",
   accent: "border-accent/20 border-t-accent",
+  warning: "border-warning/20 border-t-warning",
+  success: "border-success/20 border-t-success",
 }
 
 export function LoadingRing({

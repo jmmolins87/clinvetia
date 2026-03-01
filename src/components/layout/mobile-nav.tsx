@@ -25,8 +25,7 @@ const NAV_LINKS = [
 export function MobileNav() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const { trigger } = useTranslationSkeleton()
-  const [langChecked, setLangChecked] = useState(false)
+  const { locale, setLocale, t } = useTranslationSkeleton()
 
   // Bloquear scroll cuando el menú está abierto
   useEffect(() => {
@@ -57,7 +56,7 @@ export function MobileNav() {
         size="icon"
         className="md:hidden h-10 w-10 text-foreground cursor-pointer -mr-2"
         onClick={() => setIsOpen(true)}
-        aria-label="Abrir menú"
+        aria-label={t("Abrir menú")}
       >
         <Icon icon={Menu} size="sm" />
       </Button>
@@ -126,10 +125,9 @@ export function MobileNav() {
                 <SwitchWithLabel
                   labelLeft="ES"
                   labelRight="EN"
-                  checked={langChecked}
+                  checked={locale === "en"}
                   onCheckedChange={(checked) => {
-                    setLangChecked(checked)
-                    trigger()
+                    setLocale(checked ? "en" : "es")
                   }}
                 />
               </div>
@@ -162,7 +160,7 @@ export function MobileNav() {
                   transition={{ type: "spring", delay: 0.5 }}
                   onClick={() => setIsOpen(false)}
                   className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors cursor-pointer group shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]"
-                  aria-label="Cerrar menú"
+                  aria-label={t("Cerrar menú")}
                 >
                   <Icon icon={X} size="xl" className="transition-transform group-hover:rotate-90 duration-300" />
                 </motion.button>

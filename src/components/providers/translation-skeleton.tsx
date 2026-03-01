@@ -1,25 +1,56 @@
 "use client"
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { Locale, localeStorageKey, normalizeLocale, translateText } from "@/lib/i18n"
 
 interface TranslationSkeletonContextValue {
+  locale: Locale
   isTranslating: boolean
   trigger: () => void
+  setLocale: (locale: Locale) => void
+  t: (text: string) => string
 }
 
 const TranslationSkeletonContext = createContext<TranslationSkeletonContextValue | null>(null)
 
 export function TranslationSkeletonProvider({ children }: { children: React.ReactNode }) {
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [locale, setLocaleState] = useState<Locale>("es")
 
-  const trigger = useCallback(() => {
-    setIsTranslating(true)
-    window.setTimeout(() => setIsTranslating(false), 1500)
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem(localeStorageKey) : null
+    if (saved) {
+      setLocaleState(normalizeLocale(saved))
+      return
+    }
+    if (typeof document !== "undefined") {
+      setLocaleState(normalizeLocale(document.documentElement.lang))
+      return
+    }
+    if (typeof navigator !== "undefined") {
+      setLocaleState(normalizeLocale(navigator.language))
+    }
   }, [])
 
-  const value = useMemo(() => ({ isTranslating, trigger }), [isTranslating, trigger])
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = locale
+    }
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(localeStorageKey, locale)
+    }
+  }, [locale])
+
+  const setLocale = useCallback((nextLocale: Locale) => {
+    setLocaleState(nextLocale)
+  }, [])
+
+  const trigger = useCallback(() => {}, [])
+  const t = useCallback((text: string) => translateText(text, locale), [locale])
+
+  const value = useMemo(
+    () => ({ locale, isTranslating: false, trigger, setLocale, t }),
+    [locale, trigger, setLocale, t]
+  )
 
   return (
     <TranslationSkeletonContext.Provider value={value}>
@@ -31,7 +62,13 @@ export function TranslationSkeletonProvider({ children }: { children: React.Reac
 export function useTranslationSkeleton() {
   const ctx = useContext(TranslationSkeletonContext)
   if (!ctx) {
-    return { isTranslating: false, trigger: () => {} }
+    return {
+      locale: "es" as const,
+      isTranslating: false,
+      trigger: () => {},
+      setLocale: () => {},
+      t: (text: string) => text,
+    }
   }
   return ctx
 }
@@ -39,32 +76,12 @@ export function useTranslationSkeleton() {
 export function TranslatableText({
   text,
   className,
-  lines = 1,
-  skeletonClassName,
 }: {
   text: string
   className?: string
   lines?: number
   skeletonClassName?: string
 }) {
-  const { isTranslating } = useTranslationSkeleton()
-
-  if (!isTranslating) {
-    return <span className={className}>{text}</span>
-  }
-
-  const baseWidth = Math.max(text.length, 1)
-
-  return (
-    <span className={cn("inline-flex flex-col", className)}>
-      {Array.from({ length: lines }).map((_, idx) => (
-        <Skeleton
-          key={idx}
-          variant="default"
-          className={cn("h-[1em] rounded-md", idx > 0 && "mt-2", skeletonClassName)}
-          style={{ width: `${Math.max(1, baseWidth)}ch` }}
-        />
-      ))}
-    </span>
-  )
+  const { t } = useTranslationSkeleton()
+  return <span className={className}>{t(text)}</span>
 }

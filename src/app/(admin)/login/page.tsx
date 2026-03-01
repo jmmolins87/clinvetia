@@ -98,20 +98,20 @@ export default function AdminLoginPage() {
                 required
                 className="h-full flex-1 bg-transparent px-2 text-sm text-foreground outline-none placeholder:text-muted-foreground/60"
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowPassword(v => !v)}
-                aria-label={
-                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                }
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--field-icon-border)] bg-[var(--field-icon-bg)] p-0 transition-colors hover:bg-[var(--field-icon-bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                className="h-8 w-8 shrink-0 rounded-full border border-[var(--field-icon-border)] bg-[var(--field-icon-bg)] p-0 hover:bg-[var(--field-icon-bg-hover)]"
               >
                 <Icon
                   icon={showPassword ? EyeOff : Eye}
                   size="sm"
                   variant="muted"
                 />
-              </button>
+              </Button>
             </div>
           </div>
 

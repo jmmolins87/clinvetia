@@ -101,12 +101,13 @@ interface CalendarGridProps {
   year: number
   month: number
   selected: Date | null
+  dayAvailability: Record<string, "available" | "unavailable">
   onSelect: (date: Date) => void
   onPrev: () => void
   onNext: () => void
 }
 
-function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: CalendarGridProps) {
+function CalendarGrid({ year, month, selected, dayAvailability, onSelect, onPrev, onNext }: CalendarGridProps) {
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfMonth(year, month)
   const today = new Date()
@@ -160,7 +161,14 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
           const weekend = isWeekend(year, month, day)
           const isToday = isSameDay(date, today)
           const isSelected = selected ? isSameDay(date, selected) : false
-          const disabled = past || weekend
+          const dateKey = formatLocalDateKey(date)
+          const backendUnavailable = dayAvailability[dateKey] === "unavailable"
+          const disabled = past || weekend || backendUnavailable
+          const dayState: "available" | "unavailable" | "selected" = isSelected
+            ? "selected"
+            : disabled
+              ? "unavailable"
+              : "available"
 
           return (
             <button
@@ -171,7 +179,7 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
                 "relative flex h-9 w-full items-center justify-center rounded-lg text-sm font-medium",
                 "transition-all duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                disabled ? "cursor-not-allowed opacity-30" : "cursor-pointer",
+                disabled ? "cursor-not-allowed border border-white/10 bg-white/8 text-muted-foreground/70" : "cursor-pointer",
                 !disabled && !isSelected && "hover:bg-primary/15 hover:text-primary",
                 isToday && !isSelected && "border border-primary/40 text-primary",
                 isSelected && "bg-primary text-primary-foreground shadow-[0_0_16px_rgba(var(--primary-rgb),0.5)]",
@@ -180,8 +188,16 @@ function CalendarGrid({ year, month, selected, onSelect, onPrev, onNext }: Calen
               aria-pressed={isSelected}
             >
               {day}
-              {isToday && (
-                <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
+              <span
+                className={cn(
+                  "absolute bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full",
+                  dayState === "available" && "bg-primary/70 ring-1 ring-primary/70",
+                  dayState === "selected" && "bg-primary ring-1 ring-primary",
+                  dayState === "unavailable" && "bg-white/45 ring-1 ring-white/60",
+                )}
+              />
+              {isToday && !isSelected && (
+                <span className="absolute inset-0 rounded-lg ring-1 ring-primary/30" />
               )}
             </button>
           )
@@ -356,11 +372,13 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
   const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
-  const [duration, setDuration] = useState(45)
+  const [duration, setDuration] = useState(30)
+  const [isRegisteredClient, setIsRegisteredClient] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [desktopStep, setDesktopStep] = useState<"calendar" | "confirm" | "success">("calendar")
   const [slots, setSlots] = useState<string[]>([])
   const [unavailable, setUnavailable] = useState<Set<string>>(new Set())
+  const [dayAvailability, setDayAvailability] = useState<Record<string, "available" | "unavailable">>({})
   const [availabilityError, setAvailabilityError] = useState<string | null>(null)
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -375,6 +393,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
     demoExpiresAt: string
     contactSubmitted: boolean
   } | null>(null)
+  const isDurationDisabled = (value: number) => !isRegisteredClient && value > 30
 
   useEffect(() => {
     const storedBookingToken = storage.get<string | null>("local", "booking_access_token", null)
@@ -459,6 +478,18 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
     recoverActiveBooking()
   }, [activeBookingBlock])
 
+  useEffect(() => {
+    const savedBooking = storage.get<{
+      contactSubmitted?: boolean
+      contact?: { email?: string | null } | null
+    } | null>("local", "booking", null)
+    const registered = Boolean(savedBooking?.contactSubmitted || savedBooking?.contact?.email)
+    setIsRegisteredClient(registered)
+    if (!registered) {
+      setDuration(30)
+    }
+  }, [])
+
   // Restaurar estado desde localStorage al montar
   useEffect(() => {
     if (activeBookingBlock) return
@@ -520,6 +551,50 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
     }
   }, [selectedDate])
 
+  useEffect(() => {
+    let mounted = true
+    const daysInMonth = getDaysInMonth(year, month)
+
+    const run = async () => {
+      const nextAvailability: Record<string, "available" | "unavailable"> = {}
+      const requests: Promise<void>[] = []
+
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const date = new Date(year, month, day)
+        const dateKey = formatLocalDateKey(date)
+        const past = isPast(year, month, day)
+        const weekend = isWeekend(year, month, day)
+
+        if (past || weekend) {
+          nextAvailability[dateKey] = "unavailable"
+          continue
+        }
+
+        requests.push(
+          getAvailability(dateKey)
+            .then((data) => {
+              const totalSlots = data.slots?.length ?? 0
+              const occupiedSlots = data.unavailable?.length ?? 0
+              const fullyOccupied = totalSlots === 0 || occupiedSlots >= totalSlots
+              nextAvailability[dateKey] = fullyOccupied ? "unavailable" : "available"
+            })
+            .catch(() => {
+              nextAvailability[dateKey] = "unavailable"
+            })
+        )
+      }
+
+      await Promise.all(requests)
+      if (!mounted) return
+      setDayAvailability(nextAvailability)
+    }
+
+    run()
+    return () => {
+      mounted = false
+    }
+  }, [year, month])
+
   function handlePrevMonth() {
     if (month === 0) {
       setMonth(11)
@@ -552,20 +627,21 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
   async function handleConfirm(payload: BookingWizardSubmitPayload) {
     setIsSubmitting(true)
     setSubmitError(null)
+    const finalDuration = isRegisteredClient ? payload.duration : 30
     try {
       const store = useROIStore.getState()
       const response = await createBooking({
         date: formatLocalDateKey(payload.date),
         time: payload.time,
-        duration: payload.duration,
+        duration: finalDuration,
         sessionToken: store.accessToken ?? null,
       })
 
       setSelectedDate(payload.date)
       setSelectedTime(payload.time)
-      setDuration(payload.duration)
+      setDuration(finalDuration)
 
-      onBooked?.(payload.date, payload.time, payload.duration)
+      onBooked?.(payload.date, payload.time, finalDuration)
 
       store.setExpiration(response.expiresAt)
       store.setFormExpiration(response.formExpiresAt)
@@ -693,6 +769,10 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                     initialDate={selectedDate}
                     initialTime={selectedTime}
                     initialDuration={duration}
+                    durationOptions={DURATION_OPTIONS.map((option) => ({
+                      ...option,
+                      disabled: isDurationDisabled(option.value),
+                    }))}
                     initialStep={selectedDate && selectedTime ? "confirm" : selectedDate ? "time" : "date"}
                   loadAvailability={async (date) => getAvailability(formatLocalDateKey(date))}
                     onSubmit={handleConfirm}
@@ -735,10 +815,12 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                     <Button
                       key={opt.value}
                       type="button"
+                      disabled={isDurationDisabled(opt.value)}
                       variant={duration === opt.value ? "default" : "ghost"}
                       onClick={() => setDuration(opt.value)}
                       className={cn(
                         "flex-1 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all duration-150",
+                        isDurationDisabled(opt.value) && "cursor-not-allowed opacity-40 hover:border-white/10 hover:text-muted-foreground",
                         duration === opt.value
                           ? "border-primary/50 bg-primary/10 text-primary"
                           : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground"
@@ -750,14 +832,17 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                 </div>
               </div>
 
-              <CalendarGrid
-                year={year}
-                month={month}
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                onPrev={handlePrevMonth}
-                onNext={handleNextMonth}
-              />
+              <div className="pt-2">
+                <CalendarGrid
+                  year={year}
+                  month={month}
+                  selected={selectedDate}
+                  dayAvailability={dayAvailability}
+                  onSelect={handleDateSelect}
+                  onPrev={handlePrevMonth}
+                  onNext={handleNextMonth}
+                />
+              </div>
 
               <div className="flex flex-wrap gap-4 text-base text-muted-foreground">
                 <span className="flex items-center gap-1.5">
@@ -769,7 +854,7 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                   Seleccionado
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-white/45 ring-1 ring-white/60" />
                   No disponible
                 </span>
               </div>
@@ -792,7 +877,11 @@ export function BookingCalendar({ className, onBooked }: BookingCalendarProps) {
                       onBack={() => setDesktopStep("calendar")}
                       onConfirm={() => {
                         if (!selectedDate || !selectedTime) return
-                        handleConfirm({ date: selectedDate, time: selectedTime, duration })
+                        handleConfirm({
+                          date: selectedDate,
+                          time: selectedTime,
+                          duration: isRegisteredClient ? duration : 30,
+                        })
                       }}
                     />
                   </GlassCard>

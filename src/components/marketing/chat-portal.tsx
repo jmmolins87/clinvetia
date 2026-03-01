@@ -6,6 +6,7 @@ import { MessageCircle, Sparkles, Send, X } from "lucide-react"
 
 import { Icon } from "@/components/ui/icon"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Sheet,
   SheetTrigger,
@@ -49,7 +50,7 @@ export function ChatPortal() {
 
   const chatBody = (
     <>
-      <SheetHeader className="px-6 pt-6 pb-4 border-b border-white/10 bg-background/60 backdrop-blur-xl">
+      <SheetHeader className="px-6 pt-6 pb-4 border-b border-[rgba(var(--white-rgb),0.10)] bg-background/60 backdrop-blur-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <SheetTitle className="text-xl">Chat ClinvetIA</SheetTitle>
@@ -86,7 +87,7 @@ export function ChatPortal() {
               <source src="/videos/avatar/avatar-dog.ogv" type="video/ogg" />
             </video>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-foreground">
+          <div className="rounded-2xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 py-3 text-sm text-foreground">
             Hola, soy tu asistente. ¿Quieres que revisemos los números de tu ROI?
           </div>
         </div>
@@ -98,10 +99,10 @@ export function ChatPortal() {
         </div>
       </div>
 
-      <div className="border-t border-white/10 px-4 py-4">
+      <div className="border-t border-[rgba(var(--white-rgb),0.10)] px-4 py-4">
         <div className="flex items-center gap-2">
-          <input
-            className="h-11 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/40"
+          <Input
+            className="h-11 flex-1 rounded-xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/40"
             placeholder="Escribe tu mensaje..."
           />
           <Button size="icon" className="h-11 w-11 rounded-xl">
@@ -113,7 +114,7 @@ export function ChatPortal() {
   )
 
   return (
-    <>
+    <div data-clinvetia-chat-portal>
       {isDesktop && (
         <Sheet open={open} onOpenChange={setOpen}>
         <div
@@ -136,8 +137,8 @@ export function ChatPortal() {
                 open && "shadow-none"
               )}
             >
-              <span className="absolute inset-1 rounded-[22px] border border-white/20" />
-              <span className="absolute inset-2 rounded-[20px] bg-white/5" />
+              <span className="absolute inset-1 rounded-[22px] border border-[rgba(var(--white-rgb),0.20)]" />
+              <span className="absolute inset-2 rounded-[20px] bg-[rgba(var(--white-rgb),0.05)]" />
               <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(var(--white-rgb),0.10),transparent_55%)]" />
               <div className="absolute inset-3 rounded-[18px] overflow-hidden">
                 <video
@@ -155,7 +156,7 @@ export function ChatPortal() {
               <div className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 border border-primary/50 shadow-[0_0_20px_rgba(var(--primary-rgb),0.6)]">
                 <Icon icon={Sparkles} size="xs" variant="primary" />
               </div>
-              <div className="absolute inset-x-2 bottom-1 rounded-full border border-white/20 bg-black/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80 backdrop-blur">
+              <div className="absolute inset-x-2 bottom-1 rounded-full border border-[rgba(var(--white-rgb),0.20)] bg-[rgba(var(--black-rgb),0.30)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[rgba(var(--white-rgb),0.80)] backdrop-blur">
                 Chat
               </div>
             </button>
@@ -185,7 +186,7 @@ export function ChatPortal() {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="sm:max-w-md p-0 overflow-hidden liquid-glass z-[300]">
           <div className="flex h-full flex-col">
-            <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/10 bg-background/60 backdrop-blur-xl">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-[rgba(var(--white-rgb),0.10)] bg-background/60 backdrop-blur-xl">
               <DialogTitle className="text-xl">Chat ClinvetIA</DialogTitle>
               <DialogDescription className="text-sm">
                 Respuestas rápidas con contexto de tu clínica.
@@ -206,7 +207,7 @@ export function ChatPortal() {
                     <source src="/videos/avatar/avatar-dog.ogv" type="video/ogg" />
                   </video>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-foreground">
+                <div className="rounded-2xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 py-3 text-sm text-foreground">
                   Hola, soy tu asistente. ¿Quieres que revisemos los números de tu ROI?
                 </div>
               </div>
@@ -218,10 +219,10 @@ export function ChatPortal() {
               </div>
             </div>
 
-            <div className="border-t border-white/10 px-4 py-4">
+            <div className="border-t border-[rgba(var(--white-rgb),0.10)] px-4 py-4">
               <div className="flex items-center gap-2">
-                <input
-                  className="h-11 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/40"
+                <Input
+                  className="h-11 flex-1 rounded-xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary/40"
                   placeholder="Escribe tu mensaje..."
                 />
                 <Button size="icon" className="h-11 w-11 rounded-xl">
@@ -233,6 +234,6 @@ export function ChatPortal() {
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </div>
   )
 }

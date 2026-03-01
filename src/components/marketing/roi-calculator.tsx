@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Euro,
   Info,
-  Loader2,
   PercentCircle,
   ReceiptText,
   TrendingDown,
@@ -32,6 +31,7 @@ import {
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Icon } from "@/components/ui/icon"
 import { Slider } from "@/components/ui/slider"
+import { Spinner } from "@/components/ui/spinner"
 import { storage } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 import { useROIStore } from "@/store/roi-store"
@@ -72,6 +72,7 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
   const [showSkipDialog, setShowSkipDialog] = useState(false)
   const [isCalculating, setIsCalculating] = useState(false)
   const [isCreatingSession, setIsCreatingSession] = useState(false)
+  const [createSessionError, setCreateSessionError] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -157,7 +158,7 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
                     <p className="text-base text-muted-foreground font-medium">Tu ROI con ClinvetIA</p>
                     <AnimatePresence mode="wait">
                       {isCalculating ? (
-                        <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center h-[3.75rem]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></motion.div>
+                        <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center h-[3.75rem]"><Spinner size="lg" variant="primary" /></motion.div>
                       ) : (
                         <motion.p key={roi} initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`text-6xl font-bold tabular-nums ${isPositive ? "text-success drop-shadow-[0_0_20px_rgba(var(--success-rgb),0.5)]" : "text-destructive"}`}>{roi > 0 ? "+" : ""}{roi}%</motion.p>
                       )}
@@ -171,8 +172,8 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
                     ))}
                   </div>
 
-                  <GlassCard className={cn("p-4 bg-gradient-to-br border-success/30", isPositive ? "from-success/10 via-background to-primary/5" : "from-white/5")}>
-                    <p className="text-base text-center">Por <span className="font-bold">1€</span> invertido, recuperas {isCalculating ? <Loader2 className="inline h-4 w-4 animate-spin" /> : <span className={cn("font-bold", isPositive ? "text-success" : "")}>{(roi / 100 + 1).toFixed(1)}€</span>}</p>
+                  <GlassCard className={cn("p-4 bg-gradient-to-br border-success/30", isPositive ? "from-success/10 via-background to-primary/5" : "from-background/60")}>
+                    <p className="text-base text-center">Por <span className="font-bold">1€</span> invertido, recuperas {isCalculating ? <Spinner size="sm" variant="default" className="inline-flex align-middle" /> : <span className={cn("font-bold", isPositive ? "text-success" : "")}>{(roi / 100 + 1).toFixed(1)}€</span>}</p>
                   </GlassCard>
                 </>
               )}
@@ -197,16 +198,24 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
         onOpenChange={setShowSkipDialog}
         data={{ monthlyPatients, averageTicket, conversionLoss, roi }}
         isSubmitting={isCreatingSession}
+        error={createSessionError}
         onConfirm={async () => {
           setIsCreatingSession(true)
+          setCreateSessionError(null)
           try {
             const session = await createSession({
               roi: { monthlyPatients, averageTicket, conversionLoss, roi },
             })
+            if (!session?.accessToken) {
+              throw new Error("No se pudo crear el token de sesión")
+            }
             setHasAcceptedDialog(true)
             setAccessToken(session.accessToken)
             storage.set("local", "roi_access_token", session.accessToken)
+            setShowSkipDialog(false)
             router.push("/contacto")
+          } catch (error) {
+            setCreateSessionError(error instanceof Error ? error.message : "No se pudo crear tu sesión. Inténtalo de nuevo.")
           } finally {
             setIsCreatingSession(false)
           }
@@ -241,7 +250,7 @@ function FormulaRow({ label, formula, result, color, isCalculating }: { label: s
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="min-w-0"><p className="text-base text-muted-foreground truncate">{label}</p><p className="text-base font-mono text-muted-foreground/60 truncate">{formula}</p></div>
-      {isCalculating ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <span className={`text-base font-semibold tabular-nums ${color}`}>{result}</span>}
+      {isCalculating ? <Spinner size="sm" variant="default" /> : <span className={`text-base font-semibold tabular-nums ${color}`}>{result}</span>}
     </div>
   )
 }
@@ -257,7 +266,7 @@ function MetricCard({ label, value, icon: IconComponent, variant, isCalculating 
         <Icon icon={IconComponent} size="sm" variant={iconVariantMap[variant]} />
         <span className="text-base font-medium">{label}</span>
       </div>
-      {isCalculating ? <div className="flex items-center justify-center h-7"><Loader2 className="h-5 w-5 animate-spin" /></div> : <p className="text-lg font-bold tabular-nums">{value}</p>}
+      {isCalculating ? <div className="flex items-center justify-center h-7"><Spinner size="default" variant="default" /></div> : <p className="text-lg font-bold tabular-nums">{value}</p>}
     </div>
   )
 }
@@ -269,7 +278,7 @@ interface ResultDialogData {
   roi: number
 }
 
-function ResultDialog({ open, onOpenChange, data, onConfirm, isSubmitting }: { open: boolean; onOpenChange: (open: boolean) => void; data: ResultDialogData; onConfirm: () => Promise<void> | void; isSubmitting: boolean }) {
+function ResultDialog({ open, onOpenChange, data, onConfirm, isSubmitting, error }: { open: boolean; onOpenChange: (open: boolean) => void; data: ResultDialogData; onConfirm: () => Promise<void> | void; isSubmitting: boolean; error?: string | null }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -286,9 +295,10 @@ function ResultDialog({ open, onOpenChange, data, onConfirm, isSubmitting }: { o
           ))}
           <div className="border-t border-primary/20 pt-2 mt-2 flex justify-between"><span>ROI proyectado:</span><span className="font-bold text-success">{data.roi}%</span></div>
         </div>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <DialogFooter className="mt-4 gap-2">
           <Button variant="destructive" className="w-full bg-destructive/15 border-2 border-destructive/70 text-destructive shadow-[0_0_20px_rgba(var(--destructive-rgb),0.50)]" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>
-          <Button variant="default" className="w-full" onClick={() => { onOpenChange(false); onConfirm() }} disabled={isSubmitting}>
+          <Button variant="default" className="w-full" onClick={() => { void onConfirm() }} disabled={isSubmitting}>
             {isSubmitting ? "Creando acceso..." : "Continuar"}
             <Icon icon={ArrowRight} size="sm" className="ml-2" />
           </Button>

@@ -123,6 +123,7 @@ export function internalLeadNotificationEmail(params: {
     dateLabel: string
     timeLabel: string
     duration: number
+    meetingLink?: string
   } | null
   roi?: {
     monthlyPatients?: number
@@ -210,6 +211,7 @@ export function leadSummaryEmail(params: {
     dateLabel: string
     timeLabel: string
     duration: number
+    meetingLink?: string
   } | null
   roi?: {
     monthlyPatients?: number
@@ -256,6 +258,11 @@ export function leadSummaryEmail(params: {
           <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Resumen demo</p>
           <p style="margin:0 0 6px;font-size:14px;color:#b6c2cf;">Fecha: <strong style="color:#ffffff;">${booking.dateLabel}</strong></p>
           <p style="margin:0;font-size:14px;color:#b6c2cf;">Hora: <strong style="color:#ffffff;">${booking.timeLabel} · ${booking.duration} min</strong></p>
+          ${
+            booking.meetingLink
+              ? `<p style="margin:10px 0 0;font-size:14px;color:#b6c2cf;">Google Meet: <a href="${booking.meetingLink}" style="color:#43e97b;text-decoration:none;">${booking.meetingLink}</a></p>`
+              : ""
+          }
         </div>`
             : ""
         }
@@ -460,6 +467,77 @@ export function adminUserResetPasswordEmail(params: {
 
         <div style="padding:14px 24px;border-top:1px solid #1f2937;background:#0b1220;color:#8b98a5;font-size:11px;text-align:center;">
           ${params.brandName} · Seguridad de acceso · ${params.supportEmail}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;")
+}
+
+export function customerReplyEmail(params: {
+  brandName: string
+  customerName: string
+  customerEmail: string
+  supportEmail: string
+  subject: string
+  message: string
+  meetingLink?: string | null
+}) {
+  const safeMessage = escapeHtml(params.message).replaceAll("\n", "<br />")
+  return `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>${escapeHtml(params.subject)}</title>
+  </head>
+  <body style="margin:0;background:#06090d;color:#e6edf3;font-family:Arial,Helvetica,sans-serif;">
+    <div style="max-width:760px;margin:0 auto;padding:28px 18px;">
+      <div style="background:linear-gradient(180deg,#111827 0%,#0f172a 100%);border:1px solid #1f2937;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.35);">
+        <div style="padding:22px 24px;border-bottom:1px solid #1f2937;background:radial-gradient(circle at top right, rgba(67,233,123,0.16), transparent 45%), radial-gradient(circle at top left, rgba(0,242,254,0.12), transparent 40%);">
+          <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:#8b98a5;">${params.brandName} · atención al cliente</p>
+          <h1 style="margin:0;font-size:24px;line-height:1.2;color:#ffffff;">${escapeHtml(params.subject)}</h1>
+          <p style="margin:10px 0 0;color:#b6c2cf;font-size:14px;line-height:1.5;">
+            Hola ${escapeHtml(params.customerName || params.customerEmail)}, te respondemos desde el equipo de ${params.brandName}.
+          </p>
+        </div>
+
+        <div style="padding:24px;">
+          <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:16px;">
+            <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Mensaje</p>
+            <p style="margin:0;color:#d4dee8;font-size:14px;line-height:1.6;">${safeMessage}</p>
+          </div>
+
+          ${
+            params.meetingLink
+              ? `<div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:16px;">
+            <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Google Meet</p>
+            <p style="margin:0;color:#d4dee8;font-size:14px;line-height:1.6;">
+              Enlace de videollamada: <a href="${escapeHtml(params.meetingLink)}" style="color:#43e97b;text-decoration:none;">${escapeHtml(params.meetingLink)}</a>
+            </p>
+          </div>`
+              : ""
+          }
+
+          <div style="border:1px solid #2a3445;background:#0a111c;border-radius:14px;padding:14px;">
+            <p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#43e97b;">Contacto</p>
+            <p style="margin:0;color:#b6c2cf;font-size:13px;line-height:1.5;">
+              Puedes responder directamente a este correo o escribirnos a ${escapeHtml(params.supportEmail)}.
+            </p>
+          </div>
+        </div>
+
+        <div style="padding:14px 24px;border-top:1px solid #1f2937;background:#0b1220;color:#8b98a5;font-size:11px;text-align:center;">
+          ${params.brandName} · ${escapeHtml(params.supportEmail)}
         </div>
       </div>
     </div>

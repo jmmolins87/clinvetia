@@ -66,7 +66,7 @@ export function CookieConsent() {
 
   return (
     <Dialog open={open} onOpenChange={(next) => setOpen(next)}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="w-[96vw] sm:max-w-xl md:max-w-2xl max-h-[92vh] overflow-y-auto p-4 md:p-6">
         <DialogHeader className="space-y-3">
           <DialogTitle>Preferencias de cookies</DialogTitle>
           <DialogDescription className="text-base">
@@ -75,7 +75,7 @@ export function CookieConsent() {
         </DialogHeader>
 
         {mode === "customize" ? (
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             <GlassCard className="p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>

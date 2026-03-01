@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useCallback } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -26,7 +26,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { sanitizeInput } from "@/lib/security"
 import { storage } from "@/lib/storage"
-import { createBooking, getActiveBookingBySession, getAvailability, getBooking, getSession, submitContact } from "@/lib/api"
+import { ApiError, createBooking, getActiveBookingBySession, getAvailability, getBooking, getSession, submitContact } from "@/lib/api"
 import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
 
 interface FormData {
@@ -92,6 +92,13 @@ function ContactFormWithROI() {
   const [expirationHandled, setExpirationHandled] = useState(false)
   const [bookingAccessToken, setBookingAccessToken] = useState<string | null>(null)
   const [sessionAccessToken, setSessionAccessToken] = useState<string | null>(null)
+  const [hasSessionROI, setHasSessionROI] = useState(false)
+  const [sessionROI, setSessionROI] = useState<{
+    monthlyPatients?: number | null
+    averageTicket?: number | null
+    conversionLoss?: number | null
+    roi?: number | null
+  } | null>(null)
   const [bookingId, setBookingId] = useState<string | null>(null)
   const bookingTokenFromQuery = searchParams.get("booking_token")
   const bookingIdFromQuery = searchParams.get("booking_id")
@@ -102,8 +109,8 @@ function ContactFormWithROI() {
     time: string;
     duration: string;
     status?: string;
-    formExpiresAt?: string;
-    demoExpiresAt?: string;
+    formExpiresAt?: string | null;
+    demoExpiresAt?: string | null;
     contactSubmitted?: boolean;
     contact?: {
       nombre: string;
@@ -112,6 +119,12 @@ function ContactFormWithROI() {
       clinica: string;
       mensaje: string;
       createdAt?: string | null;
+      roi?: {
+        monthlyPatients?: number | null;
+        averageTicket?: number | null;
+        conversionLoss?: number | null;
+        roi?: number | null;
+      } | null;
     } | null;
   } | null>(null)
 
@@ -120,12 +133,43 @@ function ContactFormWithROI() {
     monthlyPatients,
     averageTicket,
     conversionLoss,
-    isCalculated,
     setAccessToken,
     setClinicData,
     setFormExpiration,
     reset: resetROI
   } = useROIStore()
+
+  const normalizeROI = useCallback((roi?: {
+    monthlyPatients?: number | null
+    averageTicket?: number | null
+    conversionLoss?: number | null
+    roi?: number | null
+  } | null) => {
+    const monthlyPatients = typeof roi?.monthlyPatients === "number" ? roi.monthlyPatients : Number(roi?.monthlyPatients)
+    const averageTicket = typeof roi?.averageTicket === "number" ? roi.averageTicket : Number(roi?.averageTicket)
+    const conversionLoss = typeof roi?.conversionLoss === "number" ? roi.conversionLoss : Number(roi?.conversionLoss)
+    const roiValue = typeof roi?.roi === "number" ? roi.roi : Number(roi?.roi)
+    return {
+      monthlyPatients: Number.isFinite(monthlyPatients) ? monthlyPatients : null,
+      averageTicket: Number.isFinite(averageTicket) ? averageTicket : null,
+      conversionLoss: Number.isFinite(conversionLoss) ? conversionLoss : null,
+      roi: Number.isFinite(roiValue) ? roiValue : null,
+    }
+  }, [])
+
+  const hasCompleteROI = useCallback((roi?: {
+    monthlyPatients?: number | null
+    averageTicket?: number | null
+    conversionLoss?: number | null
+    roi?: number | null
+  } | null) => {
+    const normalized = normalizeROI(roi)
+    return (
+      typeof normalized.monthlyPatients === "number" &&
+      typeof normalized.averageTicket === "number" &&
+      typeof normalized.conversionLoss === "number"
+    )
+  }, [normalizeROI])
 
   useEffect(() => {
     setMounted(true)
@@ -136,11 +180,12 @@ function ContactFormWithROI() {
       : isValidAccessToken(storedBookingToken)
         ? storedBookingToken
         : null
+    const fallbackSessionToken = isValidAccessToken(accessToken) ? accessToken : null
     const validSessionToken = isValidAccessToken(sessionTokenFromQuery)
       ? sessionTokenFromQuery
       : isValidAccessToken(storedSessionToken)
         ? storedSessionToken
-        : null
+        : fallbackSessionToken
 
     if (!validBookingToken && storedBookingToken) {
       storage.remove("local", "booking_access_token")
@@ -167,9 +212,45 @@ function ContactFormWithROI() {
 
   useEffect(() => {
     if (!mounted) return
-    const stored = storage.get<{ bookingId?: string } | null>("local", "booking", null)
+    const stored = storage.get<{
+      bookingId?: string
+      date?: string
+      time?: string
+      duration?: number | string
+      status?: string
+      formExpiresAt?: string | null
+      demoExpiresAt?: string | null
+      contactSubmitted?: boolean
+      contact?: {
+        nombre: string
+        email: string
+        telefono: string
+        clinica: string
+        mensaje: string
+        createdAt?: string | null
+        roi?: {
+          monthlyPatients?: number | null
+          averageTicket?: number | null
+          conversionLoss?: number | null
+          roi?: number | null
+        } | null
+      } | null
+    } | null>("local", "booking", null)
     const id = bookingIdFromQuery || stored?.bookingId || null
     setBookingId(id)
+
+    if (stored?.date && stored?.time) {
+      setStoredBooking({
+        date: stored.date,
+        time: stored.time,
+        duration: String(stored.duration ?? ""),
+        status: stored.status,
+        formExpiresAt: stored.formExpiresAt,
+        demoExpiresAt: stored.demoExpiresAt,
+        contactSubmitted: stored.contactSubmitted ?? false,
+        contact: stored.contact ?? null,
+      })
+    }
   }, [mounted, bookingIdFromQuery])
 
   useEffect(() => {
@@ -211,30 +292,53 @@ function ContactFormWithROI() {
 
 
   useEffect(() => {
-    if (!mounted || !sessionAccessToken) return
-    if (isCalculated) return
+    if (!mounted || !sessionAccessToken) {
+      setHasSessionROI(false)
+      return
+    }
 
     const recoverROI = async () => {
       try {
         const session = await getSession(sessionAccessToken)
+        const normalizedROI = normalizeROI(session.roi)
+        const sessionHasROI = hasCompleteROI(normalizedROI)
+        if (!sessionHasROI) {
+          setHasSessionROI(false)
+          setSessionROI(null)
+          storage.remove("local", "roi_access_token")
+          setSessionAccessToken(null)
+          setAccessToken(null)
+          resetROI()
+          return
+        }
+
+        setHasSessionROI(true)
+        setSessionROI(normalizedROI)
         setAccessToken(session.accessToken)
         if (session.expiresAt) {
           useROIStore.getState().setExpiration(session.expiresAt)
         }
-        if (session.roi) {
-          setClinicData({
-            monthlyPatients: typeof session.roi.monthlyPatients === "number" ? session.roi.monthlyPatients : monthlyPatients,
-            averageTicket: typeof session.roi.averageTicket === "number" ? session.roi.averageTicket : averageTicket,
-            conversionLoss: typeof session.roi.conversionLoss === "number" ? session.roi.conversionLoss : conversionLoss,
-          })
+        setClinicData({
+          monthlyPatients: normalizedROI.monthlyPatients as number,
+          averageTicket: normalizedROI.averageTicket as number,
+          conversionLoss: normalizedROI.conversionLoss as number,
+        })
+      } catch (error) {
+        if (error instanceof ApiError && (error.status === 404 || error.status === 410)) {
+          setHasSessionROI(false)
+          setSessionROI(null)
+          storage.remove("local", "roi_access_token")
+          setSessionAccessToken(null)
+          setAccessToken(null)
+          resetROI()
+          return
         }
-      } catch {
-        // Si no hay sesión válida, el diálogo de acceso resolverá el flujo.
+        setHasSessionROI(false)
       }
     }
 
     recoverROI()
-  }, [mounted, sessionAccessToken, isCalculated, setClinicData, setAccessToken, monthlyPatients, averageTicket, conversionLoss])
+  }, [mounted, sessionAccessToken, setClinicData, setAccessToken, resetROI, hasCompleteROI, normalizeROI])
 
   useEffect(() => {
     if (!mounted || !bookingId || !bookingAccessToken) return
@@ -263,10 +367,14 @@ function ContactFormWithROI() {
     loadBooking()
   }, [mounted, bookingId, bookingAccessToken])
 
-  const isExpired = !!storedBooking?.formExpiresAt && new Date(storedBooking.formExpiresAt).getTime() < Date.now()
-  const hasActiveDemo = !!storedBooking?.demoExpiresAt && new Date(storedBooking.demoExpiresAt).getTime() > Date.now()
-  const isDemoExpired = storedBooking?.status === "expired" ||
-    (!!storedBooking?.demoExpiresAt && new Date(storedBooking.demoExpiresAt).getTime() <= Date.now())
+  const hasSubmittedContact = Boolean(storedBooking?.contactSubmitted || storedBooking?.contact)
+  const isExpired = !hasSubmittedContact &&
+    !!storedBooking?.formExpiresAt &&
+    new Date(storedBooking.formExpiresAt).getTime() < Date.now()
+  const isDemoExpired =
+    !hasSubmittedContact &&
+    (storedBooking?.status === "expired" ||
+      (!!storedBooking?.demoExpiresAt && new Date(storedBooking.demoExpiresAt).getTime() <= Date.now()))
 
   useEffect(() => {
     if (!mounted || expirationHandled) return
@@ -380,7 +488,7 @@ function ContactFormWithROI() {
     )
   }
 
-  const isDuplicateBookingContactBlocked = Boolean(storedBooking?.contactSubmitted && hasActiveDemo)
+  const isDuplicateBookingContactBlocked = hasSubmittedContact
   const bookingDateStr = storedBooking?.date
   const bookingTime = storedBooking?.time
   const bookingDuration = storedBooking?.duration
@@ -389,7 +497,34 @@ function ContactFormWithROI() {
     : null
   const hasBooking = bookingDate && bookingTime
   const hasActiveBookingSummary = hasBooking && !isDemoExpired && !isExpired
-  const perdidaMensual = Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket)
+  const roiFromContact = normalizeROI(storedBooking?.contact?.roi)
+  const roiFromSession = normalizeROI(sessionROI)
+  const hasSessionToken = isValidAccessToken(sessionAccessToken) || isValidAccessToken(accessToken)
+  const hasStoreROI = hasSessionToken && hasCompleteROI({ monthlyPatients, averageTicket, conversionLoss })
+  const roiPatients =
+    (typeof roiFromContact.monthlyPatients === "number" ? roiFromContact.monthlyPatients : null) ??
+    (typeof roiFromSession.monthlyPatients === "number" ? roiFromSession.monthlyPatients : null) ??
+    monthlyPatients
+  const roiTicket =
+    (typeof roiFromContact.averageTicket === "number" ? roiFromContact.averageTicket : null) ??
+    (typeof roiFromSession.averageTicket === "number" ? roiFromSession.averageTicket : null) ??
+    averageTicket
+  const roiLoss =
+    (typeof roiFromContact.conversionLoss === "number" ? roiFromContact.conversionLoss : null) ??
+    (typeof roiFromSession.conversionLoss === "number" ? roiFromSession.conversionLoss : null) ??
+    conversionLoss
+  const hasROISummary = Boolean(
+    hasCompleteROI(roiFromContact) ||
+      hasCompleteROI(roiFromSession) ||
+      hasStoreROI ||
+      hasSessionROI
+  )
+  const showReturningTitle = Boolean(hasROISummary && hasActiveBookingSummary && hasSubmittedContact)
+  const pageTitle = showReturningTitle ? "¿De nuevo por aquí? ¿Algún dato erróneo?" : "Cuéntanos sobre tu clínica"
+  const pageDescription = showReturningTitle
+    ? "Ya tenemos tu resumen ROI, tu demo y tus datos de contacto. Si necesitas ajustar algo, te ayudamos."
+    : "Nuestro equipo está listo para ayudarte a transformar tu gestión veterinaria."
+  const perdidaMensual = Math.round(roiPatients * (roiLoss / 100) * roiTicket)
   const recuperacionEstimada = Math.round(perdidaMensual * 0.7)
   const roi = Math.round(((recuperacionEstimada - 297) / 297) * 100)
 
@@ -514,13 +649,49 @@ function ContactFormWithROI() {
 
       setFormExpiration(null)
       const persistedBooking = storage.get<Record<string, unknown> | null>("local", "booking", null)
-      if (persistedBooking) {
-        storage.set("local", "booking", {
-          ...persistedBooking,
-          formExpiresAt: null,
-          contactSubmitted: true,
-        })
+      const bookingSnapshot = {
+        ...(persistedBooking ?? {}),
+        ...(storedBooking ?? {}),
+        formExpiresAt: null,
+        contactSubmitted: true,
+        contact: {
+          nombre: formData.nombre,
+          email: formData.email,
+          telefono: formData.telefono,
+          clinica: formData.clinica,
+          mensaje: formData.mensaje,
+          roi: {
+            monthlyPatients,
+            averageTicket,
+            conversionLoss,
+            roi,
+          },
+          createdAt: new Date().toISOString(),
+        },
       }
+      storage.set("local", "booking", bookingSnapshot)
+      setStoredBooking((prev) => ({
+        ...(prev ?? {}),
+        date: prev?.date ?? "",
+        time: prev?.time ?? "",
+        duration: prev?.duration ?? "",
+        formExpiresAt: null,
+        contactSubmitted: true,
+        contact: {
+          nombre: formData.nombre,
+          email: formData.email,
+          telefono: formData.telefono,
+          clinica: formData.clinica,
+          mensaje: formData.mensaje,
+          roi: {
+            monthlyPatients,
+            averageTicket,
+            conversionLoss,
+            roi,
+          },
+          createdAt: new Date().toISOString(),
+        },
+      }))
       window.dispatchEvent(new Event("clinvetia:contact-submitted"))
       try {
         localStorage.setItem("clinvetia:dashboard-refresh", String(Date.now()))
@@ -539,8 +710,8 @@ function ContactFormWithROI() {
 
   if (isSubmitted) {
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/20"><CheckCircle2 className="h-10 w-10 text-primary" /></div>
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-8 md:py-10 text-center">
+        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/20"><Icon icon={CheckCircle2} size="2xl" variant="primary" /></div>
         <h2 className="mb-2 text-2xl font-bold">¡Mensaje enviado!</h2>
         <p className="text-muted-foreground">Nuestro equipo te contactará en menos de 24 horas.</p>
         <div className="mt-8 w-fit mx-auto">
@@ -554,7 +725,7 @@ function ContactFormWithROI() {
 
   const summaries = (
     <div className="space-y-4">
-      {sessionAccessToken && (
+      {hasROISummary && (
         <GlassCard className="p-0 overflow-hidden border-primary/40 bg-primary/10 shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)]">
           <div className="bg-primary/20 px-4 py-3 border-b border-primary/30 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -564,14 +735,42 @@ function ContactFormWithROI() {
             <Badge variant="primary" className="h-5 px-1.5 text-[10px]">Listo</Badge>
           </div>
           <div className="p-4 space-y-3 text-sm">
-            <div className="flex justify-between"><span>Pacientes/mes</span><span className="font-semibold">{monthlyPatients}</span></div>
-            <div className="flex justify-between"><span>Ticket medio</span><span className="font-semibold">{averageTicket}€</span></div>
-            <div className="flex justify-between"><span>Pérdida de conversión</span><span className="font-semibold">{conversionLoss}%</span></div>
+            <div className="flex justify-between"><span>Pacientes/mes</span><span className="font-semibold">{roiPatients}</span></div>
+            <div className="flex justify-between"><span>Ticket medio</span><span className="font-semibold">{roiTicket}€</span></div>
+            <div className="flex justify-between"><span>Pérdida de conversión</span><span className="font-semibold">{roiLoss}%</span></div>
             <div className="border-t border-white/10 pt-2 flex justify-between"><span>Pérdida mensual</span><span className="font-semibold text-destructive">-{perdidaMensual.toLocaleString("es-ES")}€</span></div>
             <div className="flex justify-between"><span>Recuperable (70%)</span><span className="font-semibold text-success">+{recuperacionEstimada.toLocaleString("es-ES")}€</span></div>
             <Button variant="ghost" size="sm" className="w-full h-8 text-xs" asChild>
               <Link href="/calculadora">Modificar ROI</Link>
             </Button>
+          </div>
+        </GlassCard>
+      )}
+      {hasBooking && storedBooking?.contactSubmitted && (
+        <GlassCard className="p-0 overflow-hidden border-white/20 bg-white/5">
+          <div className="bg-white/5 px-4 py-3 border-b border-white/10 flex items-center gap-2">
+            <Icon icon={CheckCircle2} size="xs" variant="accent" />
+            <span className="text-xs font-bold uppercase tracking-wider">Resumen de tus datos</span>
+          </div>
+          <div className="p-4 space-y-3 text-sm">
+            {storedBooking?.contact ? (
+              <>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Nombre</span><span className="font-semibold text-right">{storedBooking.contact.nombre || "—"}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Email</span><span className="font-semibold text-right break-all">{storedBooking.contact.email || "—"}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Teléfono</span><span className="font-semibold text-right">{storedBooking.contact.telefono || "—"}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-muted-foreground">Clínica</span><span className="font-semibold text-right">{storedBooking.contact.clinica || "—"}</span></div>
+                </div>
+                <div className="border-t border-white/10 pt-2">
+                  <p className="text-xs uppercase text-muted-foreground mb-1">Mensaje</p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{storedBooking.contact.mensaje || "Sin mensaje"}</p>
+                </div>
+              </>
+            ) : (
+              <p className="text-muted-foreground">
+                Aún no tenemos tus datos de contacto asociados a esta reserva.
+              </p>
+            )}
           </div>
         </GlassCard>
       )}
@@ -642,7 +841,7 @@ function ContactFormWithROI() {
       className="w-full gap-2 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] h-14 text-lg"
       disabled={isSubmitting}
     >
-      {isSubmitting ? "Enviando..." : <><Send className="size-5" />Enviar solicitud</>}
+      {isSubmitting ? "Enviando..." : <><Icon icon={Send} size="sm" variant="primary" />Enviar solicitud</>}
     </Button>
   )
 
@@ -737,6 +936,11 @@ function ContactFormWithROI() {
   if (isDuplicateBookingContactBlocked) {
   return (
     <div className="space-y-6">
+      <div className="text-center">
+        <Badge variant="secondary" className="mb-6">Contacto</Badge>
+        <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">{pageTitle}</h1>
+        <p className="text-lg text-muted-foreground">{pageDescription}</p>
+      </div>
       {rescheduleDialog}
       <Dialog open={pendingDialogOpen} onOpenChange={setPendingDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -814,6 +1018,12 @@ function ContactFormWithROI() {
         </DialogContent>
       </Dialog>
         <GlassCard className="p-6 md:p-8 space-y-5 border-warning/30 bg-warning/5">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold tracking-tight">¿De nuevo por aquí? ¿Algún dato erróneo?</h2>
+            <p className="text-sm text-muted-foreground">
+              Ya tenemos tu envío y el resumen de tu cita. Si necesitas corregir algo, te ayudamos.
+            </p>
+          </div>
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-warning/30 bg-warning/10">
               <Icon icon={AlertCircle} size="xl" variant="warning" />
@@ -830,7 +1040,7 @@ function ContactFormWithROI() {
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            {sessionAccessToken && (
+            {hasSessionROI && (
               <GlassCard className="p-6 md:p-8 space-y-5 h-full">
                 <div className="flex items-center gap-2">
                   <Icon icon={Calculator} size="default" variant="primary" />
@@ -945,6 +1155,11 @@ function ContactFormWithROI() {
   return (
     <>
       {rescheduleDialog}
+      <div className="mb-12 text-center">
+        <Badge variant="secondary" className="mb-6">Contacto</Badge>
+        <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">{pageTitle}</h1>
+        <p className="text-lg text-muted-foreground">{pageDescription}</p>
+      </div>
       <form onSubmit={handleSubmit} className="no-validate" noValidate>
         <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-8">
           <div className="md:hidden">{summaries}</div>
@@ -988,11 +1203,6 @@ export default function ContactoPage() {
     <div className="min-h-screen py-24 md:py-32 pb-16">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl">
-          <div className="mb-12 text-center">
-            <Badge variant="secondary" className="mb-6">Contacto</Badge>
-            <h1 className="mb-4 text-4xl font-bold tracking-tight md:text-5xl">¿De nuevo por aquí? ¿Algún dato erroneo?</h1>
-            <p className="text-lg text-muted-foreground">Nuestro equipo está listo para ayudarte a transformar tu gestión veterinaria.</p>
-          </div>
           <Suspense fallback={<div className="h-96 flex items-center justify-center"><p className="text-muted-foreground animate-pulse">Cargando...</p></div>}>
             <ContactFormWithROI />
           </Suspense>

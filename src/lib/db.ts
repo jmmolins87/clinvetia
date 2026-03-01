@@ -1,6 +1,8 @@
 import mongoose from "mongoose"
 
-const MONGODB_URI = process.env.MONGODB_URI
+const MONGODB_URI =
+  process.env.MONGODB_URI?.trim() ||
+  (process.env.NODE_ENV !== "production" ? "mongodb://127.0.0.1:27017/clinvetia" : undefined)
 
 type MongooseCache = {
   conn: typeof mongoose | null
@@ -13,7 +15,7 @@ declare global {
 
 export async function dbConnect() {
   if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI is not set")
+    throw new Error("MONGODB_URI is not set (and no development fallback is available)")
   }
 
   if (!global.mongooseCache) {
@@ -25,7 +27,10 @@ export async function dbConnect() {
   }
 
   if (!global.mongooseCache.promise) {
-    global.mongooseCache.promise = mongoose.connect(MONGODB_URI)
+    global.mongooseCache.promise = mongoose.connect(MONGODB_URI).catch((error) => {
+      global.mongooseCache = { conn: null, promise: null }
+      throw error
+    })
   }
 
   global.mongooseCache.conn = await global.mongooseCache.promise

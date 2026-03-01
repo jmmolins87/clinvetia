@@ -6,6 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Icon } from "@/components/ui/icon"
 
 const ToastProvider = ToastPrimitive.Provider
 const ToastClose = ToastPrimitive.Close
@@ -68,7 +69,7 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: [
-          "border-white/10",
+          "border-[rgba(var(--white-rgb),0.10)]",
           "bg-background/80",
           "text-foreground",
         ].join(" "),
@@ -101,11 +102,11 @@ const ToastAction = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-8 shrink-0 items-center justify-center",
-      "rounded-full border border-white/20 bg-white/5",
+      "rounded-full border border-[rgba(var(--white-rgb),0.20)] bg-[rgba(var(--white-rgb),0.05)]",
       "px-3 text-sm font-medium",
       "text-foreground",
       "transition-all duration-200",
-      "hover:bg-white/10 hover:border-white/30",
+      "hover:bg-[rgba(var(--white-rgb),0.10)] hover:border-[rgba(var(--white-rgb),0.30)]",
       "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
       "ring-offset-background",
       "disabled:pointer-events-none disabled:opacity-50",
@@ -132,7 +133,7 @@ const ToastCloseButton = React.forwardRef<
       "rounded-full p-1 cursor-pointer",
       "text-foreground/50",
       "transition-all duration-200",
-      "hover:text-foreground hover:bg-white/10",
+      "hover:text-foreground hover:bg-[rgba(var(--white-rgb),0.10)]",
       "focus:outline-none focus:ring-2 focus:ring-ring",
       "ring-offset-background",
       "group-[.destructive]:text-destructive-foreground/70",
@@ -142,7 +143,7 @@ const ToastCloseButton = React.forwardRef<
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" />
+    <Icon icon={X} size="sm" variant="muted" />
   </ToastPrimitive.Close>
 ))
 ToastCloseButton.displayName = ToastPrimitive.Close.displayName

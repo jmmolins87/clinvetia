@@ -191,12 +191,12 @@ export default function AdminContactsPage() {
               <div
                 key={contact.id}
                 ref={index === 0 ? itemRef : undefined}
-                className="rounded-xl border border-white/10 px-4 py-4 space-y-4"
+                className="space-y-4 rounded-xl border border-border/70 bg-background/70 px-4 py-4 shadow-sm"
               >
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{contact.nombre}</div>
-                    <div className="text-xs text-muted-foreground truncate">{contact.clinica}</div>
+                    <div className="truncate text-sm font-semibold">{contact.nombre}</div>
+                    <div className="truncate text-sm text-muted-foreground">{contact.clinica}</div>
                   </div>
                   <div className="flex items-center gap-2 justify-end">
                     <Badge variant="secondary">{new Date(contact.createdAt).toLocaleDateString("es-ES")}</Badge>
@@ -216,21 +216,21 @@ export default function AdminContactsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-2 xl:grid-cols-4 md:max-w-2xl">
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground uppercase">Correo</div>
+                <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
+                  <div className="space-y-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
+                    <div className="text-muted-foreground uppercase tracking-wide">Correo</div>
                     <div className="text-foreground break-all">{contact.email}</div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground uppercase">Teléfono</div>
+                  <div className="space-y-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
+                    <div className="text-muted-foreground uppercase tracking-wide">Teléfono</div>
                     <div className="text-foreground">{contact.telefono || "-"}</div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground uppercase">ROI</div>
+                  <div className="space-y-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
+                    <div className="text-muted-foreground uppercase tracking-wide">ROI</div>
                     <div className="text-foreground">{typeof contact.roi?.roi === "number" ? `${contact.roi.roi}%` : "-"}</div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground uppercase">Demo</div>
+                  <div className="space-y-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
+                    <div className="text-muted-foreground uppercase tracking-wide">Demo</div>
                     <div className="text-foreground">
                       {contact.booking ? `${contact.booking.time} · ${contact.booking.duration}m` : "Sin demo"}
                     </div>
@@ -238,7 +238,7 @@ export default function AdminContactsPage() {
                 </div>
 
                 {contact.booking && (
-                  <div className="rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-xs">
+                  <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">Demo: </span>
                     <span className="capitalize">{new Date(contact.booking.date).toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })}</span>
                     <span className="text-muted-foreground"> · Estado: </span>
@@ -247,23 +247,23 @@ export default function AdminContactsPage() {
                 )}
 
                 {contact.mensaje && (
-                  <div className="rounded-lg border border-white/8 bg-white/5 px-3 py-3 text-xs text-muted-foreground whitespace-pre-wrap">
+                  <div className="rounded-lg border border-border/60 bg-muted/60 px-3 py-3 text-sm text-muted-foreground whitespace-pre-wrap">
                     {contact.mensaje}
                   </div>
                 )}
 
                 {contact.roi && (
-                  <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-4">
-                    <div className="rounded-lg border border-white/8 bg-white/5 px-3 py-2">
+                  <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-4">
+                    <div className="rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
                       <span className="text-muted-foreground">Pacientes/mes: </span>{contact.roi.monthlyPatients ?? "-"}
                     </div>
-                    <div className="rounded-lg border border-white/8 bg-white/5 px-3 py-2">
+                    <div className="rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
                       <span className="text-muted-foreground">Ticket: </span>{typeof contact.roi.averageTicket === "number" ? `${contact.roi.averageTicket}€` : "-"}
                     </div>
-                    <div className="rounded-lg border border-white/8 bg-white/5 px-3 py-2">
+                    <div className="rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
                       <span className="text-muted-foreground">Pérdida conv.: </span>{typeof contact.roi.conversionLoss === "number" ? `${contact.roi.conversionLoss}%` : "-"}
                     </div>
-                    <div className="rounded-lg border border-white/8 bg-white/5 px-3 py-2">
+                    <div className="rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
                       <span className="text-muted-foreground">ROI: </span>{typeof contact.roi.roi === "number" ? `${contact.roi.roi}%` : "-"}
                     </div>
                   </div>

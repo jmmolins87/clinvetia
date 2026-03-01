@@ -22,7 +22,7 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { CtaSection } from "@/components/marketing/cta-section"
 import { BrandName } from "@/components/ui/brand-name"
 import { MarketingCard } from "@/components/ui/marketing-card"
-import { Icon } from '@/components/ui/icon';
+import { Icon } from "@/components/ui/icon"
 
 const features = [
   {
@@ -234,7 +234,7 @@ export default function SolucionPage() {
                   {/* Arrow connector (mobile/tablet) */}
                   {index < flujoPasos.length - 1 && (
                     <div className="lg:hidden flex justify-center my-2">
-                      <ArrowRight className="h-5 w-5 text-muted-foreground opacity-30" />
+                      <Icon icon={ArrowRight} size="sm" variant="muted" className="opacity-30" />
                     </div>
                   )}
                 </motion.div>

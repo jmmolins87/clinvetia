@@ -10,6 +10,7 @@ export async function sendBrevoEmail(params: {
   htmlContent: string
   attachments?: BrevoAttachment[]
   replyTo?: { email: string; name?: string }
+  sender?: { email: string; name?: string }
 }) {
   const apiKey = process.env.BREVO_API_KEY
   const senderEmail = process.env.BREVO_SENDER_EMAIL
@@ -20,7 +21,10 @@ export async function sendBrevoEmail(params: {
   }
 
   const body = {
-    sender: { email: senderEmail, name: senderName },
+    sender: {
+      email: params.sender?.email || senderEmail,
+      name: params.sender?.name || senderName,
+    },
     to: params.to,
     subject: params.subject,
     htmlContent: params.htmlContent,

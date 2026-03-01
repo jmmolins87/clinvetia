@@ -10,6 +10,12 @@ import { recordAdminAudit } from "@/lib/admin-audit"
 import { sendBrevoEmail } from "@/lib/brevo"
 import { leadSummaryEmail } from "@/lib/emails"
 import { buildICS } from "@/lib/ics"
+import {
+  appendBookingEmailEvent,
+  buildGoogleMeetLink,
+  CUSTOMER_DELIVERY_EMAIL,
+} from "@/lib/booking-communication"
+import { clearRoiForBookingContext } from "@/lib/roi-cleanup"
 
 const updateBookingSchema = z.discriminatedUnion("action", [
   z.object({
@@ -60,28 +66,30 @@ export async function GET(req: Request) {
     {} as Record<string, (typeof contacts)[number]>
   )
 
-  const visibleBookings = bookings.filter((b) => contactByBookingId[String(b._id)])
-
   return NextResponse.json({
-    bookings: visibleBookings.map((b) => ({
+    bookings: bookings.map((b) => ({
       ...(contactByBookingId[String(b._id)]
         ? {
             nombre: contactByBookingId[String(b._id)].nombre,
             telefono: contactByBookingId[String(b._id)].telefono,
             clinica: contactByBookingId[String(b._id)].clinica,
             email: contactByBookingId[String(b._id)].email,
+            mensaje: contactByBookingId[String(b._id)].mensaje,
           }
         : {
             nombre: "",
             telefono: "",
             clinica: "",
             email: "",
+            mensaje: "",
           }),
       id: String(b._id),
       date: b.date.toISOString(),
       time: b.time,
       duration: b.duration,
       status: b.status,
+      googleMeetLink: b.googleMeetLink ?? null,
+      emailEvents: Array.isArray(b.emailEvents) ? b.emailEvents : [],
     })),
   })
 }
@@ -109,6 +117,8 @@ export async function POST(req: Request) {
     const contact = Array.isArray(rawContact) ? rawContact[0] : rawContact
     const supportEmail = process.env.BREVO_REPLY_TO || "info@clinvetia.com"
     const brandName = "Clinvetia"
+    const bookingId = String(booking._id)
+    const meetingLink = booking.googleMeetLink || buildGoogleMeetLink(bookingId)
 
     if (parsed.action === "delete") {
       if (!["cancelled", "expired"].includes(booking.status)) {
@@ -117,6 +127,11 @@ export async function POST(req: Request) {
           { status: 409 }
         )
       }
+      await clearRoiForBookingContext({
+        bookingId,
+        bookingSessionToken: booking.sessionToken ?? null,
+        contactSessionToken: contact?.sessionToken ? String(contact.sessionToken) : null,
+      })
       await Booking.deleteOne({ _id: booking._id })
     } else if (parsed.action === "status") {
       await Booking.updateOne({ _id: booking._id }, { $set: { status: parsed.status } })
@@ -133,22 +148,40 @@ export async function POST(req: Request) {
 
         const subject =
           parsed.status === "cancelled" ? "Tu demo ha sido cancelada" : "Tu demo está confirmada"
+        const bookingSummary = {
+          dateLabel,
+          timeLabel,
+          duration: booking.duration,
+          meetingLink,
+        }
+        const htmlContent = leadSummaryEmail({
+          brandName,
+          nombre: contact.nombre,
+          email: contact.email,
+          telefono: contact.telefono,
+          clinica: contact.clinica,
+          mensaje: contact.mensaje,
+          supportEmail,
+          booking: bookingSummary,
+          roi: contact.roi ?? null,
+        })
 
         const attachments =
-          parsed.status === "confirmed"
+          parsed.status === "confirmed" || parsed.status === "cancelled"
             ? [
                 {
                   name: "clinvetia-demo.ics",
                   content: Buffer.from(
                     buildICS({
-                      uid: String(booking._id),
+                      uid: bookingId,
                       start,
                       end,
                       summary: "Demo Clinvetia",
-                      description: "Demo personalizada con Clinvetia",
-                      location: "Videollamada",
+                      description: `Demo personalizada con Clinvetia. Enlace Google Meet: ${meetingLink}`,
+                      location: meetingLink,
+                      url: meetingLink,
                       organizerEmail: supportEmail,
-                      attendeeEmail: contact.email,
+                      attendeeEmail: CUSTOMER_DELIVERY_EMAIL,
                     })
                   ).toString("base64"),
                   contentType: "text/calendar",
@@ -156,22 +189,35 @@ export async function POST(req: Request) {
               ]
             : undefined
 
-        await sendBrevoEmail({
-          to: [{ email: contact.email, name: contact.nombre }],
-          subject,
-          htmlContent: leadSummaryEmail({
-            brandName,
-            nombre: contact.nombre,
-            email: contact.email,
-            telefono: contact.telefono,
-            clinica: contact.clinica,
-            mensaje: contact.mensaje,
-            supportEmail,
-            booking: { dateLabel, timeLabel, duration: booking.duration },
-            roi: contact.roi ?? null,
-          }),
-          attachments,
-          replyTo: { email: supportEmail },
+        const deliveryTargets = Array.from(new Set([contact.email, CUSTOMER_DELIVERY_EMAIL]))
+        for (const target of deliveryTargets) {
+          const result = await sendBrevoEmail({
+            to: [{ email: target, name: target === contact.email ? contact.nombre : brandName }],
+            subject,
+            htmlContent,
+            attachments,
+            replyTo: { email: supportEmail },
+          })
+
+          await appendBookingEmailEvent({
+            bookingId,
+            category: parsed.status === "cancelled" ? "booking_cancelled" : "booking_confirmed",
+            subject,
+            intendedRecipient: contact.email,
+            deliveredTo: target,
+            status: result.ok ? "sent" : "failed",
+            error: result.error ?? null,
+            message: contact.mensaje,
+            googleMeetLink: meetingLink,
+          })
+        }
+      }
+
+      if (parsed.status === "cancelled" || parsed.status === "expired") {
+        await clearRoiForBookingContext({
+          bookingId,
+          bookingSessionToken: booking.sessionToken ?? null,
+          contactSessionToken: contact?.sessionToken ? String(contact.sessionToken) : null,
         })
       }
     } else {
@@ -263,39 +309,58 @@ export async function POST(req: Request) {
         const timeLabel = parsed.time
 
         const ics = buildICS({
-          uid: String(booking._id),
+          uid: bookingId,
           start,
           end,
           summary: "Demo Clinvetia (reagendada)",
-          description: "Demo personalizada con Clinvetia - cita reagendada",
-          location: "Videollamada",
+          description: `Demo personalizada con Clinvetia - cita reagendada. Enlace Google Meet: ${meetingLink}`,
+          location: meetingLink,
+          url: meetingLink,
           organizerEmail: supportEmail,
-          attendeeEmail: contact.email,
+          attendeeEmail: CUSTOMER_DELIVERY_EMAIL,
         })
 
-        await sendBrevoEmail({
-          to: [{ email: contact.email, name: contact.nombre }],
-          subject: "Tu demo ha sido reagendada",
-          htmlContent: leadSummaryEmail({
-            brandName,
-            nombre: contact.nombre,
-            email: contact.email,
-            telefono: contact.telefono,
-            clinica: contact.clinica,
-            mensaje: contact.mensaje,
-            supportEmail,
-            booking: { dateLabel, timeLabel, duration: parsed.duration },
-            roi: contact.roi ?? null,
-          }),
-          attachments: [
-            {
-              name: "clinvetia-demo-reagendada.ics",
-              content: Buffer.from(ics).toString("base64"),
-              contentType: "text/calendar",
-            },
-          ],
-          replyTo: { email: supportEmail },
+        const subject = "Tu demo ha sido reagendada"
+        const htmlContent = leadSummaryEmail({
+          brandName,
+          nombre: contact.nombre,
+          email: contact.email,
+          telefono: contact.telefono,
+          clinica: contact.clinica,
+          mensaje: contact.mensaje,
+          supportEmail,
+          booking: { dateLabel, timeLabel, duration: parsed.duration, meetingLink },
+          roi: contact.roi ?? null,
         })
+        const attachments = [
+          {
+            name: "clinvetia-demo-reagendada.ics",
+            content: Buffer.from(ics).toString("base64"),
+            contentType: "text/calendar",
+          },
+        ]
+        const deliveryTargets = Array.from(new Set([contact.email, CUSTOMER_DELIVERY_EMAIL]))
+        for (const target of deliveryTargets) {
+          const result = await sendBrevoEmail({
+            to: [{ email: target, name: target === contact.email ? contact.nombre : brandName }],
+            subject,
+            htmlContent,
+            attachments,
+            replyTo: { email: supportEmail },
+          })
+
+          await appendBookingEmailEvent({
+            bookingId,
+            category: "booking_rescheduled",
+            subject,
+            intendedRecipient: contact.email,
+            deliveredTo: target,
+            status: result.ok ? "sent" : "failed",
+            error: result.error ?? null,
+            message: contact.mensaje,
+            googleMeetLink: meetingLink,
+          })
+        }
       }
     }
 

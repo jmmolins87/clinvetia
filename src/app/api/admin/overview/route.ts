@@ -4,6 +4,23 @@ import { DEMO_BOOKINGS, DEMO_CONTACTS, DEMO_OVERVIEW } from "@/lib/admin-demo-da
 import { Booking } from "@/models/Booking"
 import { Contact } from "@/models/Contact"
 import { dbConnect } from "@/lib/db"
+import { buildGoogleMeetLink } from "@/lib/booking-communication"
+
+type ROINode = {
+  monthlyPatients?: number | null
+  averageTicket?: number | null
+  conversionLoss?: number | null
+  roi?: number | null
+} | null | undefined
+
+function hasCompleteROI(roi: ROINode) {
+  return (
+    typeof roi?.monthlyPatients === "number" &&
+    typeof roi?.averageTicket === "number" &&
+    typeof roi?.conversionLoss === "number" &&
+    typeof roi?.roi === "number"
+  )
+}
 
 export async function GET(req: Request) {
   const auth = await requireAdmin(req)
@@ -44,8 +61,20 @@ export async function GET(req: Request) {
     return NextResponse.json({
       mode: "demo",
       rangeDays: days,
-      kpis: DEMO_OVERVIEW,
-      recentBookings: DEMO_BOOKINGS,
+      kpis: {
+        ...DEMO_OVERVIEW,
+        totalContacts: DEMO_CONTACTS.length,
+      },
+      recentBookings: DEMO_BOOKINGS.map((booking) => {
+        const contact = DEMO_CONTACTS.find((item) => item.booking?.id === booking.id)
+        return {
+          ...booking,
+          mensaje: contact?.mensaje || "",
+          roi: contact?.roi || null,
+          googleMeetLink: buildGoogleMeetLink(booking.id),
+          emailEvents: [],
+        }
+      }),
       recentContacts: DEMO_CONTACTS,
       charts: {
         labels,
@@ -62,8 +91,9 @@ export async function GET(req: Request) {
   const endSeriesDate = new Date(dates[dates.length - 1])
   endSeriesDate.setHours(23, 59, 59, 999)
 
-  const [contacts, recentContacts, bookingsSeriesAgg, contactsSeriesAgg] = await Promise.all([
-    Contact.find({}).sort({ createdAt: -1 }).lean(),
+  const [allBookings, totalContacts, recentContacts, bookingsSeriesAgg, contactsSeriesAgg] = await Promise.all([
+    Booking.find({}).sort({ createdAt: -1 }).lean(),
+    Contact.countDocuments({}),
     Contact.find({}).sort({ createdAt: -1 }).limit(5).lean(),
     Booking.aggregate<{ _id: string; count: number }>([
       { $match: { createdAt: { $gte: startSeriesDate, $lte: endSeriesDate } } },
@@ -89,18 +119,48 @@ export async function GET(req: Request) {
     ]),
   ])
 
-  const bookingIds = contacts
-    .map((c) => c.bookingId)
-    .filter(Boolean)
-    .map((id) => String(id))
+  const recentBookings = allBookings.slice(0, 5)
+  const recentBookingIds = recentBookings.map((booking) => String(booking._id))
+  const recentBookingObjectIds = recentBookings.map((booking) => booking._id)
+  const recentSessionTokens = recentBookings
+    .map((booking) => booking.sessionToken)
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+  const [bookingContacts, sessionContacts] = await Promise.all([
+    recentBookingIds.length
+      ? Contact.find({ bookingId: { $in: [...recentBookingIds, ...recentBookingObjectIds] } }).sort({ createdAt: -1 }).lean()
+      : [],
+    recentSessionTokens.length
+      ? Contact.find({ sessionToken: { $in: recentSessionTokens } }).sort({ createdAt: -1 }).lean()
+      : [],
+  ])
 
-  const bookings = bookingIds.length
-    ? await Booking.find({ _id: { $in: bookingIds } }).sort({ createdAt: -1 }).lean()
-    : []
+  const pickPreferredContact = (
+    current: (typeof bookingContacts)[number] | undefined,
+    next: (typeof bookingContacts)[number]
+  ) => {
+    if (!current) return next
+    if (!hasCompleteROI(current.roi) && hasCompleteROI(next.roi)) return next
+    return current
+  }
 
-  const recentBookings = bookings.slice(0, 5)
+  const contactByBookingId = bookingContacts.reduce(
+    (acc: Record<string, (typeof bookingContacts)[number]>, contact) => {
+      const key = contact.bookingId ? String(contact.bookingId) : ""
+      if (key) acc[key] = pickPreferredContact(acc[key], contact)
+      return acc
+    },
+    {} as Record<string, (typeof bookingContacts)[number]>
+  )
+  const contactBySessionToken = sessionContacts.reduce(
+    (acc: Record<string, (typeof sessionContacts)[number]>, contact) => {
+      const key = typeof contact.sessionToken === "string" ? contact.sessionToken : ""
+      if (key) acc[key] = pickPreferredContact(acc[key], contact)
+      return acc
+    },
+    {} as Record<string, (typeof sessionContacts)[number]>
+  )
 
-  const bookingsByStatus = bookings.reduce(
+  const bookingsByStatus = allBookings.reduce(
     (acc: Record<string, number>, item) => {
       acc[item.status] = (acc[item.status] ?? 0) + 1
       return acc
@@ -108,7 +168,7 @@ export async function GET(req: Request) {
     {} as Record<string, number>
   )
 
-  const totalBookings = bookings.length
+  const totalBookings = allBookings.length
 
   const statusCounts = bookingsByStatus
 
@@ -143,19 +203,49 @@ export async function GET(req: Request) {
     rangeDays: days,
     kpis: {
       totalBookings,
+      totalContacts,
       confirmedBookings: statusCounts.confirmed || 0,
       pendingBookings: statusCounts.pending || 0,
       expiredBookings: statusCounts.expired || 0,
       cancelledBookings: statusCounts.cancelled || 0,
     },
-    recentBookings: recentBookings.map((b) => ({
-      id: String(b._id),
-      date: b.date.toISOString(),
-      time: b.time,
-      duration: b.duration,
-      status: b.status,
-      email: "",
-    })),
+    recentBookings: recentBookings.map((b) => {
+      const bookingContact = contactByBookingId[String(b._id)]
+      const sessionContact = b.sessionToken ? contactBySessionToken[b.sessionToken] : undefined
+      const selectedContact =
+        bookingContact && hasCompleteROI(bookingContact.roi)
+          ? bookingContact
+          : sessionContact && hasCompleteROI(sessionContact.roi)
+            ? sessionContact
+            : bookingContact ?? sessionContact
+
+      return {
+        ...(selectedContact
+          ? {
+              nombre: selectedContact.nombre,
+              telefono: selectedContact.telefono,
+              clinica: selectedContact.clinica,
+              email: selectedContact.email,
+              mensaje: selectedContact.mensaje,
+              roi: hasCompleteROI(selectedContact.roi) ? selectedContact.roi : null,
+            }
+          : {
+              nombre: "",
+              telefono: "",
+              clinica: "",
+              email: "",
+              mensaje: "",
+              roi: null,
+            }),
+        id: String(b._id),
+        date: b.date.toISOString(),
+        time: b.time,
+        duration: b.duration,
+        status: b.status,
+        googleMeetLink: b.googleMeetLink || buildGoogleMeetLink(String(b._id)),
+        emailEvents: Array.isArray(b.emailEvents) ? b.emailEvents : [],
+      }
+    }),
     recentContacts: recentContacts.map((c) => ({
       id: String(c._id),
       nombre: c.nombre,

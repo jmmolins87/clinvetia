@@ -6,113 +6,115 @@
    ============================================================ */
 
 /* ----------------------------------------------------------
-   LIGHT FROST (modo claro) — Estilo Snow Glass
+   LIGHT FROST (modo claro) — Estilo Snow Glass (High Contrast)
    ---------------------------------------------------------- */
 :root {
-  /* Superficies — blanco/nieve suave */
-  --background:       #fafbfc;
-  --foreground:       #1a1d23;
+  /* Superficies — blanco puro para máximo contraste */
+  --background:       #ffffff;
+  --foreground:       #020617;
   --card:             #ffffff;
-  --card-foreground:  #1a1d23;
+  --card-foreground:  #020617;
   --popover:          #ffffff;
-  --popover-foreground: #1a1d23;
+  --popover-foreground: #020617;
 
-  /* Marca — cyan neon para light */
-  --primary:          #00b4d8;
+  /* Marca — Colores más vibrantes y legibles en light */
+  --primary:          #0284c7;          /* Sky 600 */
   --primary-foreground: #ffffff;
-  --secondary:        #f8b4c4;
-  --secondary-foreground: #1a1d23;
+  --secondary:        #db2777;          /* Pink 600 */
+  --secondary-foreground: #ffffff;
 
   /* Semánticas */
   --muted:            #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent:           #a8c5e2;
-  --accent-foreground: #1e40af;
-  --destructive:      #ef4444;
+  --muted-foreground: #475569;          /* Slate 600 */
+  --accent:           #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive:      #dc2626;
   --destructive-foreground: #ffffff;
 
-  /* Estructura — bordes sutiles azulados */
-  --border:           rgba(160, 182, 200, 0.40);
-  --input:            rgba(160, 182, 200, 0.30);
-  --ring:             #00b4d8;
+  /* Estructura — bordes más definidos */
+  --border:           rgba(15, 23, 42, 0.15);
+  --input:            rgba(15, 23, 42, 0.12);
+  --ring:             #0284c7;
+  --grid-color:       rgba(15, 23, 42, 0.04);
 
-  /* Glass Frost — efecto cristal delicado */
-  --glass-bg:         rgba(255, 255, 255, 0.70);
-  --glass-border:     rgba(160, 182, 200, 0.35);
-  --glass-blur:       20px;
-  --field-bg:         rgba(255, 255, 255, 0.05);
-  --field-border:     rgba(255, 255, 255, 0.14);
-  --field-border-hover: rgba(255, 255, 255, 0.25);
-  --field-shadow:     inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.20);
-  --field-shadow-hover: inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.20);
-  --field-focus-border: rgba(var(--primary-rgb), 0.70);
-  --field-focus-shadow: inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -1px 0 rgba(0,0,0,0.20), 0 0 20px rgba(var(--primary-rgb),0.35), 0 0 50px rgba(var(--primary-rgb),0.15);
-  --field-icon-bg:    rgba(255, 255, 255, 0.05);
-  --field-icon-bg-hover: rgba(255, 255, 255, 0.10);
-  --field-icon-border: rgba(255, 255, 255, 0.10);
+  /* Glass Frost — efecto cristal con bordes más marcados */
+  --glass-bg:         rgba(255, 255, 255, 0.80);
+  --glass-border:     rgba(15, 23, 42, 0.15);
+  --glass-blur:       16px;
+  --field-bg:         rgba(15, 23, 42, 0.03);
+  --field-bg-hover:   rgba(15, 23, 42, 0.06);
+  --field-border:     rgba(15, 23, 42, 0.12);
+  --field-border-hover: rgba(15, 23, 42, 0.20);
+  --field-shadow:     inset 0 1px 2px rgba(0,0,0,0.05);
+  --field-shadow-hover: inset 0 1px 3px rgba(0,0,0,0.08);
+  --field-focus-border: rgba(var(--primary-rgb), 0.80);
+  --field-focus-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.15);
+  --field-icon-bg:    rgba(15, 23, 42, 0.03);
+  --field-icon-bg-hover: rgba(15, 23, 42, 0.06);
+  --field-icon-border: rgba(15, 23, 42, 0.08);
 
-  /* Liquid Glass — highlight interno sutil */
-  --glass-highlight:  inset 0 1px 0 rgba(255, 255, 255, 0.85),
-                      inset 0 -1px 0 rgba(160, 182, 200, 0.15);
+  /* Liquid Glass — highlight interno más nítido */
+  --glass-highlight:  inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                      inset 0 -1px 0 rgba(0, 0, 0, 0.05);
 
-  /* Liquid Glass — sombra exterior suave */
-  --glass-shadow:     0 8px 32px rgba(160, 182, 200, 0.20),
-                      0 2px 8px rgba(160, 182, 200, 0.12);
+  /* Liquid Glass — sombra exterior más definida */
+  --glass-shadow:     0 8px 32px rgba(15, 23, 42, 0.08),
+                      0 2px 8px rgba(15, 23, 42, 0.04);
 
-  /* Sombras — suaves y delicadas */
-  --shadow-sm:        0 1px 3px rgba(160, 182, 200, 0.10);
-  --shadow-md:        0 4px 16px rgba(160, 182, 200, 0.15);
-  --shadow-glow:      0 0 20px rgba(0, 180, 216, 0.20);
+  /* Sombras — mayor profundidad */
+  --shadow-sm:        0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md:        0 4px 12px rgba(15, 23, 42, 0.10);
+  --shadow-glow:      0 0 20px rgba(2, 132, 199, 0.15);
 
   /* Radio global */
   --radius:           0.75rem;
 
-  /* Neon colors — versiones más suaves para light */
-  --neon-green:       #48bb78;
-  --neon-cyan:        #00b4d8;
-  --neon-pink:        #f8b4c4;
-  --neon-red:         #ef4444;
-  --neon-amber:       #f59e0b;
-  --neon-blue:        #60a5fa;
+  /* Neon colors — más saturados para legibilidad */
+  --neon-green:       #16a34a;
+  --neon-cyan:        #0891b2;
+  --neon-pink:        #db2777;
+  --neon-red:         #dc2626;
+  --neon-amber:       #d97706;
+  --neon-blue:        #2563eb;
 
   /* Semánticas extra */
-  --success:          #48bb78;
+  --success:          #16a34a;
   --success-foreground: #ffffff;
-  --warning:          #f59e0b;
+  --warning:          #d97706;
   --warning-foreground: #ffffff;
 
-  /* Gradientes — más sutiles en light */
-  --gradient-primary:   linear-gradient(135deg, #00b4d8 0%, #48bb78 100%);
-  --gradient-secondary: linear-gradient(135deg, #f8b4c4 0%, #f472b6 100%);
-  --gradient-accent:    linear-gradient(135deg, #a8c5e2 0%, #60a5fa 100%);
-  --gradient-surface:   linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%);
+  /* Gradientes — mayor contraste cromático */
+  --gradient-primary:   linear-gradient(135deg, #0284c7 0%, #16a34a 100%);
+  --gradient-secondary: linear-gradient(135deg, #db2777 0%, #9333ea 100%);
+  --gradient-accent:    linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  --gradient-surface:   linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
 
-  /* Glows — más sutiles en light */
-  --glow-primary:     0 0 15px rgba(0, 180, 216, 0.30),
-                      0 0 35px rgba(0, 180, 216, 0.10);
-  --glow-secondary:   0 0 15px rgba(248, 180, 196, 0.35),
-                      0 0 35px rgba(248, 180, 196, 0.12);
-  --glow-accent:      0 0 15px rgba(168, 197, 226, 0.30),
-                      0 0 35px rgba(168, 197, 226, 0.10);
-  --glow-destructive: 0 0 15px rgba(239, 68, 68, 0.35),
-                      0 0 35px rgba(239, 68, 68, 0.12);
-  --glow-lg:          0 0 30px rgba(0, 180, 216, 0.20), 0 0 60px rgba(0, 180, 216, 0.08);
+  /* Glows — optimizados para fondos claros */
+  --glow-primary:     0 0 15px rgba(2, 132, 199, 0.25),
+                      0 0 35px rgba(2, 132, 199, 0.10);
+  --glow-secondary:   0 0 15px rgba(219, 39, 119, 0.25),
+                      0 0 35px rgba(219, 39, 119, 0.10);
+  --glow-accent:      0 0 15px rgba(2, 132, 199, 0.20),
+                      0 0 35px rgba(2, 132, 199, 0.10);
+  --glow-destructive: 0 0 15px rgba(220, 38, 38, 0.25),
+                      0 0 35px rgba(220, 38, 38, 0.10);
+  --glow-lg:          0 0 30px rgba(2, 132, 199, 0.15), 0 0 60px rgba(2, 132, 199, 0.05);
 
   /* Bordes sutiles (hover) */
-  --border-neon-primary:   rgba(0, 180, 216, 0.50);
-  --border-neon-secondary: rgba(248, 180, 196, 0.50);
-  --border-neon-accent:    rgba(168, 197, 226, 0.50);
+  --border-neon-primary:   rgba(2, 132, 199, 0.40);
+  --border-neon-secondary: rgba(219, 39, 119, 0.40);
+  --border-neon-accent:    rgba(2, 132, 199, 0.30);
 
-  /* RGB channels para uso en rgba() dentro de box-shadow */
-  --primary-rgb:      0,   180, 216;
-  --secondary-rgb:    248, 180, 196;
-  --accent-rgb:       168, 197, 226;
-  --destructive-rgb:  239, 68,  68;
-  --success-rgb:      72, 187, 120;
-  --warning-rgb:      245, 158, 11;
-  --ring-rgb:         0,   180, 216;
+  /* RGB channels — actualizados */
+  --primary-rgb:      2, 132, 199;
+  --secondary-rgb:    219, 39, 119;
+  --accent-rgb:       2, 132, 199;
+  --destructive-rgb:  220, 38, 38;
+  --success-rgb:      22, 163, 74;
+  --warning-rgb:      217, 119, 6;
+  --ring-rgb:         2, 132, 199;
   --white-rgb:        255, 255, 255;
-  --black-rgb:        0, 0, 0;
+  --black-rgb:        2, 6, 23;
 }
 
 /* ----------------------------------------------------------
@@ -145,6 +147,7 @@
   --border:           rgba(255, 255, 255, 0.10);
   --input:            rgba(255, 255, 255, 0.08);
   --ring:             #43e97b;
+  --grid-color:       rgba(67, 233, 123, 0.08);
 
   /* ── Gradientes de marca ── */
   --gradient-primary:   linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
@@ -157,6 +160,7 @@
   --glass-border:     rgba(255, 255, 255, 0.12);
   --glass-blur:       20px;
   --field-bg:         rgba(255, 255, 255, 0.05);
+  --field-bg-hover:   rgba(255, 255, 255, 0.10);
   --field-border:     rgba(255, 255, 255, 0.14);
   --field-border-hover: rgba(255, 255, 255, 0.25);
   --field-shadow:     inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.20);
@@ -227,8 +231,8 @@
    ---------------------------------------------------------- */
 @theme inline {
   /* Fuentes (inyectadas desde layout.tsx vía next/font) */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-geist-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
 
   /* Colores semánticos → utilidades Tailwind */
   --color-background:         var(--background);
@@ -449,9 +453,9 @@ body {
   border-radius: inherit;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0.00) 55%,
-    rgba(0, 0, 0, 0.10) 100%
+    rgba(var(--white-rgb), 0.22) 0%,
+    rgba(var(--white-rgb), 0.00) 55%,
+    rgba(var(--black-rgb), 0.10) 100%
   );
   pointer-events: none;
   z-index: 1;
@@ -502,12 +506,12 @@ html {
   background-color: rgba(var(--secondary-rgb), 0.15);
   border-color: rgba(var(--secondary-rgb), 0.70);
   color: var(--neon-pink);
-  box-shadow: 0 0 20px rgba(var(--secondary-rgb), 0.50), 0 0 60px rgba(var(--secondary-rgb), 0.20), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 20px rgba(var(--secondary-rgb), 0.50), 0 0 60px rgba(var(--secondary-rgb), 0.20), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 .btn-secondary:hover {
   background-color: rgba(var(--secondary-rgb), 0.22);
   border-color: rgba(var(--secondary-rgb), 0.90);
-  box-shadow: 0 0 30px rgba(var(--secondary-rgb), 0.70), 0 0 80px rgba(var(--secondary-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 0 30px rgba(var(--secondary-rgb), 0.70), 0 0 80px rgba(var(--secondary-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.25);
 }
 
 /* Warning variant */
@@ -515,12 +519,12 @@ html {
   background-color: rgba(var(--warning-rgb), 0.15);
   border-color: rgba(var(--warning-rgb), 0.70);
   color: var(--warning);
-  box-shadow: 0 0 20px rgba(var(--warning-rgb), 0.50), 0 0 60px rgba(var(--warning-rgb), 0.20), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 20px rgba(var(--warning-rgb), 0.50), 0 0 60px rgba(var(--warning-rgb), 0.20), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 .btn-warning:hover {
   background-color: rgba(var(--warning-rgb), 0.22);
   border-color: rgba(var(--warning-rgb), 0.90);
-  box-shadow: 0 0 30px rgba(var(--warning-rgb), 0.70), 0 0 80px rgba(var(--warning-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 0 30px rgba(var(--warning-rgb), 0.70), 0 0 80px rgba(var(--warning-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.25);
 }
 
 /* Destructive variant */
@@ -528,12 +532,12 @@ html {
   background-color: rgba(var(--destructive-rgb), 0.15);
   border-color: rgba(var(--destructive-rgb), 0.70);
   color: var(--destructive);
-  box-shadow: 0 0 20px rgba(var(--destructive-rgb), 0.50), 0 0 60px rgba(var(--destructive-rgb), 0.20), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 20px rgba(var(--destructive-rgb), 0.50), 0 0 60px rgba(var(--destructive-rgb), 0.20), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 .btn-destructive:hover {
   background-color: rgba(var(--destructive-rgb), 0.22);
   border-color: rgba(var(--destructive-rgb), 0.90);
-  box-shadow: 0 0 30px rgba(var(--destructive-rgb), 0.70), 0 0 80px rgba(var(--destructive-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 0 30px rgba(var(--destructive-rgb), 0.70), 0 0 80px rgba(var(--destructive-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.25);
 }
 
 /* Accent variant */
@@ -541,24 +545,24 @@ html {
   background-color: rgba(var(--accent-rgb), 0.15);
   border-color: rgba(var(--accent-rgb), 0.70);
   color: var(--neon-cyan);
-  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.50), 0 0 60px rgba(var(--accent-rgb), 0.20), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.50), 0 0 60px rgba(var(--accent-rgb), 0.20), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 .btn-accent:hover {
   background-color: rgba(var(--accent-rgb), 0.22);
   border-color: rgba(var(--accent-rgb), 0.90);
-  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.70), 0 0 80px rgba(var(--accent-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.70), 0 0 80px rgba(var(--accent-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.25);
 }
 
 /* Ghost variant */
 .btn-ghost-base {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background-color: var(--field-bg);
+  border-color: var(--field-border);
+  box-shadow: var(--field-shadow);
 }
 .btn-ghost-base:hover {
-  background-color: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.20);
-  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  background-color: var(--field-bg-hover);
+  border-color: var(--field-border-hover);
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.20), var(--field-shadow-hover);
 }
 
 /* Badge variants */
@@ -566,55 +570,55 @@ html {
   background-color: rgba(var(--primary-rgb), 0.12);
   border-color: rgba(var(--primary-rgb), 0.55);
   color: var(--primary);
-  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.15);
 }
 .badge-default:hover {
   background-color: rgba(var(--primary-rgb), 0.20);
-  box-shadow: 0 0 18px rgba(var(--primary-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 18px rgba(var(--primary-rgb), 0.50), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 
 .badge-secondary {
   background-color: rgba(var(--secondary-rgb), 0.12);
   border-color: rgba(var(--secondary-rgb), 0.55);
   color: var(--neon-pink);
-  box-shadow: 0 0 10px rgba(var(--secondary-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 0 10px rgba(var(--secondary-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.15);
 }
 .badge-secondary:hover {
   background-color: rgba(var(--secondary-rgb), 0.20);
-  box-shadow: 0 0 18px rgba(var(--secondary-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 18px rgba(var(--secondary-rgb), 0.50), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 
 .badge-destructive {
   background-color: rgba(var(--destructive-rgb), 0.12);
   border-color: rgba(var(--destructive-rgb), 0.55);
   color: var(--destructive);
-  box-shadow: 0 0 10px rgba(var(--destructive-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 0 10px rgba(var(--destructive-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.15);
 }
 .badge-destructive:hover {
   background-color: rgba(var(--destructive-rgb), 0.20);
-  box-shadow: 0 0 18px rgba(var(--destructive-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 18px rgba(var(--destructive-rgb), 0.50), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 
 .badge-success {
   background-color: rgba(var(--success-rgb), 0.12);
   border-color: rgba(var(--success-rgb), 0.55);
   color: var(--success);
-  box-shadow: 0 0 10px rgba(var(--success-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 0 10px rgba(var(--success-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.15);
 }
 .badge-success:hover {
   background-color: rgba(var(--success-rgb), 0.20);
-  box-shadow: 0 0 18px rgba(var(--success-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 18px rgba(var(--success-rgb), 0.50), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 
 .badge-warning {
   background-color: rgba(var(--warning-rgb), 0.12);
   border-color: rgba(var(--warning-rgb), 0.55);
   color: var(--warning);
-  box-shadow: 0 0 10px rgba(var(--warning-rgb), 0.30), inset 0 1px 0 rgba(255,255,255,0.15);
+  box-shadow: 0 0 10px rgba(var(--warning-rgb), 0.30), inset 0 1px 0 rgba(var(--white-rgb), 0.15);
 }
 .badge-warning:hover {
   background-color: rgba(var(--warning-rgb), 0.20);
-  box-shadow: 0 0 18px rgba(var(--warning-rgb), 0.50), inset 0 1px 0 rgba(255,255,255,0.20);
+  box-shadow: 0 0 18px rgba(var(--warning-rgb), 0.50), inset 0 1px 0 rgba(var(--white-rgb), 0.20);
 }
 
 /* Icon glow variants */
@@ -632,13 +636,13 @@ html {
 .toast-destructive {
   border-color: rgba(var(--destructive-rgb), 0.50);
   background-color: rgba(var(--destructive-rgb), 0.15);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 0 20px rgba(var(--destructive-rgb), 0.25), 0 8px 32px rgba(0,0,0,0.50);
+  box-shadow: inset 0 1px 0 rgba(var(--white-rgb), 0.10), 0 0 20px rgba(var(--destructive-rgb), 0.25), 0 8px 32px rgba(var(--black-rgb), 0.50);
 }
 
 .toast-success {
   border-color: rgba(var(--success-rgb), 0.50);
   background-color: rgba(var(--success-rgb), 0.12);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 0 20px rgba(var(--success-rgb), 0.20), 0 8px 32px rgba(0,0,0,0.50);
+  box-shadow: inset 0 1px 0 rgba(var(--white-rgb), 0.10), 0 0 20px rgba(var(--success-rgb), 0.20), 0 8px 32px rgba(var(--black-rgb), 0.50);
 }
 
 /* Input focus */
@@ -654,4 +658,18 @@ html {
 /* Custom */
 .no-scroll-dashboard {
   height: auto;
+}
+
+[class*="text-xs"],
+[class*="text-sm"],
+[class*="text-[8px]"],
+[class*="text-[9px]"],
+[class*="text-[10px]"],
+[class*="text-[11px]"],
+[class*="text-[12px]"],
+[class*="text-[13px]"],
+[class*="text-[14px]"],
+[class*="text-[15px]"] {
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
 }

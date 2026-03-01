@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Clock } from "lucide-react"
 import { useROIStore } from "@/store/roi-store"
+import { Icon } from "@/components/ui/icon"
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +19,11 @@ export function GlobalBookingTimer() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
 
+  const hasSubmittedContact = () => {
+    const booking = storage.get<{ contactSubmitted?: boolean; contact?: unknown } | null>("local", "booking", null)
+    return Boolean(booking?.contactSubmitted || booking?.contact)
+  }
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -28,9 +34,20 @@ export function GlobalBookingTimer() {
       return
     }
 
+    if (hasSubmittedContact()) {
+      setFormExpiration(null)
+      setTimeLeft(null)
+      return
+    }
+
     const expiry = new Date(formExpiresAt).getTime()
     
     const updateTimer = () => {
+      if (hasSubmittedContact()) {
+        setFormExpiration(null)
+        setTimeLeft(null)
+        return
+      }
       const remaining = Math.max(0, expiry - Date.now())
       const seconds = Math.floor(remaining / 1000)
       setTimeLeft(seconds)
@@ -65,6 +82,7 @@ export function GlobalBookingTimer() {
 
   useEffect(() => {
     const checkDemoExpiration = () => {
+      if (hasSubmittedContact()) return
       const booking = storage.get<{ 
         demoExpiresAt?: string; 
         bookingId?: string; 
@@ -126,6 +144,7 @@ export function GlobalBookingTimer() {
     <TooltipProvider>
       <AnimatePresence>
         <motion.div
+          data-clinvetia-booking-timer
           initial={{ opacity: 0, x: -50, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -50, scale: 0.9 }}
@@ -180,7 +199,7 @@ export function GlobalBookingTimer() {
               className="flex items-center gap-3 px-4 py-2 border-warning/40 shadow-[0_0_30px_rgba(var(--warning-rgb),0.3)]"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/20">
-                <Clock className="h-4 w-4 animate-pulse" />
+                <Icon icon={Clock} size="sm" variant="warning" className="animate-pulse" />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-sm">Completa tus datos</span>

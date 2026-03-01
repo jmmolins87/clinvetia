@@ -53,7 +53,7 @@ export interface BookingWizardProps {
   confirmCtaLabel?: string
   confirmingLabel?: string
   showDurationSelector?: boolean
-  durationOptions?: { label: string; value: number }[]
+  durationOptions?: { label: string; value: number; disabled?: boolean }[]
   initialDate?: Date | null
   initialTime?: string | null
   initialDuration?: number
@@ -273,10 +273,12 @@ export function BookingWizard({
               <Button
                 key={option.value}
                 type="button"
+                disabled={Boolean(option.disabled)}
                 variant={duration === option.value ? "default" : "ghost"}
                 onClick={() => setDuration(option.value)}
                 className={cn(
                   "w-full cursor-pointer rounded-xl border px-3 py-2 text-xs font-semibold",
+                  option.disabled && "cursor-not-allowed opacity-40 hover:border-white/10 hover:text-muted-foreground",
                   duration === option.value
                     ? "border-primary/40 bg-primary/10 text-primary"
                     : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground"

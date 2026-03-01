@@ -5,6 +5,7 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Icon } from "@/components/ui/icon"
 
 const Accordion = AccordionPrimitive.Root
 
@@ -14,7 +15,7 @@ const AccordionItem = React.forwardRef<
 >(({ className, last, ...props }, ref) => (
   <AccordionPrimitive.Item
     ref={ref}
-    className={cn(!last && "border-b border-white/10", className)}
+    className={cn(!last && "border-b border-[rgba(var(--white-rgb),0.10)]", className)}
     {...props}
   />
 ))
@@ -32,7 +33,7 @@ const AccordionTrigger = React.forwardRef<
         "transition-all duration-300 ease-out",
         "text-muted-foreground hover:text-primary cursor-pointer",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "[&[data-state=open]>svg]:rotate-180 [&[data-state=open]]:text-primary",
+        "[&[data-state=open]_.accordion-chevron]:rotate-180 [&[data-state=open]]:text-primary",
         className
       )}
       {...props}
@@ -40,7 +41,12 @@ const AccordionTrigger = React.forwardRef<
       <span className="transition-colors duration-300 group-hover:text-primary group-[&[data-state=open]]:text-primary">
         {children}
       </span>
-      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ease-out group-hover:text-primary group-[&[data-state=open]]:text-primary" />
+      <Icon
+        icon={ChevronDown}
+        size="sm"
+        variant="muted"
+        className="accordion-chevron shrink-0 transition-transform duration-300 ease-out group-hover:text-primary group-[&[data-state=open]]:text-primary"
+      />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ))

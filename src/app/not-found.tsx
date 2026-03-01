@@ -8,12 +8,21 @@ import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { BrandName } from "@/components/ui/brand-name"
+import { useTranslationSkeleton } from "@/components/providers/translation-skeleton"
+import { translateText } from "@/lib/i18n"
 
 export default function NotFound() {
   const router = useRouter()
+  const { locale } = useTranslationSkeleton()
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex items-end justify-end p-6 md:p-12">
+      <style jsx global>{`
+        [data-clinvetia-chat-portal],
+        [data-clinvetia-booking-timer] {
+          display: none !important;
+        }
+      `}</style>
       {/* Background Video */}
       <video
         autoPlay
@@ -52,16 +61,18 @@ export default function NotFound() {
               </motion.div>
               <h1 className="font-bold tracking-tighter leading-none">
                 <span className="text-7xl md:text-9xl text-gradient-primary block mb-2">404</span>
-                <span className="text-xl md:text-2xl text-muted-foreground uppercase tracking-[0.3em] font-semibold">Error</span>
+                <span className="text-xl md:text-2xl text-muted-foreground uppercase tracking-[0.3em] font-semibold">
+                  {translateText("Error", locale)}
+                </span>
               </h1>
             </div>
             
             <h2 className="text-2xl font-bold mb-4 text-foreground">
-              Paciente a la fuga. 🐾
+              {translateText("Página no encontrada", locale)}
             </h2>
             
             <p className="text-muted-foreground text-lg mb-10 leading-relaxed">
-              Esta página no ha pasado por consulta. Puede que se haya ido a dar un paseo largo por el parque. No es una urgencia, te ayudamos a volver.
+              {translateText("La página que buscas no existe o fue movida.", locale)}
             </p>
           </div>
 
@@ -75,7 +86,7 @@ export default function NotFound() {
               >
                 <Link href="/">
                   <Icon icon={Home} size="default" />
-                  Ir al inicio
+                  {translateText("Ir al inicio", locale)}
                 </Link>
               </Button>
               
@@ -86,7 +97,7 @@ export default function NotFound() {
                 onClick={() => router.back()}
               >
                 <Icon icon={ArrowLeft} size="default" />
-                Volver atrás
+                {translateText("Volver atrás", locale)}
               </Button>
             </div>
 

@@ -22,6 +22,7 @@ export function ExitIntentGuard() {
   const [showExitDialog, setShowExitDialog] = useState(false)
   const [pendingUrl, setPendingUrl] = useState<string | null>(null)
   const [hasLocalAccessToken, setHasLocalAccessToken] = useState(false)
+  const hasInteractedRef = useRef(false)
   
   // Usamos un ref para el estado de aceptación para que los listeners tengan el valor real
   const hasAcceptedRef = useRef(hasAcceptedDialog)
@@ -44,8 +45,13 @@ export function ExitIntentGuard() {
   useEffect(() => {
     if (!isCalculatorPage || hasLocalAccessToken) return
 
+    const markInteracted = () => {
+      hasInteractedRef.current = true
+    }
+
     const handleMouseLeave = (e: MouseEvent) => {
       if (hasAcceptedRef.current) return
+      if (!hasInteractedRef.current) return
       if (e.clientY <= 0) {
         setShowExitDialog(true)
       }
@@ -53,6 +59,7 @@ export function ExitIntentGuard() {
 
     const handleInternalClick = (e: MouseEvent) => {
       if (hasAcceptedRef.current) return
+      if (!hasInteractedRef.current) return
 
       const target = e.target as HTMLElement
       const link = target.closest("a")
@@ -77,17 +84,24 @@ export function ExitIntentGuard() {
 
     const handlePopState = () => {
       if (hasAcceptedRef.current) return
+      if (!hasInteractedRef.current) return
       const destination = window.location.href
       setPendingUrl(destination)
       setShowExitDialog(true)
       window.history.pushState(null, "", "/calculadora")
     }
 
+    document.addEventListener("pointerdown", markInteracted, true)
+    document.addEventListener("keydown", markInteracted, true)
+    document.addEventListener("mousemove", markInteracted, { once: true })
     document.addEventListener("mouseleave", handleMouseLeave)
     document.addEventListener("click", handleInternalClick, true) // Capture phase
     window.addEventListener("popstate", handlePopState)
 
     return () => {
+      document.removeEventListener("pointerdown", markInteracted, true)
+      document.removeEventListener("keydown", markInteracted, true)
+      document.removeEventListener("mousemove", markInteracted)
       document.removeEventListener("mouseleave", handleMouseLeave)
       document.removeEventListener("click", handleInternalClick, true)
       window.removeEventListener("popstate", handlePopState)

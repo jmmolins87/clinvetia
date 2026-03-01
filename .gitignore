@@ -43,3 +43,8 @@ next-env.d.ts
 # data
 .mongo-data
 .pnpm-store
+.n8n
+.n8n*
+n8n
+.activepieces
+activepieces

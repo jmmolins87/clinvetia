@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { GlassCard } from "@/components/ui/GlassCard"
+import { Icon } from "@/components/ui/icon"
 
 interface FormData {
   nombre: string
@@ -56,7 +57,7 @@ export function ContactForm() {
         className="flex flex-col items-center justify-center py-16 text-center"
       >
         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/20">
-          <CheckCircle2 className="h-10 w-10 text-primary" />
+          <Icon icon={CheckCircle2} size="2xl" variant="primary" />
         </div>
         <h2 className="mb-2 text-2xl font-bold">¡Mensaje enviado!</h2>
         <p className="text-muted-foreground">
@@ -158,7 +159,7 @@ export function ContactForm() {
               "Enviando..."
             ) : (
               <>
-                <Send className="size-4" />
+                <Icon icon={Send} size="sm" variant="primary" />
                 Enviar mensaje
               </>
             )}
@@ -171,15 +172,15 @@ export function ContactForm() {
           <h3 className="mb-4 font-semibold">Información de contacto</h3>
           <ul className="space-y-4 text-sm">
             <li className="flex items-start gap-3">
-              <Mail className="mt-0.5 h-4 w-4 text-primary" />
+              <Icon icon={Mail} size="sm" variant="primary" className="mt-0.5" />
               <span className="text-muted-foreground">hola@clinvetia.com</span>
             </li>
             <li className="flex items-start gap-3">
-              <Phone className="mt-0.5 h-4 w-4 text-primary" />
+              <Icon icon={Phone} size="sm" variant="primary" className="mt-0.5" />
               <span className="text-muted-foreground">+34 900 123 456</span>
             </li>
             <li className="flex items-start gap-3">
-              <Clock className="mt-0.5 h-4 w-4 text-primary" />
+              <Icon icon={Clock} size="sm" variant="primary" className="mt-0.5" />
               <span className="text-muted-foreground">
                 Lun-Vie: 9:00 - 18:00
                 <br />
@@ -187,7 +188,7 @@ export function ContactForm() {
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 text-primary" />
+              <Icon icon={MapPin} size="sm" variant="primary" className="mt-0.5" />
               <span className="text-muted-foreground">
                 Barcelona, España
               </span>

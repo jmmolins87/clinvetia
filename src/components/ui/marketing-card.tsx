@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { LucideIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { Icon as AppIcon } from "@/components/ui/icon"
 import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
 
 interface MarketingCardProps {
@@ -39,8 +40,8 @@ export function MarketingCard({
       className="h-full"
     >
       <Card className={cn(
-        "h-full border-white/10 bg-white/5 backdrop-blur-lg",
-        "hover:border-white/20 hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)]",
+        "h-full border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] backdrop-blur-lg",
+        "hover:border-[rgba(var(--white-rgb),0.20)] hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.1)]",
         "transition-all duration-300",
         className
       )}>
@@ -49,10 +50,10 @@ export function MarketingCard({
             <div className="shrink-0">
               <SkeletonWrapper shape="circle" className="h-12 w-12">
                 <div className={cn(
-                  "flex items-center justify-center rounded-full bg-white/10 p-3 h-12 w-12",
+                  "flex items-center justify-center rounded-full bg-[rgba(var(--white-rgb),0.10)] p-3 h-12 w-12",
                   iconClassName
                 )}>
-                  <Icon className="size-6 text-primary" />
+                  <AppIcon icon={Icon} size="lg" variant="primary" />
                 </div>
               </SkeletonWrapper>
             </div>

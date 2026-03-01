@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "version:prod:patch": "npm version patch --no-git-tag-version",
+    "version:prod:minor": "npm version minor --no-git-tag-version",
+    "version:prod:major": "npm version major --no-git-tag-version",
     "seed": "node --env-file=.env scripts/seed.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static"
