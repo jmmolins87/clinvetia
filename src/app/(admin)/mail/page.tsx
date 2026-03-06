@@ -227,7 +227,7 @@ export default function AdminMailPage() {
     }
     const payload = (await res.json()) as MailResponse
     if (controller.signal.aborted) return
-    if (payload.adminRole === "superadmin" && mailbox !== "shared") {
+    if ((payload.adminRole === "superadmin" || payload.adminRole === "demo") && mailbox !== "shared") {
       setMailbox("shared")
     }
     setData(payload)
@@ -685,7 +685,7 @@ export default function AdminMailPage() {
           ))}
         </div>
 
-        <div className="grid gap-4 rounded-2xl border border-white/10 bg-background/30 p-4 md:grid-cols-2 xl:grid-cols-[2.1fr_2.1fr_1.15fr_1.15fr_0.9fr]">
+        <div className="mb-3 grid gap-4 rounded-2xl border border-white/10 bg-background/30 p-4 md:mb-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[2.1fr_2.1fr_1.15fr_1.15fr_0.9fr]">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}

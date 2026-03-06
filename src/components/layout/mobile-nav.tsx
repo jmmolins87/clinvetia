@@ -54,7 +54,7 @@ export function MobileNav() {
       <Button
         variant="ghost"
         size="icon"
-        className="md:hidden h-10 w-10 text-foreground cursor-pointer -mr-2"
+        className="xl:hidden h-10 w-10 text-foreground cursor-pointer -mr-2"
         onClick={() => setIsOpen(true)}
         aria-label={t("Abrir menú")}
       >
@@ -80,7 +80,8 @@ export function MobileNav() {
             </div>
 
             {/* Links de navegación */}
-            <nav className="flex-1 flex flex-col justify-center px-8 space-y-8 pt-6">
+            <nav className="flex-1 overflow-y-auto px-6 pb-4 pt-6 sm:px-8">
+              <div className="space-y-5">
               {NAV_LINKS.map((link, idx) => {
                 const isActive = pathname === link.href
                 
@@ -94,7 +95,7 @@ export function MobileNav() {
                     <Link
                       href={link.href}
                       className={cn(
-                        "flex items-center justify-between text-4xl font-bold tracking-tight transition-colors",
+                        "flex items-center justify-between text-2xl font-bold tracking-tight transition-colors sm:text-3xl",
                         isActive ? "text-primary" : "text-foreground/60 hover:text-primary"
                       )}
                     >
@@ -109,10 +110,11 @@ export function MobileNav() {
                   </motion.div>
                 )
               })}
+              </div>
             </nav>
 
             {/* Footer del menú con Ajustes y Botones */}
-            <div className="p-8 space-y-6 bg-gradient-to-t from-background via-background to-transparent border-t border-white/5">
+            <div className="space-y-4 border-t border-white/5 bg-gradient-to-t from-background via-background to-transparent p-5 sm:p-6">
               
               {/* Ajustes: Tema e Idioma */}
               <div className="flex items-center justify-between bg-white/5 rounded-2xl p-4 border border-white/5">
@@ -137,7 +139,7 @@ export function MobileNav() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="space-y-4"
+                className="space-y-3"
               >
                 <Button variant="secondary" size="lg" className="w-full h-14 text-lg" asChild>
                   <Link href="/calculadora">
@@ -145,9 +147,9 @@ export function MobileNav() {
                   </Link>
                 </Button>
 
-                <Button size="lg" className="w-full h-16 text-xl shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]" asChild>
+                <Button size="lg" className="h-14 w-full text-lg shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]" asChild>
                   <Link href="/demo">
-                    <TranslatableText text="Reservar Demo" className="text-xl" />
+                    <TranslatableText text="Reservar Demo" className="text-lg" />
                   </Link>
                 </Button>
               </motion.div>
@@ -159,7 +161,7 @@ export function MobileNav() {
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", delay: 0.5 }}
                   onClick={() => setIsOpen(false)}
-                  className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors cursor-pointer group shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]"
+                  className="group flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary/20 bg-primary/5 text-primary shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)] transition-colors hover:bg-primary/10 sm:h-20 sm:w-20"
                   aria-label={t("Cerrar menú")}
                 >
                   <Icon icon={X} size="xl" className="transition-transform group-hover:rotate-90 duration-300" />

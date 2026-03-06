@@ -103,7 +103,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size }), "rounded-md")}
         wrapperClassName={cn(
           asChild ? undefined : (isIcon ? "inline-flex" : "flex"),
-          !isIcon && "w-full"
+          !asChild && !isIcon && "w-full"
         )}
       >
         <Comp

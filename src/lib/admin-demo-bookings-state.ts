@@ -51,6 +51,7 @@ function deepClone<T>(value: T): T {
 }
 
 let demoBookingsState: DemoBooking[] = deepClone(DEMO_BOOKINGS)
+let demoContactsState: DemoContact[] = deepClone(DEMO_CONTACTS)
 
 function sortBookings(items: DemoBooking[]) {
   return [...items].sort((a, b) => +new Date(b.createdAt || b.date) - +new Date(a.createdAt || a.date))
@@ -129,7 +130,7 @@ export function deleteDemoBooking(id: string) {
 
 export function listDemoContactsWithBookings(): DemoContact[] {
   const bookingsById = new Map(demoBookingsState.map((item) => [item.id, item]))
-  return DEMO_CONTACTS.map((contact) => {
+  return demoContactsState.map((contact) => {
     if (!contact.booking) return deepClone(contact)
     const booking = bookingsById.get(contact.booking.id)
     if (!booking) {
@@ -151,6 +152,13 @@ export function listDemoContactsWithBookings(): DemoContact[] {
   }).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
 }
 
+export function deleteDemoContact(id: string) {
+  const before = demoContactsState.length
+  demoContactsState = demoContactsState.filter((item) => item.id !== id)
+  return demoContactsState.length < before
+}
+
 export function resetDemoBookingsState() {
   demoBookingsState = deepClone(DEMO_BOOKINGS)
+  demoContactsState = deepClone(DEMO_CONTACTS)
 }

@@ -369,7 +369,7 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -483,20 +483,20 @@ export default function AdminUsersPage() {
                   ref={index === 0 ? itemRef : undefined}
                   className="space-y-3 rounded-lg border border-white/10 px-3 py-3"
                 >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-3 md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                    <div className="flex min-w-0 items-center gap-3">
                       <Avatar
                         size="sm"
                         variant={user.role === "superadmin" ? "primary" : "secondary"}
                         initials={getInitials(user.name, user.email)}
                       />
-                      <div>
-                        <div className="text-base sm:text-sm font-medium">{user.name} · {user.email}</div>
+                      <div className="min-w-0">
+                        <div className="truncate text-base font-medium sm:text-sm">{user.name} · {user.email}</div>
                         <div className="text-sm sm:text-xs text-muted-foreground">{user.role} · {user.status}</div>
                       </div>
                     </div>
                     {role && canEditThisUser && (
-                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-nowrap sm:items-center">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                         <Button
                           variant="default"
                           size="sm"
@@ -634,15 +634,15 @@ export default function AdminUsersPage() {
         )}
       </GlassCard>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <GlassCard className="p-5 space-y-4">
+      <div className="space-y-6">
+        <GlassCard className="w-full p-5 space-y-4">
           <h3 className="text-lg font-semibold">Crear usuario</h3>
           {role && creatableRoles.length === 0 && (
             <div className="text-sm text-muted-foreground">Tu rol no puede crear usuarios.</div>
           )}
-          <form className="grid gap-4" onSubmit={handleCreate}>
-            <div className="grid gap-4 lg:grid-cols-3">
-              <div className="space-y-2">
+          <form className="grid gap-3" onSubmit={handleCreate} noValidate>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_220px] lg:items-start">
+              <div className="space-y-1">
                 <label className="text-sm font-medium" htmlFor="name">Nombre</label>
                 <Input
                   id="name"
@@ -660,13 +660,12 @@ export default function AdminUsersPage() {
                   }}
                   disabled={!role || creatableRoles.length === 0}
                   className={createErrors.name ? "glass border-destructive/50" : "glass"}
-                  required
                 />
                 {createTouched.name && createErrors.name && (
-                  <div className="text-xs text-destructive">{createErrors.name}</div>
+                  <div className="text-left text-xs text-destructive lg:hidden">{createErrors.name}</div>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <label className="text-sm font-medium" htmlFor="email">Email</label>
                 <Input
                   id="email"
@@ -685,13 +684,12 @@ export default function AdminUsersPage() {
                   }}
                   disabled={!role || creatableRoles.length === 0}
                   className={createErrors.email ? "glass border-destructive/50" : "glass"}
-                  required
                 />
                 {createTouched.email && createErrors.email && (
-                  <div className="text-xs text-destructive">{createErrors.email}</div>
+                  <div className="text-left text-xs text-destructive lg:hidden">{createErrors.email}</div>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <label className="text-sm font-medium" htmlFor="role">Rol</label>
                 <Select
                   id="role"
@@ -705,15 +703,31 @@ export default function AdminUsersPage() {
                   ))}
                 </Select>
               </div>
+              <div className="grid grid-rows-[auto_40px] gap-1">
+                <div className="invisible text-sm font-medium">Acción</div>
+                <Button type="submit" className="h-10 w-full self-start" disabled={!role || creatableRoles.length === 0 || creating}>
+                  {creating ? "Enviando invitación..." : "Enviar invitación"}
+                </Button>
+              </div>
             </div>
-            <div>
-              <Button type="submit" className="w-full sm:w-auto" disabled={!role || creatableRoles.length === 0 || creating}>
-                {creating ? "Enviando invitación..." : "Enviar invitación"}
-              </Button>
+            <div className="hidden gap-4 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_220px]">
+              <div className="flex min-h-5 items-start text-left text-xs">
+                {createTouched.name && createErrors.name ? (
+                  <span className="text-destructive">{createErrors.name}</span>
+                ) : null}
+              </div>
+              <div className="flex min-h-5 items-start text-left text-xs">
+                {createTouched.email && createErrors.email ? (
+                  <span className="text-destructive">{createErrors.email}</span>
+                ) : null}
+              </div>
+              <div className="min-h-5 text-xs" />
+              <div className="min-h-5 text-xs" />
             </div>
           </form>
         </GlassCard>
 
+        {!pendingLoading && pendingActions.length > 0 && (
         <GlassCard className="p-5 space-y-5">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold">Solicitudes pendientes</h3>
@@ -721,24 +735,11 @@ export default function AdminUsersPage() {
               {pendingActions.length}
             </Badge>
           </div>
-
-        {pendingLoading && (
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <Spinner size="sm" variant="accent" />
-            <span>Cargando solicitudes...</span>
-          </div>
-        )}
-
-        {!pendingLoading && pendingActions.length === 0 && (
-          <div className="text-sm text-muted-foreground">No hay invitaciones ni resets pendientes.</div>
-        )}
-
-        {!pendingLoading && pendingActions.length > 0 && (
           <div className="space-y-4 pt-1">
             {pendingActions.map((actionItem) => {
               const isInvite = actionItem.type === "invite_user"
               const isBusy = pendingActionLoadingId === actionItem.id
-              const disableActions = role === "worker" || role === "demo"
+              const disableActions = role === "worker"
               return (
                 <div key={actionItem.id} className="rounded-lg border border-white/10 px-3 py-3">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -787,8 +788,8 @@ export default function AdminUsersPage() {
               )
             })}
           </div>
-        )}
         </GlassCard>
+        )}
       </div>
     </div>
   )

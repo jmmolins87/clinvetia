@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, CalendarDays, FileClock, Inbox, LayoutGrid, LogOut, Mail, Menu, Settings, Users, X } from "lucide-react"
+import { BarChart3, CalendarDays, FileClock, Inbox, LayoutGrid, LogOut, Mail, Menu, Settings, Sparkles, Users, X } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { BrandName } from "@/components/ui/brand-name"
 import { Button } from "@/components/ui/button"
@@ -32,7 +32,7 @@ import { ADMIN_ROLES, allowedCreatableRoles, type AdminRole } from "@/lib/admin-
 import { sanitizeInput } from "@/lib/security"
 import { cn } from "@/lib/utils"
 
-const navItems = [
+const baseNavItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/admin/bookings", label: "Citas", icon: CalendarDays },
   { href: "/admin/contacts", label: "Contactos", icon: Inbox },
@@ -58,6 +58,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const mobileNavScrollRef = useRef<HTMLDivElement | null>(null)
   const isDashboard = pathname === "/admin/dashboard"
   const editableRoles = useMemo(() => (admin ? allowedCreatableRoles(admin.role) : []), [admin])
+  const navItems = useMemo(() => {
+    const items = [...baseNavItems]
+    if (admin?.role === "demo") {
+      items.push({ href: "/admin/demo-playbook", label: "Presentación", icon: Sparkles })
+    }
+    return items
+  }, [admin?.role])
 
   const updateMobileNavHint = useCallback(() => {
     const el = mobileNavScrollRef.current
@@ -182,8 +189,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_0%,rgba(var(--primary-rgb),0.12),transparent_35%),radial-gradient(circle_at_100%_20%,rgba(var(--secondary-rgb),0.10),transparent_40%)] no-scroll-dashboard">
-      <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col px-3 py-4 md:px-5 md:py-6">
+    <div className="admin-no-glow h-screen overflow-hidden bg-[radial-gradient(circle_at_10%_0%,rgba(var(--primary-rgb),0.12),transparent_35%),radial-gradient(circle_at_100%_20%,rgba(var(--secondary-rgb),0.10),transparent_40%)] no-scroll-dashboard">
+      <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col px-3 py-4 md:px-5 md:py-6 2xl:px-8">
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent className="glass sm:max-w-[520px]">
             <DialogHeader>
@@ -240,7 +247,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <div className="mb-4 lg:hidden">
+        <div className="mb-4 xl:hidden">
           <GlassCard className="p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -275,80 +282,84 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       </Button>
                     </SheetHeader>
 
-                    <ContentScroll className="h-[calc(100dvh-4rem)] px-8 py-6">
-                      <div className="space-y-6 pt-4">
-                        {navItems.map((item) => {
-                          const active = pathname === item.href
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className={cn(
-                                "flex items-center justify-between text-4xl font-bold tracking-tight transition-colors",
-                                active
-                                  ? "text-primary"
-                                  : "text-foreground/60 hover:text-primary"
-                              )}
-                            >
-                              <span>{item.label}</span>
-                              {active && <span className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_12px_rgba(var(--primary-rgb),0.8)]" />}
-                            </Link>
-                          )
-                        })}
-                      </div>
+                    <ContentScroll className="h-[calc(100dvh-4rem)] px-5 py-5 sm:px-6 sm:py-6">
+                      <div className="grid gap-6 pt-2 sm:grid-cols-[minmax(0,1fr)_280px] sm:items-start">
+                        <div className="space-y-5">
+                          {navItems.map((item) => {
+                            const active = pathname === item.href
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={cn(
+                                  "flex items-center justify-between text-4xl font-bold tracking-tight transition-colors sm:text-5xl",
+                                  active
+                                    ? "text-primary"
+                                    : "text-foreground/60 hover:text-primary"
+                                )}
+                              >
+                                <span>{item.label}</span>
+                                {active && <span className="h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_12px_rgba(var(--primary-rgb),0.8)]" />}
+                              </Link>
+                            )
+                          })}
+                        </div>
 
-                      <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                        <div className="mb-2 flex items-center gap-2">
-                          <Icon icon={CalendarDays} size="sm" variant="primary" />
-                          <span className="text-sm font-medium">Gestión rápida</span>
-                        </div>
-                        <div className="grid gap-2">
-                          <Button variant="ghost" size="sm" className="justify-start border border-primary/20 hover:bg-primary/10" asChild>
-                            <Link href="/admin/bookings" onClick={() => setMobileMenuOpen(false)}>Gestionar citas</Link>
-                          </Button>
-                          <Button variant="ghost" size="sm" className="justify-start border border-warning/20 hover:bg-warning/10 hover:text-warning" asChild>
-                            <Link href="/admin/contacts" onClick={() => setMobileMenuOpen(false)}>Gestionar leads</Link>
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <div className="mb-2 flex items-center gap-2">
-                          <Icon icon={Settings} size="sm" variant="accent" />
-                          <span className="text-sm font-medium">Configuración</span>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="rounded-lg border border-white/10 bg-black/10 px-2.5 py-2 text-xs">
-                            <div className="truncate font-semibold">{admin?.name || "Usuario interno"}</div>
-                            <div className="truncate text-muted-foreground">{admin?.email || "..."}</div>
+                        <div className="space-y-4">
+                          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                            <div className="mb-2 flex items-center gap-2">
+                              <Icon icon={CalendarDays} size="sm" variant="primary" />
+                              <span className="text-sm font-medium">Gestión rápida</span>
+                            </div>
+                            <div className="grid gap-2">
+                              <Button variant="ghost" size="sm" className="justify-start border border-primary/20 hover:bg-primary/10" asChild>
+                                <Link href="/admin/bookings" onClick={() => setMobileMenuOpen(false)}>Gestionar citas</Link>
+                              </Button>
+                              <Button variant="ghost" size="sm" className="justify-start border border-warning/20 hover:bg-warning/10 hover:text-warning" asChild>
+                                <Link href="/admin/contacts" onClick={() => setMobileMenuOpen(false)}>Gestionar leads</Link>
+                              </Button>
+                            </div>
                           </div>
-                          <div className="grid gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="justify-start border border-white/10 !w-full"
-                              onClick={() => {
-                                setMobileMenuOpen(false)
-                                if (isDashboard) {
-                                  setEditOpen(true)
-                                } else {
-                                  router.push("/admin/users")
-                                }
-                              }}
-                            >
-                              Gestionar usuarios
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="justify-start !w-full"
-                              onClick={handleLogout}
-                              disabled={loggingOut}
-                            >
-                              <Icon icon={LogOut} size="xs" variant="destructive" />
-                              {loggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
-                            </Button>
+
+                          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <div className="mb-2 flex items-center gap-2">
+                              <Icon icon={Settings} size="sm" variant="accent" />
+                              <span className="text-sm font-medium">Configuración</span>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="rounded-lg border border-white/10 bg-black/10 px-2.5 py-2 text-xs">
+                                <div className="truncate font-semibold">{admin?.name || "Usuario interno"}</div>
+                                <div className="truncate text-muted-foreground">{admin?.email || "..."}</div>
+                              </div>
+                              <div className="grid gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="justify-start border border-white/10 !w-full"
+                                  onClick={() => {
+                                    setMobileMenuOpen(false)
+                                    if (isDashboard) {
+                                      setEditOpen(true)
+                                    } else {
+                                      router.push("/admin/users")
+                                    }
+                                  }}
+                                >
+                                  Gestionar usuarios
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="justify-start !w-full"
+                                  onClick={handleLogout}
+                                  disabled={loggingOut}
+                                >
+                                  <Icon icon={LogOut} size="xs" variant="destructive" />
+                                  {loggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -382,14 +393,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
               {showMobileNavHint && (
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-primary/25 via-primary/10 to-transparent lg:hidden" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-primary/25 via-primary/10 to-transparent xl:hidden" />
               )}
             </div>
           </GlassCard>
         </div>
 
-        <div className="flex flex-1 min-h-0 items-start gap-5 md:gap-6">
-        <aside className="hidden w-[280px] shrink-0 self-start lg:sticky lg:top-6 lg:block">
+        <div className="flex flex-1 min-h-0 items-start gap-4 lg:gap-5 xl:gap-6">
+        <aside className="hidden w-[250px] shrink-0 self-start xl:sticky xl:top-6 xl:block 2xl:w-[280px]">
           <div>
               <GlassCard className="flex flex-col p-5">
             <div className="space-y-4 border-b border-white/10 pb-5">
@@ -466,7 +477,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className={cn("min-w-0 flex-1 flex flex-col min-h-0", isDashboard && "overflow-y-auto")}>
-          <GlassCard className="mb-5 hidden p-5 md:p-6 lg:block">
+          <GlassCard className="mb-5 hidden p-5 md:p-6 xl:block">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-sm text-muted-foreground">Administración</div>

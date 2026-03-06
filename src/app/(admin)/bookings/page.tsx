@@ -695,12 +695,37 @@ export default function AdminBookingsPage() {
 
 
       {!loading && (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-          <GlassCard className="p-4"><div className="text-xs text-muted-foreground">Total</div><div className="text-xl font-semibold">{counts.total}</div></GlassCard>
-          <GlassCard className="border-primary/20 bg-primary/5 p-4"><div className="text-xs text-primary">Confirmadas</div><div className="text-xl font-semibold text-primary">{counts.confirmed}</div></GlassCard>
-          <GlassCard className="border-warning/20 bg-warning/5 p-4"><div className="text-xs text-warning">Pendientes</div><div className="text-xl font-semibold text-warning">{counts.pending}</div></GlassCard>
-          <GlassCard className="border-secondary/20 bg-secondary/5 p-4"><div className="text-xs text-secondary">Canceladas</div><div className="text-xl font-semibold text-secondary">{counts.cancelled}</div></GlassCard>
-          <GlassCard className="border-destructive/20 bg-destructive/5 p-4"><div className="text-xs text-destructive">Expiradas</div><div className="text-xl font-semibold text-destructive">{counts.expired}</div></GlassCard>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
+          <GlassCard className="p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs text-muted-foreground">Total</div>
+              <div className="text-xl font-semibold">{counts.total}</div>
+            </div>
+          </GlassCard>
+          <GlassCard className="border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs text-primary">Confirmadas</div>
+              <div className="text-xl font-semibold text-primary">{counts.confirmed}</div>
+            </div>
+          </GlassCard>
+          <GlassCard className="border-warning/20 bg-warning/5 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs text-warning">Pendientes</div>
+              <div className="text-xl font-semibold text-warning">{counts.pending}</div>
+            </div>
+          </GlassCard>
+          <GlassCard className="border-secondary/20 bg-secondary/5 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs text-secondary">Canceladas</div>
+              <div className="text-xl font-semibold text-secondary">{counts.cancelled}</div>
+            </div>
+          </GlassCard>
+          <GlassCard className="border-destructive/20 bg-destructive/5 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs text-destructive">Expiradas</div>
+              <div className="text-xl font-semibold text-destructive">{counts.expired}</div>
+            </div>
+          </GlassCard>
         </div>
       )}
 
@@ -776,16 +801,20 @@ export default function AdminBookingsPage() {
           <div className="text-sm text-muted-foreground">Sin reservas para los filtros/búsqueda seleccionados</div>
         )}
         {!loading && (
-          <div ref={listRef} className="space-y-5 mb-4">
+          <div ref={listRef} className="relative mb-4 space-y-5">
             {pagedBookings.map((booking, index) => {
               const meetLink = booking.googleMeetLink || `https://meet.google.com/new#booking-${booking.id}`
               return (
               <div
                 key={booking.id}
                 ref={index === 0 ? itemRef : undefined}
-                className={`rounded-xl border p-4 md:p-5 ${rowClassForStatus(booking.status)}`}
+                className={cn(
+                  "rounded-xl border p-4 md:p-5 transition-all duration-200",
+                  rowClassForStatus(booking.status),
+                  pageNavLoading && "blur-[2px] opacity-70"
+                )}
               >
-                <div className="grid gap-4 xl:grid-cols-[minmax(220px,1fr)_minmax(260px,1.1fr)_auto] xl:items-stretch">
+                <div className="grid gap-4 lg:grid-cols-[minmax(220px,1fr)_minmax(260px,1.1fr)_auto] lg:items-stretch">
                   <div className="h-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 space-y-2">
                     <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Cita</div>
                     <div className="text-sm font-semibold">
@@ -827,7 +856,7 @@ export default function AdminBookingsPage() {
                   </div>
 
                   <div className="h-full rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                    <div className="flex h-full flex-col justify-between gap-4 xl:min-w-[250px]">
+                    <div className="flex h-full flex-col justify-between gap-4 lg:min-w-[220px]">
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           {(booking.status === "cancelled" || booking.status === "expired") && canOperate ? (
@@ -862,7 +891,7 @@ export default function AdminBookingsPage() {
                       <div className="border-t border-white/10 sm:hidden" />
 
                       {canOperate && (
-                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center xl:flex-nowrap xl:justify-end">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap lg:justify-end">
                           {booking.status !== "expired" && (
                             <Button
                               type="button"
@@ -929,6 +958,14 @@ export default function AdminBookingsPage() {
                 )}
               </div>
             )})}
+            {pageNavLoading && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-white/10 bg-background/55 backdrop-blur-sm">
+                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <Spinner size="sm" variant="primary" />
+                  Cargando citas...
+                </div>
+              </div>
+            )}
           </div>
         )}
         {!loading && filteredBookings.length > 0 && (

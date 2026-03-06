@@ -127,7 +127,7 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
 
       <section className="pb-20">
         <div className="container mx-auto px-4 max-w-5xl">
-          <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
             <motion.div {...fadeUp} transition={{ delay: 0.1 }} className="space-y-6">
               <GlassCard className="p-6 md:p-8 space-y-8">
                 {SLIDERS.map((s) => (

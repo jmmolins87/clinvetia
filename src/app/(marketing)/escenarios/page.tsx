@@ -171,7 +171,7 @@ export default function EscenariosPage() {
                   <p className="text-sm text-muted-foreground">{selectedCaso.subtitulo}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <DetailBox label="Problema" text={selectedCaso.descripcion} className="col-span-2 border-destructive/30 bg-destructive/10 text-destructive" />
                 <DetailBox label="Mensaje" text={selectedCaso.mensaje} icon={MessageSquare} className="border-white/10 bg-white/5 text-primary" />
                 <DetailBox label="Sistema" text={selectedCaso.sistema} icon={Cog} className="border-white/10 bg-white/5 text-secondary" />
@@ -219,7 +219,7 @@ export default function EscenariosPage() {
                   <Image src={caso.imagen} alt={caso.titulo} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
                   
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-md opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 pointer-events-none md:pointer-events-auto">
-                    <div className="grid grid-cols-2 gap-3 w-full max-w-lg">
+                    <div className="grid w-full max-w-lg grid-cols-1 gap-3 sm:grid-cols-2">
                       <DetailBox label="Problema" text={caso.descripcion} className="border-destructive/30 bg-destructive/10 text-destructive" fullWidth />
                       <DetailBox label="Mensaje" text={caso.mensaje} icon={MessageSquare} className="border-white/10 bg-white/5 text-primary" />
                       <DetailBox label="Sistema" text={caso.sistema} icon={Cog} className="border-white/10 bg-white/5 text-secondary" />

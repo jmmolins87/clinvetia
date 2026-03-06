@@ -9,7 +9,6 @@ import { ADMIN_ROLES, canManageRole, isAdminRole, type AdminRole } from "@/lib/a
 import { AdminUserActionToken } from "@/models/AdminUserActionToken"
 import { sendBrevoEmail } from "@/lib/brevo"
 import { adminUserInviteEmail } from "@/lib/emails"
-import { DEMO_ADMIN_USERS } from "@/lib/admin-demo-data"
 
 const userSchema = z.object({
   email: z.string().email(),
@@ -21,12 +20,6 @@ export async function GET(req: Request) {
   const auth = await requireAdmin(req)
   if (!auth.ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  if (auth.data.admin.role === "demo") {
-    return NextResponse.json({
-      users: DEMO_ADMIN_USERS,
-    })
   }
 
   await dbConnect()
@@ -55,7 +48,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "El usuario demo solo existe como usuario único del sistema" }, { status: 403 })
     }
     const actorRole = auth.data.admin.role as AdminRole
-    if (actorRole === "worker" || actorRole === "demo") {
+    if (actorRole === "worker") {
       return NextResponse.json({ error: "No puedes crear usuarios con tu rol" }, { status: 403 })
     }
     if (!canManageRole(actorRole, parsed.role)) {

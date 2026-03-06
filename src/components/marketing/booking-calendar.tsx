@@ -752,7 +752,7 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
         <div className={cn("min-h-[8rem]", className)} aria-hidden />
       ) : (
         <>
-          <div className={cn("space-y-4", !embedded && "lg:hidden", className)}>
+          <div className={cn("space-y-4", !embedded && "xl:hidden", className)}>
             <AnimatePresence mode="wait">
               {showSuccess && selectedDate && selectedTime ? (
                 <GlassCard key="success" className="p-6">
@@ -794,7 +794,7 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
             </div>
           </div>
 
-      <div className={cn("hidden items-start justify-center gap-6 lg:grid lg:grid-cols-[minmax(620px,760px)_360px]", embedded && "lg:hidden", className)}>
+      <div className={cn("hidden items-start justify-center gap-6 xl:grid xl:grid-cols-[minmax(620px,760px)_minmax(320px,360px)]", embedded && "xl:hidden", className)}>
             <GlassCard className="self-start p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -896,7 +896,7 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
                     exit={{ opacity: 0, x: -10 }}
                     className="flex flex-1 flex-col gap-4"
                   >
-                    <GlassCard className="p-5 space-y-4 lg:sticky lg:top-24">
+                    <GlassCard className="p-5 space-y-4 xl:sticky xl:top-24">
                       {selectedDate ? (
                         <>
                           <div>

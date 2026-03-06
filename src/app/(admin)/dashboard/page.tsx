@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -14,6 +14,7 @@ import {
   Clock3,
   Inbox,
   Mail,
+  Search,
   Send,
   TimerReset,
   TrendingUp,
@@ -154,7 +155,7 @@ function StatusSparkBars({
       {values.map((entry, index) => (
         <div key={`${entry.tone}-${index}`} className="rounded-lg border border-white/10 bg-background/35 px-2 py-2">
           <div className="text-center text-xs font-semibold">{entry.value}</div>
-          <div className="mt-1 flex h-14 items-end">
+          <div className="mt-1 flex h-20 items-end">
             <div
               className={`w-full rounded-md border bg-gradient-to-t ${tones[entry.tone]}`}
               style={{ height: `${Math.max(10, (entry.value / max) * 100)}%` }}
@@ -201,7 +202,7 @@ function DonutStatus({
           <span className="text-xs uppercase tracking-wider text-muted-foreground">Total de citas</span>
           <span className="text-lg font-semibold">{total}</span>
         </div>
-        <div className="h-3 overflow-hidden rounded-full border border-white/10 bg-background/60">
+        <div className="h-4 overflow-hidden rounded-full border border-white/10 bg-background/60">
           <div className="flex h-full w-full">
             {rows.map((row) => (
               <div
@@ -280,56 +281,56 @@ function RecentBookingCard({ booking }: { booking: RecentBooking }) {
     <div
       className={
         booking.status === "expired"
-          ? "rounded-xl border border-destructive/20 bg-destructive/5 p-3"
+          ? "w-full min-w-0 overflow-hidden rounded-xl border border-destructive/20 bg-destructive/5 p-2 sm:p-3"
           : booking.status === "pending"
-            ? "rounded-xl border border-warning/20 bg-warning/5 p-3"
+            ? "w-full min-w-0 overflow-hidden rounded-xl border border-warning/20 bg-warning/5 p-2 sm:p-3"
             : booking.status === "confirmed"
-              ? "rounded-xl border border-primary/20 bg-primary/5 p-3"
+              ? "w-full min-w-0 overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-2 sm:p-3"
               : booking.status === "cancelled"
-                ? "rounded-xl border border-secondary/20 bg-secondary/5 p-3"
-                : "rounded-xl border border-white/10 bg-white/5 p-3"
+                ? "w-full min-w-0 overflow-hidden rounded-xl border border-secondary/20 bg-secondary/5 p-2 sm:p-3"
+                : "w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-2 sm:p-3"
       }
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="text-sm font-medium">
+        <div className="min-w-0">
+          <div className="break-words text-sm font-medium">
             {new Date(booking.date).toLocaleDateString("es-ES")} · {booking.time}
           </div>
-          <div className="text-xs text-muted-foreground">{booking.duration} min · ID {booking.id.slice(-6)}</div>
+          <div className="break-all text-xs text-muted-foreground">{booking.duration} min · ID {booking.id.slice(-6)}</div>
         </div>
-        <Badge variant={statusBadgeVariant(booking.status)}>{statusLabel(booking.status)}</Badge>
+        <Badge className="self-start" variant={statusBadgeVariant(booking.status)}>{statusLabel(booking.status)}</Badge>
       </div>
 
       <div className="mt-3 space-y-2 text-xs text-muted-foreground">
-        <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2">
+        <div className="min-w-0 rounded-lg border border-white/10 bg-background/40 px-2 py-2 sm:px-3">
           <div className="text-[11px] uppercase tracking-wider">Datos del usuario</div>
-          <div className="mt-1">
+          <div className="mt-1 min-w-0 break-words">
             <div>{booking.nombre || "Sin nombre"}</div>
             <div className="break-all">{booking.email || "Sin email"}</div>
-            <div>{booking.telefono || "Sin teléfono"}{booking.clinica ? ` · ${booking.clinica}` : ""}</div>
+            <div className="break-words">{booking.telefono || "Sin teléfono"}{booking.clinica ? ` · ${booking.clinica}` : ""}</div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2">
+        <div className="min-w-0 rounded-lg border border-white/10 bg-background/40 px-2 py-2 sm:px-3">
           <div className="text-[11px] uppercase tracking-wider">Resumen de demo</div>
           <div className="mt-1">
-            <div>
+            <div className="break-words">
               {new Date(booking.date).toLocaleDateString("es-ES")} · {booking.time} · {booking.duration} min
             </div>
             <a
               href={meetLink}
               target="_blank"
               rel="noreferrer"
-              className="break-all text-primary underline-offset-2 hover:underline"
+              className="inline-block max-w-full break-all text-primary underline-offset-2 hover:underline"
             >
               {meetLink}
             </a>
           </div>
         </div>
 
-        <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2">
+        <div className="min-w-0 rounded-lg border border-white/10 bg-background/40 px-2 py-2 sm:px-3">
           <div className="text-[11px] uppercase tracking-wider">Resumen ROI</div>
-          <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
+          <div className="mt-1 grid grid-cols-1 gap-x-3 gap-y-1 sm:grid-cols-2">
             <span>Pacientes/mes: {booking.roi?.monthlyPatients ?? "-"}</span>
             <span>Ticket: {booking.roi?.averageTicket ?? "-"}{typeof booking.roi?.averageTicket === "number" ? "€" : ""}</span>
             <span>Pérdida: {booking.roi?.conversionLoss ?? "-"}{typeof booking.roi?.conversionLoss === "number" ? "%" : ""}</span>
@@ -338,13 +339,13 @@ function RecentBookingCard({ booking }: { booking: RecentBooking }) {
         </div>
 
         {booking.mensaje && (
-          <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2 whitespace-pre-wrap">
+          <div className="min-w-0 whitespace-pre-wrap break-words rounded-lg border border-white/10 bg-background/40 px-2 py-2 sm:px-3">
             {booking.mensaje}
           </div>
         )}
 
         {booking.emailEvents && booking.emailEvents.length > 0 && (
-          <div className="rounded-lg border border-white/10 bg-background/40 px-3 py-2">
+          <div className="min-w-0 rounded-lg border border-white/10 bg-background/40 px-2 py-2 sm:px-3">
             <div className="text-[11px] uppercase tracking-wider">Correos enviados</div>
             <div className="mt-1 space-y-1">
               {booking.emailEvents
@@ -379,6 +380,7 @@ export default function AdminDashboardPage() {
   const [emailMailbox, setEmailMailbox] = useState<"shared" | "self">("self")
   const [canUseSharedMailbox, setCanUseSharedMailbox] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
+  const [bookingSearch, setBookingSearch] = useState("")
   const [desktopBookingIndex, setDesktopBookingIndex] = useState(0)
   const [desktopBookingTransitioning, setDesktopBookingTransitioning] = useState(false)
   const desktopSwitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -507,8 +509,24 @@ export default function AdminDashboardPage() {
   }
 
   const ratio = kpis.totalBookings > 0 ? Math.round((kpis.confirmedBookings / kpis.totalBookings) * 100) : 0
-  const recentBookings = data?.recentBookings ?? []
-  const totalRecentBookings = recentBookings.length
+  const recentBookings = useMemo(() => data?.recentBookings ?? [], [data])
+  const normalizedBookingSearch = bookingSearch.trim().toLowerCase()
+  const filteredRecentBookings = useMemo(() => {
+    if (!normalizedBookingSearch) return recentBookings
+    return recentBookings.filter((booking) => {
+      const searchable = [
+        booking.id,
+        booking.nombre ?? "",
+        booking.email ?? "",
+        booking.telefono ?? "",
+        booking.clinica ?? "",
+        statusLabel(booking.status),
+        booking.time,
+      ]
+      return searchable.join(" ").toLowerCase().includes(normalizedBookingSearch)
+    })
+  }, [normalizedBookingSearch, recentBookings])
+  const totalRecentBookings = filteredRecentBookings.length
 
   useEffect(() => {
     if (totalRecentBookings === 0) {
@@ -565,7 +583,7 @@ export default function AdminDashboardPage() {
   const chartMax = Math.max(...bookingTrend, ...contactTrend, 1)
 
   return (
-    <div className="w-full space-y-7 overflow-x-hidden">
+    <div className="w-full min-w-0 space-y-7 overflow-x-hidden">
       <Dialog
         open={Boolean(emailTarget)}
         onOpenChange={(open) => {
@@ -644,7 +662,7 @@ export default function AdminDashboardPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="grid w-full min-w-0 gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+      <div className="grid w-full min-w-0 gap-6 lg:grid-cols-[1.25fr_0.75fr] lg:items-stretch">
         <GlassCard className="relative w-full min-w-0 p-5 md:p-6">
           <div className="relative flex flex-col gap-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -730,34 +748,36 @@ export default function AdminDashboardPage() {
           </div>
         </GlassCard>
 
-        <GlassCard className="w-full min-w-0 p-5 md:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <Icon icon={Activity} size="sm" variant="accent" />
-              <h3 className="text-base font-semibold">Distribución de estados</h3>
+        <GlassCard className="w-full min-w-0 p-5 md:p-6 lg:min-h-[560px]">
+          <div className="flex h-full flex-col">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <Icon icon={Activity} size="sm" variant="accent" />
+                <h3 className="text-base font-semibold">Distribución de estados</h3>
+              </div>
+              <Badge variant="outline" className="w-fit">En tiempo real</Badge>
             </div>
-            <Badge variant="outline" className="w-fit">En tiempo real</Badge>
-          </div>
-          <div className="mt-4">
-            <DonutStatus
-              confirmed={kpis.confirmedBookings}
-              pending={kpis.pendingBookings}
-              cancelled={kpis.cancelledBookings}
-              expired={kpis.expiredBookings}
-            />
-          </div>
-          <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
-            <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Carga operativa</div>
-            <div className="mb-2 text-[11px] text-muted-foreground">
-              Volumen por estado para priorizar seguimiento diario.
+            <div className="mt-4 flex-1">
+              <DonutStatus
+                confirmed={kpis.confirmedBookings}
+                pending={kpis.pendingBookings}
+                cancelled={kpis.cancelledBookings}
+                expired={kpis.expiredBookings}
+              />
             </div>
-            <StatusSparkBars values={workloadBars} />
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">Carga operativa</div>
+              <div className="mb-2 text-[11px] text-muted-foreground">
+                Volumen por estado para priorizar seguimiento diario.
+              </div>
+              <StatusSparkBars values={workloadBars} />
+            </div>
           </div>
         </GlassCard>
       </div>
 
-      <div className="grid w-full min-w-0 gap-6 xl:grid-cols-[1.2fr_1fr_1fr]">
-        <GlassCard className="w-full min-w-0 p-5">
+      <div className="grid w-full min-w-0 gap-6 lg:grid-cols-[1.2fr_1fr_1fr]">
+        <GlassCard className="flex h-full min-w-0 flex-col overflow-hidden p-5">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr] sm:items-center">
             <div className="flex min-w-0 items-center gap-2">
               <Icon icon={CalendarClock} size="default" variant="primary" />
@@ -771,6 +791,21 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="mt-5 space-y-4">
+            <div className="grid min-w-0 gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div className="relative min-w-0">
+                <Icon icon={Search} size="xs" variant="muted" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={bookingSearch}
+                  onChange={(event) => setBookingSearch(event.target.value)}
+                  placeholder="Buscar por nombre, email, clínica, teléfono o ID"
+                  className="h-10 w-full min-w-0 pl-9"
+                  aria-label="Buscar reserva reciente"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground sm:text-right">
+                {totalRecentBookings} resultado{totalRecentBookings === 1 ? "" : "s"}
+              </div>
+            </div>
             {loading && (
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Spinner size="sm" variant="primary" />
@@ -778,18 +813,15 @@ export default function AdminDashboardPage() {
               </div>
             )}
             {!loading && totalRecentBookings === 0 && (
-              <div className="text-sm text-muted-foreground">Sin reservas</div>
+              <div className="text-sm text-muted-foreground">
+                {bookingSearch.trim() ? "Sin reservas para la búsqueda actual" : "Sin reservas"}
+              </div>
             )}
             {!loading && totalRecentBookings > 0 && (
               <>
-                <div className="space-y-4 md:hidden">
-                  {recentBookings.map((booking) => (
-                    <RecentBookingCard key={booking.id} booking={booking} />
-                  ))}
-                </div>
-                <div className="group relative hidden md:block">
+                <div className="relative min-w-0">
                   <div className={desktopBookingTransitioning ? "transition-all duration-200 blur-[2px] opacity-70" : "transition-all duration-200"}>
-                    <RecentBookingCard booking={recentBookings[desktopBookingIndex]} />
+                    <RecentBookingCard booking={filteredRecentBookings[desktopBookingIndex]} />
                   </div>
                   {desktopBookingTransitioning && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-white/10 bg-background/60">
@@ -799,46 +831,42 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
                   )}
-                  {totalRecentBookings > 1 && (
-                    <div className="relative mt-3 h-8 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <div className="absolute left-0 top-1/2 z-30 -translate-y-1/2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => changeDesktopBooking((desktopBookingIndex - 1 + totalRecentBookings) % totalRecentBookings)}
-                          className="!h-8 !w-8 shadow-neon-primary"
-                          aria-label="Cita anterior"
-                          disabled={desktopBookingTransitioning}
-                        >
-                          <Icon icon={ChevronLeft} size="xs" variant="default" />
-                        </Button>
-                      </div>
-                      <div className="absolute right-0 top-1/2 z-30 -translate-y-1/2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => changeDesktopBooking((desktopBookingIndex + 1) % totalRecentBookings)}
-                          className="!h-8 !w-8 shadow-neon-primary"
-                          aria-label="Siguiente cita"
-                          disabled={desktopBookingTransitioning}
-                        >
-                          <Icon icon={ChevronRight} size="xs" variant="default" />
-                        </Button>
-                      </div>
-                      <div className="absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 bg-background/70 px-2 py-0.5 text-[10px] text-muted-foreground">
-                        {desktopBookingIndex + 1}/{totalRecentBookings}
-                      </div>
-                    </div>
-                  )}
+                </div>
+                <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => changeDesktopBooking((desktopBookingIndex - 1 + totalRecentBookings) % totalRecentBookings)}
+                    className="w-full gap-1.5 px-2 text-xs shadow-neon-primary sm:px-3 sm:text-sm"
+                    aria-label="Cita anterior"
+                    disabled={desktopBookingTransitioning || totalRecentBookings <= 1}
+                  >
+                    <Icon icon={ChevronLeft} size="xs" variant="default" />
+                    Anterior
+                  </Button>
+                  <div className="rounded-full border border-white/10 bg-background/70 px-2 py-0.5 text-[10px] text-muted-foreground">
+                    {desktopBookingIndex + 1}/{totalRecentBookings}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => changeDesktopBooking((desktopBookingIndex + 1) % totalRecentBookings)}
+                    className="w-full gap-1.5 px-2 text-xs shadow-neon-primary sm:px-3 sm:text-sm"
+                    aria-label="Siguiente cita"
+                    disabled={desktopBookingTransitioning || totalRecentBookings <= 1}
+                  >
+                    Siguiente
+                    <Icon icon={ChevronRight} size="xs" variant="default" />
+                  </Button>
                 </div>
               </>
             )}
           </div>
         </GlassCard>
 
-        <GlassCard className="w-full min-w-0 p-5">
+        <GlassCard className="w-full min-w-0 overflow-hidden p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Icon icon={Users} size="sm" variant="primary" />
@@ -847,7 +875,7 @@ export default function AdminDashboardPage() {
             <Badge variant="accent">Resumen</Badge>
           </div>
 
-          <div className="mt-5 space-y-5">
+          <div className="mt-5 flex min-h-0 flex-1 flex-col gap-5">
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Embudo operativo</div>
               <div className="mt-3 space-y-2">
@@ -869,21 +897,21 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+            <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-white/10 bg-white/5 p-3">
               <div className="flex items-center gap-2">
-                <Icon icon={TimerReset} size="xs" variant="accent" />
+                <Icon icon={TimerReset} size="sm" variant="default" />
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">Tendencia visual</div>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 flex min-h-0 flex-1 flex-col">
                 {data?.charts ? (
-                  <div className="space-y-3">
+                  <div className="flex min-h-0 flex-1 flex-col gap-3">
                     <div
-                      className="grid gap-1"
+                      className="grid min-h-[140px] flex-1 gap-1 md:min-h-[180px]"
                       style={{ gridTemplateColumns: `repeat(${Math.max(bookingTrend.length, 1)}, minmax(0, 1fr))` }}
                     >
                       {bookingTrend.map((value, index) => (
-                        <div key={`b-${index}`} className="flex flex-col items-center gap-1">
-                          <div className="flex h-20 w-full items-end">
+                        <div key={`b-${index}`} className="flex h-full flex-col items-center gap-1">
+                          <div className="flex h-full w-full items-end">
                             <div
                               className="w-full rounded-sm border border-primary/20 bg-gradient-to-t from-primary/25 to-primary/70"
                               style={{ height: `${Math.max(6, (value / chartMax) * 100)}%` }}
@@ -896,12 +924,12 @@ export default function AdminDashboardPage() {
                       ))}
                     </div>
                     <div
-                      className="grid gap-1"
+                      className="grid min-h-[90px] flex-1 gap-1 md:min-h-[120px]"
                       style={{ gridTemplateColumns: `repeat(${Math.max(contactTrend.length, 1)}, minmax(0, 1fr))` }}
                     >
                       {contactTrend.map((value, index) => (
-                        <div key={`c-${index}`} className="flex flex-col items-center gap-1">
-                          <div className="flex h-12 w-full items-end">
+                        <div key={`c-${index}`} className="flex h-full flex-col items-center gap-1">
+                          <div className="flex h-full w-full items-end">
                             <div
                               className="w-full rounded-sm border border-secondary/20 bg-gradient-to-t from-secondary/25 to-secondary/70"
                               style={{ height: `${Math.max(6, (value / chartMax) * 100)}%` }}
@@ -913,10 +941,12 @@ export default function AdminDashboardPage() {
                         </div>
                       ))}
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
-                      <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" />Citas</div>
-                      <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-secondary" />Leads</div>
-                      <span>Rango {rangeDays} días</span>
+                    <div className="flex items-center justify-between gap-3 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" />Citas</div>
+                        <div className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-secondary" />Leads</div>
+                      </div>
+                      <span className="shrink-0">Rango {rangeDays} días</span>
                     </div>
                   </div>
                 ) : (
@@ -927,7 +957,7 @@ export default function AdminDashboardPage() {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-5">
+        <GlassCard className="w-full min-w-0 overflow-hidden p-5">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr] sm:items-center">
             <h3 className="min-w-0 text-base font-semibold sm:whitespace-nowrap">Leads recientes</h3>
             <div className="flex justify-start sm:justify-end">
@@ -948,14 +978,14 @@ export default function AdminDashboardPage() {
               <div className="text-sm text-muted-foreground">Sin contactos</div>
             )}
             {!loading && data?.recentContacts.map((contact) => (
-              <div key={contact.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <div key={contact.id} className="w-full min-w-0 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="text-sm font-medium">{contact.nombre}</div>
-                    <div className="text-xs text-muted-foreground">{contact.clinica}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">{contact.email}</div>
+                  <div className="min-w-0">
+                    <div className="break-words text-sm font-medium">{contact.nombre}</div>
+                    <div className="break-words text-xs text-muted-foreground">{contact.clinica}</div>
+                    <div className="mt-1 break-all text-xs text-muted-foreground">{contact.email}</div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex shrink-0 flex-col items-end gap-2">
                     <Badge variant="secondary">
                       {new Date(contact.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" })}
                     </Badge>
@@ -977,14 +1007,14 @@ export default function AdminDashboardPage() {
         </GlassCard>
       </div>
 
-      <div className="grid w-full min-w-0 gap-6 xl:grid-cols-[1.4fr_1fr]">
+      <div className="grid w-full min-w-0 gap-6 lg:grid-cols-[1.4fr_1fr]">
         <GlassCard className="w-full min-w-0 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-base font-semibold">Tabla rápida de operación</h3>
             <Badge variant="outline" className="w-fit">Acción sugerida</Badge>
           </div>
           <TableOverflowHint>
-              <Table className="min-w-[720px] md:min-w-full">
+              <Table className="min-w-[640px] md:min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Bloque</TableHead>
@@ -1091,14 +1121,14 @@ export default function AdminDashboardPage() {
         </GlassCard>
       </div>
 
-      <div className="grid w-full min-w-0 gap-6 xl:grid-cols-2">
+      <div className="grid w-full min-w-0 gap-6 lg:grid-cols-2">
         <GlassCard className="w-full min-w-0 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-base font-semibold">Tabla de estadísticas (citas)</h3>
             <Badge variant="outline" className="w-fit">Estados</Badge>
           </div>
           <TableOverflowHint>
-              <Table className="min-w-[720px] md:min-w-full">
+              <Table className="min-w-[640px] md:min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Métrica</TableHead>
@@ -1151,7 +1181,7 @@ export default function AdminDashboardPage() {
             <Badge variant="accent" className="w-fit">Resumen</Badge>
           </div>
           <TableOverflowHint>
-              <Table className="min-w-[720px] md:min-w-full">
+              <Table className="min-w-[640px] md:min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Indicador</TableHead>

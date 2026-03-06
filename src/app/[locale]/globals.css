@@ -660,6 +660,39 @@ html {
   height: auto;
 }
 
+.admin-no-glow .btn-liquid,
+.admin-no-glow .btn-liquid:hover,
+.admin-no-glow .btn-liquid:active,
+.admin-no-glow .btn-secondary,
+.admin-no-glow .btn-secondary:hover,
+.admin-no-glow .btn-warning,
+.admin-no-glow .btn-warning:hover,
+.admin-no-glow .btn-destructive,
+.admin-no-glow .btn-destructive:hover,
+.admin-no-glow .btn-accent,
+.admin-no-glow .btn-accent:hover,
+.admin-no-glow .btn-ghost-base,
+.admin-no-glow .btn-ghost-base:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.admin-no-glow .btn-liquid::before {
+  opacity: 0 !important;
+}
+
+.admin-no-glow .liquid-glass,
+.admin-no-glow .liquid-glass-primary,
+.admin-no-glow .liquid-glass-secondary {
+  box-shadow: none !important;
+}
+
+.admin-no-glow .icon-glow-secondary,
+.admin-no-glow .icon-glow-accent,
+.admin-no-glow svg {
+  filter: none !important;
+}
+
 html:has(.ui-overlay-lock-scroll[data-state="open"]),
 body:has(.ui-overlay-lock-scroll[data-state="open"]) {
   overflow: hidden !important;
@@ -678,4 +711,16 @@ body:has(.ui-overlay-lock-scroll[data-state="open"]) {
 [class*="text-[15px]"] {
   font-size: 1rem !important;
   line-height: 1.5rem !important;
+}
+
+@media (min-width: 1920px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 2560px) {
+  html {
+    font-size: 18px;
+  }
 }

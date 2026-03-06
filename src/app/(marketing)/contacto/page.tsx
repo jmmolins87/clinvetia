@@ -1043,7 +1043,7 @@ function ContactFormWithROI() {
         </GlassCard>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {hasSessionROI && (
               <GlassCard className="p-6 md:p-8 space-y-5 h-full">
                 <div className="flex items-center gap-2">
@@ -1165,8 +1165,8 @@ function ContactFormWithROI() {
         <p className="text-lg text-muted-foreground">{pageDescription}</p>
       </div>
       <form onSubmit={handleSubmit} className="no-validate" noValidate>
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-8">
-          <div className="md:hidden">{summaries}</div>
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="lg:hidden">{summaries}</div>
           <div className="space-y-8">
             <GlassCard className="p-6 md:p-8 space-y-6">
               {CONTACT_FIELDS.map((field) => (
@@ -1193,9 +1193,9 @@ function ContactFormWithROI() {
                 <Textarea id="mensaje" name="mensaje" placeholder="Cuéntanos sobre tu clínica..." value={formData.mensaje} onChange={handleChange} onBlur={handleBlur} required rows={5} className={cn("glass resize-none transition-all duration-200", errors.mensaje ? "border-destructive/50 ring-destructive/20 focus-visible:ring-destructive" : "")} />
               </div>
             </GlassCard>
-            <div className="md:hidden">{submitButton}</div>
+            <div className="lg:hidden">{submitButton}</div>
           </div>
-          <div className="hidden md:block space-y-6">{summaries}{submitButton}</div>
+          <div className="hidden lg:block space-y-6">{summaries}{submitButton}</div>
         </div>
       </form>
     </>
@@ -1206,7 +1206,7 @@ export default function ContactoPage() {
   return (
     <div className="min-h-screen py-24 md:py-32 pb-16">
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-5xl xl:max-w-6xl">
           <Suspense fallback={<div className="h-96 flex items-center justify-center"><p className="text-muted-foreground animate-pulse">Cargando...</p></div>}>
             <ContactFormWithROI />
           </Suspense>

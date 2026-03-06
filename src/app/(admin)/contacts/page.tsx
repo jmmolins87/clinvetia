@@ -111,7 +111,7 @@ export default function AdminContactsPage() {
   const totalPages = Math.max(1, Math.ceil(filteredContacts.length / pageSize))
   const pageSafe = Math.min(page, totalPages)
   const pagedContacts = filteredContacts.slice((pageSafe - 1) * pageSize, pageSafe * pageSize)
-  const canDelete = role === "superadmin" || role === "admin"
+  const canDelete = role === "superadmin" || role === "admin" || role === "demo"
 
   const changePageWithLoader = useCallback((direction: "prev" | "next") => {
     if (pageNavLoading) return
@@ -221,25 +221,25 @@ export default function AdminContactsPage() {
           <div className="text-sm text-muted-foreground">Sin resultados para la búsqueda</div>
         )}
         {!loading && (
-          <div ref={listRef} className="space-y-4 mb-4">
+          <div ref={listRef} className="relative mb-4 space-y-4">
             {pagedContacts.map((contact, index) => (
               <div
                 key={contact.id}
                 ref={index === 0 ? itemRef : undefined}
-                className="space-y-4 rounded-xl border border-border/70 bg-background/70 px-4 py-4 shadow-sm"
+                className={
+                  pageNavLoading
+                    ? "space-y-4 rounded-xl border border-border/70 bg-background/70 px-4 py-4 shadow-sm transition-all duration-200 blur-[2px] opacity-70"
+                    : "space-y-4 rounded-xl border border-border/70 bg-background/70 px-4 py-4 shadow-sm transition-all duration-200"
+                }
               >
-                <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold">{contact.nombre}</div>
-                    <div className="truncate text-sm text-muted-foreground">{contact.clinica}</div>
-                  </div>
-                  <div className="flex items-center gap-2 justify-end">
+                <div className="space-y-3 border-b border-border/60 pb-3">
+                  <div className="flex w-full items-center gap-2">
                     <Badge variant="secondary">{new Date(contact.createdAt).toLocaleDateString("es-ES")}</Badge>
                     <Button
                       type="button"
                       size="sm"
                       variant="destructive"
-                      className="!w-auto px-3"
+                      className="ml-auto !w-auto px-3"
                       disabled={deletingId === contact.id || !canDelete}
                       onClick={() => setDeleteTarget({ id: contact.id, nombre: contact.nombre })}
                     >
@@ -249,9 +249,13 @@ export default function AdminContactsPage() {
                       </span>
                     </Button>
                   </div>
+                  <div>
+                    <div className="text-sm font-semibold break-words">{contact.nombre}</div>
+                    <div className="text-sm text-muted-foreground break-words">{contact.clinica}</div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2 lg:grid-cols-4">
                   <div className="space-y-1 rounded-lg border border-border/60 bg-muted/60 px-3 py-2">
                     <div className="text-muted-foreground uppercase tracking-wide">Correo</div>
                     <div className="text-foreground break-all">{contact.email}</div>
@@ -305,6 +309,14 @@ export default function AdminContactsPage() {
                 )}
               </div>
             ))}
+            {pageNavLoading && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-white/10 bg-background/55 backdrop-blur-sm">
+                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <Spinner size="sm" variant="secondary" />
+                  Cargando contactos...
+                </div>
+              </div>
+            )}
           </div>
         )}
         {!loading && filteredContacts.length > 0 && (
@@ -315,12 +327,12 @@ export default function AdminContactsPage() {
             <span>
               Página {pageSafe} de {totalPages} · {filteredContacts.length} contactos
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center gap-2 sm:w-auto">
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="!w-auto"
+                className="flex-1 sm:!w-auto"
                 disabled={pageSafe <= 1 || pageNavLoading !== null}
                 onClick={() => changePageWithLoader("prev")}
               >
@@ -335,7 +347,7 @@ export default function AdminContactsPage() {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="!w-auto"
+                className="flex-1 sm:!w-auto"
                 disabled={pageSafe >= totalPages || pageNavLoading !== null}
                 onClick={() => changePageWithLoader("next")}
               >

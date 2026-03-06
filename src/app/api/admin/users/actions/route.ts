@@ -10,7 +10,6 @@ import { sendBrevoEmail } from "@/lib/brevo"
 import { adminUserInviteEmail, adminUserResetPasswordEmail } from "@/lib/emails"
 import { hashPassword } from "@/lib/auth"
 import { recordAdminAudit } from "@/lib/admin-audit"
-import { DEMO_PENDING_USER_ACTIONS } from "@/lib/admin-demo-data"
 
 interface AdminTargetUserRoleView {
   _id: { toString(): string }
@@ -40,10 +39,6 @@ export async function GET(req: Request) {
   const auth = await requireAdmin(req)
   if (!auth.ok) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  if (auth.data.admin.role === "demo") {
-    return NextResponse.json({ actions: DEMO_PENDING_USER_ACTIONS })
   }
 
   await dbConnect()
@@ -102,7 +97,7 @@ export async function POST(req: Request) {
     const body = await req.json()
     const parsed = actionSchema.parse(body)
     const actorRole = auth.data.admin.role as AdminRole
-    if (actorRole === "worker" || actorRole === "demo") {
+    if (actorRole === "worker") {
       return NextResponse.json({ error: "No puedes gestionar solicitudes con tu rol" }, { status: 403 })
     }
 

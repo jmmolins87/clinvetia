@@ -18,15 +18,19 @@ export function isSuperAdmin(role: AdminRole) {
   return role === "superadmin"
 }
 
+export function hasSuperadminPermissions(role: AdminRole) {
+  return role === "superadmin" || role === "demo"
+}
+
 export function canManageRole(actorRole: AdminRole, targetRole: AdminRole) {
-  if (isSuperAdmin(actorRole)) return true
+  if (hasSuperadminPermissions(actorRole)) return true
   if (targetRole === "superadmin" || targetRole === "demo") return false
   return roleRank[actorRole] >= roleRank[targetRole]
 }
 
 export function allowedCreatableRoles(actorRole: AdminRole): AdminRole[] {
-  if (actorRole === "worker" || actorRole === "demo") return []
-  if (isSuperAdmin(actorRole)) return ADMIN_ROLES.filter((role) => role !== "demo")
+  if (actorRole === "worker") return []
+  if (hasSuperadminPermissions(actorRole)) return ADMIN_ROLES.filter((role) => role !== "demo")
   return ADMIN_ROLES.filter((role) => role !== "superadmin" && role !== "demo" && canManageRole(actorRole, role))
 }
 

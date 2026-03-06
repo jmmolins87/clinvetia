@@ -31,7 +31,7 @@ function Logo() {
     <Link
       href="/"
       aria-label={t("Ir al inicio de Clinvetia")}
-      className="group flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex shrink-0 items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Image
         src="/logo.png"
@@ -52,7 +52,7 @@ function NavLinks() {
   return (
     <nav
       aria-label={t("Navegación principal")}
-      className="hidden md:flex items-center gap-0.5"
+      className="hidden xl:flex items-center gap-0.5"
     >
       {NAV_LINKS.map(({ href, label }) => {
         const isActive = pathname === href
@@ -98,12 +98,12 @@ export function Navbar() {
         <Logo />
 
         {/* ── Nav links + Acciones ────────────────────── */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 xl:gap-2">
 
           <NavLinks />
 
           {/* Selector de idioma — Oculto en mobile */}
-          <div className="hidden md:flex">
+          <div className="hidden xl:flex">
             <SwitchWithLabel
               labelLeft="ES"
               labelRight="EN"
@@ -115,12 +115,21 @@ export function Navbar() {
           </div>
 
           {/* ThemeSwitcher — Oculto en mobile */}
-          <div className="hidden md:flex">
+          <div className="hidden xl:flex">
             <ThemeSwitcher />
           </div>
 
           {/* Calculadora ROI — Oculto en mobile */}
-          <div className="hidden md:flex">
+          <div className="hidden xl:flex 2xl:hidden">
+            <Button size="sm" asChild>
+              <Link href="/demo" className="flex items-center gap-2">
+                <Icon icon={CalendarDays} size="sm" variant="primary" aria-hidden />
+                <TranslatableText text="Demo" className="inline-flex" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="hidden 2xl:flex">
             <Button
               variant="secondary"
               size="sm"
@@ -135,7 +144,7 @@ export function Navbar() {
           </div>
 
           {/* CTA principal — Oculto en mobile */}
-          <div className="hidden md:flex">
+          <div className="hidden 2xl:flex">
             <Button size="sm" asChild>
               <Link href="/demo" className="flex items-center gap-2">
                 <Icon icon={CalendarDays} size="sm" variant="primary" aria-hidden />
