@@ -119,17 +119,8 @@ export function Navbar() {
             <ThemeSwitcher />
           </div>
 
-          {/* Calculadora ROI — Oculto en mobile */}
-          <div className="hidden xl:flex 2xl:hidden">
-            <Button size="sm" asChild>
-              <Link href="/demo" className="flex items-center gap-2">
-                <Icon icon={CalendarDays} size="sm" variant="primary" aria-hidden />
-                <TranslatableText text="Demo" className="inline-flex" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="hidden 2xl:flex">
+          {/* Calculadora ROI — compacta en xl, completa en 2xl */}
+          <div className="hidden xl:flex">
             <Button
               variant="secondary"
               size="sm"
@@ -138,17 +129,19 @@ export function Navbar() {
             >
               <Link href="/calculadora">
                 <Icon icon={Calculator} size="sm" variant="secondary" aria-hidden />
-                <TranslatableText text="Calculadora ROI" className="inline-flex" />
+                <span className="inline-flex 2xl:hidden">ROI</span>
+                <TranslatableText text="Calculadora ROI" className="hidden 2xl:inline-flex" />
               </Link>
             </Button>
           </div>
 
-          {/* CTA principal — Oculto en mobile */}
-          <div className="hidden 2xl:flex">
+          {/* CTA principal — compacta en xl, completa en 2xl */}
+          <div className="hidden xl:flex">
             <Button size="sm" asChild>
               <Link href="/demo" className="flex items-center gap-2">
                 <Icon icon={CalendarDays} size="sm" variant="primary" aria-hidden />
-                <TranslatableText text="Reservar demo" className="inline-flex" />
+                <span className="inline-flex 2xl:hidden">Demo</span>
+                <TranslatableText text="Reservar demo" className="hidden 2xl:inline-flex" />
               </Link>
             </Button>
           </div>
