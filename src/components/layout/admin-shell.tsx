@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart3, CalendarDays, FileClock, Inbox, LayoutGrid, LogOut, Mail, Menu, Settings, Sparkles, Users, X } from "lucide-react"
+import { BarChart3, CalendarDays, CalendarRange, FileClock, Inbox, LayoutGrid, LogOut, Mail, Menu, Settings, Sparkles, Users, X } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { BrandName } from "@/components/ui/brand-name"
 import { Button } from "@/components/ui/button"
@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils"
 const baseNavItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/admin/bookings", label: "Citas", icon: CalendarDays },
+  { href: "/admin/calendar", label: "Calendario", icon: CalendarRange },
   { href: "/admin/contacts", label: "Contactos", icon: Inbox },
   { href: "/admin/mail", label: "Correos", icon: Mail },
   { href: "/admin/users", label: "Usuarios", icon: Users },

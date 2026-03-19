@@ -32,6 +32,31 @@ export async function GET(req: Request) {
           limit: "1-200",
         },
       },
+      vetAvailability: {
+        method: "GET",
+        path: "/api/ai/vet/availability",
+        query: {
+          date: "YYYY-MM-DD",
+          priority: "normal|urgent",
+        },
+      },
+      vetBookings: {
+        method: "POST",
+        path: "/api/ai/vet/bookings",
+        body: {
+          ownerName: "string",
+          email: "string",
+          phone: "string",
+          petName: "string",
+          species: "string",
+          reason: "string",
+          priority: "normal|urgent",
+          date: "YYYY-MM-DD",
+          time: "HH:mm",
+          duration: "15-120 optional",
+          notes: "string optional",
+        },
+      },
     },
   })
 }
