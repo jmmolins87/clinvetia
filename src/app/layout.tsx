@@ -5,6 +5,7 @@ import { LoadingProvider } from "@/components/providers/loading-provider";
 import { TranslationSkeletonProvider } from "@/components/providers/translation-skeleton";
 import { GlobalAutoTranslate } from "@/components/providers/global-auto-translate";
 import { GlobalBackground } from "@/components/ui/global-background";
+import { Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import "./[locale]/globals.css";
 
@@ -132,6 +133,7 @@ export default function RootLayout({
               <GlobalAutoTranslate />
               <GlobalBackground />
               <PageLoader />
+              <Sonner />
               <Toaster />
               {children}
             </TranslationSkeletonProvider>

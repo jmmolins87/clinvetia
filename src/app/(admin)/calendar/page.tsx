@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { DayButtonProps } from "react-day-picker"
-import { CalendarCheck2, CalendarDays, Check, Video, X } from "lucide-react"
+import { ArrowLeft, CalendarCheck2, CalendarDays, Check, Trash2, Video, X } from "lucide-react"
 
 import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
 import { GlassCard } from "@/components/ui/GlassCard"
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -20,8 +21,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Icon } from "@/components/ui/icon"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { toast as sonnerToast } from "@/components/ui/sonner"
 import { Spinner } from "@/components/ui/spinner"
 import { useToast } from "@/components/ui/use-toast"
+import { cn } from "@/lib/utils"
 
 type CalendarBooking = {
   id: string
@@ -35,7 +40,8 @@ type CalendarBooking = {
   googleMeetLink?: string | null
 }
 
-type CalendarActionType = "confirm" | "cancel" | "reschedule" | "meet"
+type CalendarActionType = "confirm" | "cancel" | "reschedule" | "meet" | "delete"
+type SummaryFilter = "month" | "confirmed" | "pending" | "cancelled" | "rescheduled"
 
 function dateKey(date: Date) {
   const year = date.getFullYear()
@@ -52,6 +58,28 @@ function isSameMonthDate(date: Date, month: Date) {
   return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth()
 }
 
+function isPastCalendarDate(date: Date) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const compareDate = new Date(date)
+  compareDate.setHours(0, 0, 0, 0)
+  return compareDate.getTime() < today.getTime()
+}
+
+function isPastTimeSlot(date: Date, slot: string) {
+  const now = new Date()
+  const compareDate = new Date(date)
+  compareDate.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  if (compareDate.getTime() !== today.getTime()) return false
+
+  const [hour, min] = slot.split(":").map(Number)
+  const slotTime = new Date(date)
+  slotTime.setHours(hour, min, 0, 0)
+  return slotTime <= now
+}
+
 function sortBookingsByDateTime(bookings: CalendarBooking[]) {
   return bookings.slice().sort((left, right) => {
     const leftValue = new Date(`${bookingDateKey(left.date)}T${left.time}:00`).getTime()
@@ -65,6 +93,7 @@ function statusLabel(status: string) {
   if (status === "pending") return "Pendiente"
   if (status === "cancelled") return "Cancelada"
   if (status === "expired") return "Expirada"
+  if (status === "rescheduled") return "Reagendada"
   return status
 }
 
@@ -73,7 +102,70 @@ function statusBadgeVariant(status: string): "primary" | "warning" | "destructiv
   if (status === "pending") return "warning"
   if (status === "cancelled") return "secondary"
   if (status === "expired") return "destructive"
+  if (status === "rescheduled") return "accent"
   return "accent"
+}
+
+function bookingCardClass(status: string) {
+  if (status === "pending") {
+    return "w-full cursor-pointer rounded-2xl border border-warning/20 bg-warning/5 p-4 text-left transition-all hover:border-warning/40 hover:bg-warning/10"
+  }
+  if (status === "confirmed") {
+    return "w-full cursor-pointer rounded-2xl border border-primary/20 bg-primary/5 p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/10"
+  }
+  if (status === "cancelled") {
+    return "w-full cursor-pointer rounded-2xl border border-secondary/20 bg-secondary/5 p-4 text-left transition-all hover:border-secondary/40 hover:bg-secondary/10"
+  }
+  if (status === "rescheduled") {
+    return "w-full cursor-pointer rounded-2xl border border-accent/80 bg-[rgba(var(--accent-rgb),0.2)] p-4 text-left transition-all hover:border-accent hover:bg-[rgba(var(--accent-rgb),0.26)]"
+  }
+  if (status === "expired") {
+    return "w-full cursor-pointer rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-left transition-all hover:border-destructive/40 hover:bg-destructive/10"
+  }
+  return "w-full cursor-pointer rounded-2xl border border-white/10 bg-background/40 p-4 text-left transition-all hover:border-primary/30 hover:bg-primary/5"
+}
+
+function summaryFilterLabel(filter: SummaryFilter) {
+  if (filter === "month") return "Mes"
+  if (filter === "confirmed") return "Confirmadas"
+  if (filter === "pending") return "Pendientes"
+  if (filter === "cancelled") return "Canceladas"
+  return "Reagendadas"
+}
+
+function HoverPopoverLabel({
+  label,
+  className,
+}: {
+  label: string
+  className?: string
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <span
+          className={cn("block max-w-full truncate", className)}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+        >
+          {label}
+        </span>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="center"
+        className="max-w-[220px] px-3 py-2 text-xs font-medium"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        {label}
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 export default function AdminCalendarPage() {
@@ -88,11 +180,23 @@ export default function AdminCalendarPage() {
   const [confirmAction, setConfirmAction] = useState<CalendarActionType | null>(null)
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const [rescheduleBooking, setRescheduleBooking] = useState<CalendarBooking | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createEmail, setCreateEmail] = useState("")
+  const [createDate, setCreateDate] = useState<Date | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [dayPage, setDayPage] = useState(1)
   const [upcomingPage, setUpcomingPage] = useState(1)
-  const [dayPageLoading, setDayPageLoading] = useState<"prev" | "next" | null>(null)
+  const [dayPageLoading, setDayPageLoading] = useState<"prev" | "next" | "date" | null>(null)
   const [upcomingPageLoading, setUpcomingPageLoading] = useState<"prev" | "next" | null>(null)
+  const [selectedDateCanCreate, setSelectedDateCanCreate] = useState(true)
+  const [summaryFilter, setSummaryFilter] = useState<SummaryFilter>("month")
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false)
+  const [summaryPage, setSummaryPage] = useState(1)
+  const [summarySearch, setSummarySearch] = useState("")
+  const [summaryModalLoading, setSummaryModalLoading] = useState<"search" | "prev" | "next" | null>(null)
+  const [summaryDetailBooking, setSummaryDetailBooking] = useState<CalendarBooking | null>(null)
+  const [mobileDayAgendaOpen, setMobileDayAgendaOpen] = useState(false)
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -131,6 +235,16 @@ export default function AdminCalendarPage() {
   }, [load])
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)")
+    const syncViewport = () => setIsMobileViewport(mediaQuery.matches)
+    syncViewport()
+    mediaQuery.addEventListener("change", syncViewport)
+    return () => {
+      mediaQuery.removeEventListener("change", syncViewport)
+    }
+  }, [])
+
+  useEffect(() => {
     const onStorage = (event: StorageEvent) => {
       if (event.key !== "clinvetia:booking-updated") return
       load()
@@ -145,15 +259,16 @@ export default function AdminCalendarPage() {
   }, [load])
 
   const bookingStatusCountsByDate = useMemo(() => {
-    return bookings.reduce<Record<string, { pending: number; confirmed: number; cancelled: number; expired: number }>>((acc, booking) => {
+    return bookings.reduce<Record<string, { pending: number; confirmed: number; cancelled: number; expired: number; rescheduled: number }>>((acc, booking) => {
       const key = bookingDateKey(booking.date)
       if (!acc[key]) {
-        acc[key] = { pending: 0, confirmed: 0, cancelled: 0, expired: 0 }
+        acc[key] = { pending: 0, confirmed: 0, cancelled: 0, expired: 0, rescheduled: 0 }
       }
       if (booking.status === "pending") acc[key].pending += 1
       if (booking.status === "confirmed") acc[key].confirmed += 1
       if (booking.status === "cancelled") acc[key].cancelled += 1
       if (booking.status === "expired") acc[key].expired += 1
+      if (booking.status === "rescheduled") acc[key].rescheduled += 1
       return acc
     }, {})
   }, [bookings])
@@ -167,7 +282,7 @@ export default function AdminCalendarPage() {
   const selectedDayBookings = useMemo(() => {
     return sortBookingsByDateTime(bookings.filter((booking) => bookingDateKey(booking.date) === selectedKey))
   }, [bookings, selectedKey])
-  const dayPageSize = 4
+  const dayPageSize = 3
   const totalDayPages = Math.max(1, Math.ceil(selectedDayBookings.length / dayPageSize))
   const safeDayPage = Math.min(dayPage, totalDayPages)
   const pagedSelectedDayBookings = useMemo(() => {
@@ -185,11 +300,41 @@ export default function AdminCalendarPage() {
         if (booking.status === "pending") acc.pending += 1
         if (booking.status === "cancelled") acc.cancelled += 1
         if (booking.status === "expired") acc.expired += 1
+        if (booking.status === "rescheduled") acc.rescheduled += 1
         return acc
       },
-      { total: 0, confirmed: 0, pending: 0, cancelled: 0, expired: 0 }
+      { total: 0, confirmed: 0, pending: 0, cancelled: 0, expired: 0, rescheduled: 0 }
     )
   }, [monthBookings])
+  const summaryBookings = useMemo(() => {
+    if (summaryFilter === "month") return monthBookings
+    return monthBookings.filter((booking) => booking.status === summaryFilter)
+  }, [monthBookings, summaryFilter])
+  const filteredSummaryBookings = useMemo(() => {
+    const query = summarySearch.trim().toLowerCase()
+    if (!query) return summaryBookings
+
+    return summaryBookings.filter((booking) => {
+      const parts = [
+        booking.id,
+        booking.date,
+        booking.time,
+        booking.nombre,
+        booking.clinica,
+        booking.email,
+        new Date(booking.date).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }),
+      ]
+
+      return parts.some((part) => part?.toLowerCase().includes(query))
+    })
+  }, [summaryBookings, summarySearch])
+  const summaryPageSize = 3
+  const totalSummaryPages = Math.max(1, Math.ceil(filteredSummaryBookings.length / summaryPageSize))
+  const safeSummaryPage = Math.min(summaryPage, totalSummaryPages)
+  const pagedSummaryBookings = useMemo(() => {
+    const start = (safeSummaryPage - 1) * summaryPageSize
+    return filteredSummaryBookings.slice(start, start + summaryPageSize)
+  }, [filteredSummaryBookings, safeSummaryPage])
   const nextUpcomingBookings = useMemo(() => {
     const now = Date.now()
     return sortBookingsByDateTime(bookings)
@@ -203,11 +348,19 @@ export default function AdminCalendarPage() {
     return nextUpcomingBookings.slice(start, start + upcomingPageSize)
   }, [nextUpcomingBookings, safeUpcomingPage])
   const monthLabel = calendarMonth.toLocaleDateString("es-ES", { month: "long", year: "numeric" })
-  const activeMeetLink = activeBooking?.googleMeetLink || (activeBooking ? `https://meet.google.com/new#booking-${activeBooking.id}` : null)
+  const selectedDateIsPast = isPastCalendarDate(selectedDate)
+  const selectedDateBookingClosed = !selectedDateIsPast && !selectedDateCanCreate
+  const getBookingMeetLink = useCallback((booking: CalendarBooking | null) => {
+    if (!booking || ["cancelled", "expired", "rescheduled"].includes(booking.status)) return null
+    return booking.googleMeetLink || `https://meet.google.com/new#booking-${booking.id}`
+  }, [])
+  const activeMeetLink = getBookingMeetLink(activeBooking)
   const canOperate = mode === "demo" || mode === "superadmin"
-  const compactModalActions = activeBooking?.status === "pending"
-  const modalActions = useMemo(() => {
-    if (!activeBooking) return []
+  const compactModalActions = activeBooking?.status === "pending" || activeBooking?.status === "confirmed"
+  const getBookingActions = useCallback((booking: CalendarBooking | null) => {
+    if (!booking) return []
+
+    const bookingMeetLink = getBookingMeetLink(booking)
 
     const actions: Array<{
       key: CalendarActionType
@@ -218,37 +371,40 @@ export default function AdminCalendarPage() {
       disabled?: boolean
     }> = []
 
-    if (canOperate && activeBooking.status !== "confirmed" && activeBooking.status !== "expired") {
+    if (canOperate && booking.status !== "confirmed" && booking.status !== "expired" && booking.status !== "rescheduled") {
       actions.push({
         key: "confirm",
-        label: activeBooking.status === "cancelled" ? "Reactivar" : "Aceptar",
+        label: booking.status === "cancelled" ? "Reactivar" : "Aceptar",
         variant: "default",
         icon: Check,
         spinnerVariant: "primary",
-        disabled: updatingId === activeBooking.id,
+        disabled: updatingId === booking.id,
       })
     }
 
-    if (canOperate && activeBooking.status !== "cancelled" && activeBooking.status !== "expired") {
+    if (canOperate) {
       actions.push({
         key: "reschedule",
         label: "Reagendar",
         variant: "accent",
         icon: CalendarCheck2,
         spinnerVariant: "accent",
-        disabled: updatingId === activeBooking.id,
+        disabled: updatingId === booking.id,
       })
+    }
+
+    if (canOperate && booking.status !== "cancelled" && booking.status !== "expired" && booking.status !== "rescheduled") {
       actions.push({
         key: "cancel",
         label: "Cancelar",
         variant: "destructive",
         icon: X,
         spinnerVariant: "destructive",
-        disabled: updatingId === activeBooking.id,
+        disabled: updatingId === booking.id,
       })
     }
 
-    if (activeMeetLink) {
+    if (bookingMeetLink) {
       actions.push({
         key: "meet",
         label: "Abrir Meet",
@@ -258,8 +414,24 @@ export default function AdminCalendarPage() {
       })
     }
 
+    if (canOperate) {
+      actions.push({
+        key: "delete",
+        label: "Borrar",
+        variant: "destructive",
+        icon: Trash2,
+        spinnerVariant: "destructive",
+        disabled: updatingId === booking.id,
+      })
+    }
+
     return actions
-  }, [activeBooking, activeMeetLink, canOperate, updatingId])
+  }, [canOperate, getBookingMeetLink, updatingId])
+  const modalActions = useMemo(() => getBookingActions(activeBooking), [activeBooking, getBookingActions])
+  const summaryDetailMeetLink = getBookingMeetLink(summaryDetailBooking)
+  const summaryDetailActions = useMemo(() => getBookingActions(summaryDetailBooking), [getBookingActions, summaryDetailBooking])
+  const summaryDetailCompactActions =
+    summaryDetailBooking?.status === "pending" || summaryDetailBooking?.status === "confirmed"
 
   useEffect(() => {
     setDayPage(1)
@@ -277,6 +449,32 @@ export default function AdminCalendarPage() {
     }
   }, [totalUpcomingPages, upcomingPage])
 
+  useEffect(() => {
+    setSummaryPage(1)
+  }, [summaryFilter, calendarMonth, summarySearch])
+
+  useEffect(() => {
+    if (!summaryModalOpen) {
+      setSummaryModalLoading(null)
+      return
+    }
+
+    setSummaryModalLoading("search")
+    const timeoutId = window.setTimeout(() => {
+      setSummaryModalLoading((current) => (current === "search" ? null : current))
+    }, 220)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [summaryModalOpen, summarySearch])
+
+  useEffect(() => {
+    if (summaryPage > totalSummaryPages) {
+      setSummaryPage(totalSummaryPages)
+    }
+  }, [summaryPage, totalSummaryPages])
+
   const changeDayPageWithLoader = useCallback((direction: "prev" | "next") => {
     if (dayPageLoading) return
     if (direction === "prev" && safeDayPage <= 1) return
@@ -289,6 +487,54 @@ export default function AdminCalendarPage() {
       setDayPageLoading(null)
     }, 500)
   }, [dayPageLoading, safeDayPage, totalDayPages])
+
+  const selectDateWithLoader = useCallback((date: Date) => {
+    if (dayPageLoading === "date") return
+    setDayPageLoading("date")
+    window.setTimeout(() => {
+      setSelectedDate(date)
+      setCalendarMonth(date)
+      setDayPageLoading(null)
+    }, 350)
+  }, [dayPageLoading])
+
+  const loadAvailability = useCallback(async (date: Date) => {
+    const res = await fetch(`/api/availability?date=${encodeURIComponent(date.toISOString().slice(0, 10))}`, { cache: "no-store" })
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null)
+      throw new Error(payload?.error || "No se pudieron cargar los horarios")
+    }
+    const data = await res.json()
+    return { slots: data.slots || [], unavailable: data.unavailable || [] }
+  }, [])
+
+  useEffect(() => {
+    if (!canOperate) return
+    if (isPastCalendarDate(selectedDate)) {
+      setSelectedDateCanCreate(false)
+      return
+    }
+
+    let mounted = true
+
+    const run = async () => {
+      try {
+        const availability = await loadAvailability(selectedDate)
+        if (!mounted) return
+        const canCreate = availability.slots.some(
+          (slot: string) => !availability.unavailable.includes(slot) && !isPastTimeSlot(selectedDate, slot)
+        )
+        setSelectedDateCanCreate(canCreate)
+      } catch {
+        if (mounted) setSelectedDateCanCreate(true)
+      }
+    }
+
+    run()
+    return () => {
+      mounted = false
+    }
+  }, [canOperate, loadAvailability, selectedDate])
 
   const changeUpcomingPageWithLoader = useCallback((direction: "prev" | "next") => {
     if (upcomingPageLoading) return
@@ -303,9 +549,38 @@ export default function AdminCalendarPage() {
     }, 500)
   }, [safeUpcomingPage, totalUpcomingPages, upcomingPageLoading])
 
+  const changeSummaryPageWithLoader = useCallback((direction: "prev" | "next") => {
+    if (summaryModalLoading) return
+    if (direction === "prev" && safeSummaryPage <= 1) return
+    if (direction === "next" && safeSummaryPage >= totalSummaryPages) return
+    setSummaryModalLoading(direction)
+    window.setTimeout(() => {
+      setSummaryPage((current) =>
+        direction === "prev" ? Math.max(1, current - 1) : Math.min(totalSummaryPages, current + 1)
+      )
+      setSummaryModalLoading(null)
+    }, 350)
+  }, [safeSummaryPage, summaryModalLoading, totalSummaryPages])
+
+  const openCreateDialog = useCallback((date: Date) => {
+    if (!canOperate) return
+    setSelectedDate(date)
+    setCalendarMonth(date)
+    setCreateDate(date)
+    setCreateOpen(true)
+  }, [canOperate])
+
+  const openMobileDayAgenda = useCallback((date: Date) => {
+    setSelectedDate(date)
+    setCalendarMonth(date)
+    setMobileDayAgendaOpen(true)
+  }, [])
+
   const DayButton = useCallback(({ day, modifiers, className, ...props }: DayButtonProps) => {
     const key = dateKey(day.date)
-    const counts = bookingStatusCountsByDate[key] ?? { pending: 0, confirmed: 0, cancelled: 0, expired: 0 }
+    const counts = bookingStatusCountsByDate[key] ?? { pending: 0, confirmed: 0, cancelled: 0, expired: 0, rescheduled: 0 }
+    const hasBookings = counts.pending + counts.confirmed + counts.cancelled + counts.expired > 0
+    const blockedEmptyPastDay = !hasBookings && isPastCalendarDate(day.date)
     const badges = [
       counts.confirmed > 0
         ? { label: counts.confirmed, className: "border-primary/40 bg-primary/15 text-primary" }
@@ -319,30 +594,49 @@ export default function AdminCalendarPage() {
       counts.expired > 0
         ? { label: counts.expired, className: "border-destructive/40 bg-destructive/15 text-destructive" }
         : null,
+      counts.rescheduled > 0
+        ? { label: counts.rescheduled, className: "border-accent bg-[rgba(var(--accent-rgb),0.32)] text-[hsl(var(--accent))]" }
+        : null,
     ].filter(Boolean) as Array<{ label: number; className: string }>
 
     return (
-      <button {...props} className={className}>
+      <button
+        {...props}
+        disabled={props.disabled || blockedEmptyPastDay}
+        className={cn(
+          className,
+          modifiers.outside ? "" : blockedEmptyPastDay ? "cursor-not-allowed opacity-35" : "cursor-pointer"
+        )}
+        onClick={(event) => {
+          props.onClick?.(event)
+          if (event.defaultPrevented || modifiers.outside || blockedEmptyPastDay || !canOperate) return
+          if (isMobileViewport) {
+            openMobileDayAgenda(day.date)
+            return
+          }
+          openCreateDialog(day.date)
+        }}
+      >
         <span className="flex h-full w-full flex-col items-center justify-between rounded-[inherit] px-1.5 py-1.5">
           <span className={modifiers.outside ? "text-muted-foreground/40" : ""}>{day.date.getDate()}</span>
           {badges.length > 0 ? (
-            <span className="flex max-w-full flex-wrap items-center justify-center gap-1">
+            <span className="flex w-full flex-wrap justify-center gap-1">
               {badges.map((badge, index) => (
                 <span
                   key={`${key}-badge-${index}`}
-                  className={`min-w-4 rounded-full border px-1 py-0.5 text-[9px] font-semibold leading-none ${badge.className}`}
+                  className={`flex h-[18px] basis-[calc(25%-0.1875rem)] items-center justify-center rounded-full border px-1 py-0.5 text-[9px] font-semibold leading-none md:h-[22px] ${badge.className}`}
                 >
                   {badge.label}
                 </span>
               ))}
             </span>
           ) : (
-            <span className="h-[14px]" aria-hidden="true" />
+            <span className="h-[18px] md:h-[22px]" aria-hidden="true" />
           )}
         </span>
       </button>
     )
-  }, [bookingStatusCountsByDate])
+  }, [bookingStatusCountsByDate, canOperate, isMobileViewport, openCreateDialog, openMobileDayAgenda])
 
   const updateBookingStatus = useCallback(async (booking: CalendarBooking, status: "confirmed" | "cancelled") => {
     setUpdatingId(booking.id)
@@ -362,7 +656,13 @@ export default function AdminCalendarPage() {
         title: status === "confirmed" ? "Cita actualizada" : "Cita cancelada",
         description: status === "confirmed" ? "La cita ha quedado confirmada." : "La cita ha quedado cancelada.",
       })
+      sonnerToast.success(status === "confirmed" ? "Cita actualizada" : "Cita cancelada", {
+        description: status === "confirmed" ? "La cita ha quedado confirmada." : "La cita ha quedado cancelada.",
+      })
     } catch (error) {
+      sonnerToast.error("No se pudo actualizar la cita", {
+        description: error instanceof Error ? error.message : "No se pudo actualizar la cita",
+      })
       toast({
         variant: "destructive",
         title: "No se pudo actualizar la cita",
@@ -411,12 +711,18 @@ export default function AdminCalendarPage() {
       await load()
       setRescheduleOpen(false)
       setRescheduleBooking(null)
+      sonnerToast.success("Cita reagendada", {
+        description: "La cita se ha reagendado correctamente.",
+      })
       toast({
         title: "Cita reagendada",
         description: "La cita se ha reagendado correctamente.",
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo reagendar la cita"
+      sonnerToast.error("No se pudo reagendar la cita", {
+        description: message,
+      })
       toast({
         variant: "destructive",
         title: "No se pudo reagendar la cita",
@@ -427,6 +733,111 @@ export default function AdminCalendarPage() {
       setUpdatingId(null)
     }
   }, [load, rescheduleBooking, toast])
+
+  const submitCreate = useCallback(async (payload: BookingWizardSubmitPayload) => {
+    const email = createEmail.trim().toLowerCase()
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Correo obligatorio",
+        description: "Debes indicar un correo para crear y enviar la cita.",
+      })
+      throw new Error("Debes indicar un correo para crear la cita")
+    }
+
+    setUpdatingId("create-demo-booking")
+    try {
+      const res = await fetch("/api/admin/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          date: payload.date.toISOString(),
+          time: payload.time,
+          duration: payload.duration,
+          email,
+        }),
+      })
+
+      if (!res.ok) {
+        const responsePayload = await res.json().catch(() => null)
+        throw new Error(responsePayload?.error || "No se pudo crear la cita")
+      }
+
+      await load()
+      setCreateOpen(false)
+      setCreateEmail("")
+      setCreateDate(null)
+      sonnerToast.success("Cita creada", {
+        description: "La nueva cita se ha creado y enviado correctamente.",
+      })
+      toast({
+        title: "Cita creada",
+        description: "La nueva cita se ha creado y enviado correctamente.",
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo crear la cita"
+      sonnerToast.error("No se pudo crear la cita", {
+        description: message,
+      })
+      toast({
+        variant: "destructive",
+        title: "No se pudo crear la cita",
+        description: message,
+      })
+      throw new Error(message)
+    } finally {
+      setUpdatingId(null)
+    }
+  }, [createEmail, load, toast])
+
+  const deleteBooking = useCallback(async (booking: CalendarBooking) => {
+    setUpdatingId(booking.id)
+    try {
+      const res = await fetch("/api/admin/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id: booking.id }),
+      })
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null)
+        throw new Error(payload?.error || "No se pudo borrar la cita")
+      }
+      const payload = await res.json().catch(() => null)
+      await load()
+      setActiveBooking((current) =>
+        current?.id !== booking.id
+          ? current
+          : payload?.booking?.status === "deleted"
+            ? null
+            : { ...current, status: payload?.booking?.status ?? "cancelled" }
+      )
+      sonnerToast.success(payload?.booking?.status === "cancelled" ? "Cita cancelada" : "Cita eliminada", {
+        description:
+          payload?.booking?.status === "cancelled"
+            ? "La cita seguía activa y se ha cancelado directamente."
+            : "La cita se ha eliminado correctamente.",
+      })
+      toast({
+        title: payload?.booking?.status === "cancelled" ? "Cita cancelada" : "Cita eliminada",
+        description:
+          payload?.booking?.status === "cancelled"
+            ? "La cita seguía activa y se ha cancelado directamente."
+            : "La cita se ha eliminado correctamente.",
+      })
+    } catch (error) {
+      sonnerToast.error("No se pudo borrar la cita", {
+        description: error instanceof Error ? error.message : "No se pudo borrar la cita",
+      })
+      toast({
+        variant: "destructive",
+        title: "No se pudo borrar la cita",
+        description: error instanceof Error ? error.message : "No se pudo borrar la cita",
+      })
+    } finally {
+      setUpdatingId(null)
+    }
+  }, [load, toast])
 
   const confirmActionTitle =
     confirmAction === "confirm"
@@ -439,6 +850,10 @@ export default function AdminCalendarPage() {
           ? "Reagendar cita"
           : confirmAction === "meet"
             ? "Abrir Google Meet"
+            : confirmAction === "delete"
+              ? activeBooking && ["pending", "confirmed"].includes(activeBooking.status)
+                ? "Cancelar cita"
+                : "Eliminar cita"
             : ""
 
   const confirmActionDescription =
@@ -447,9 +862,13 @@ export default function AdminCalendarPage() {
       : confirmAction === "cancel"
         ? "La cita pasará a cancelada."
         : confirmAction === "reschedule"
-          ? "Abrirás el flujo para seleccionar una nueva fecha y hora."
+          ? "Abrirás el flujo para seleccionar una nueva fecha y hora. Al confirmar, se enviará al cliente y a info@clinvetia.com con el nuevo enlace de Meet."
           : confirmAction === "meet"
             ? "Se abrirá el enlace de videollamada asociado a esta cita."
+            : confirmAction === "delete"
+              ? activeBooking && ["pending", "confirmed"].includes(activeBooking.status)
+                ? "La cita sigue activa. Si continúas, se cancelará automáticamente y se avisará al cliente y a info@clinvetia.com."
+                : "La cita se eliminará definitivamente."
             : ""
 
   const executeConfirmedAction = useCallback(async () => {
@@ -470,13 +889,289 @@ export default function AdminCalendarPage() {
       openRescheduleDialog(activeBooking)
       return
     }
+    if (action === "delete") {
+      await deleteBooking(activeBooking)
+      return
+    }
     if (action === "meet" && activeMeetLink) {
       window.open(activeMeetLink, "_blank", "noopener,noreferrer")
     }
-  }, [activeBooking, activeMeetLink, confirmAction, openRescheduleDialog, updateBookingStatus])
+  }, [activeBooking, activeMeetLink, confirmAction, deleteBooking, openRescheduleDialog, updateBookingStatus])
 
   return (
     <div className="space-y-7">
+      <Dialog
+        open={summaryModalOpen}
+        onOpenChange={(open) => {
+          setSummaryModalOpen(open)
+          if (!open) {
+            setSummaryFilter("month")
+            setSummarySearch("")
+            setSummaryDetailBooking(null)
+            setActiveBooking(null)
+          }
+        }}
+      >
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-2xl [&>button]:hidden">
+          <div className={cn("min-h-0 flex-1 overflow-y-auto", summaryDetailBooking && "overflow-clip")}>
+          <div className={cn(
+            "sticky top-0 z-20 border-b border-white/10 bg-background/95 px-4 pb-4 pt-5 backdrop-blur-xl md:px-6 md:pt-6",
+            summaryDetailBooking ? "space-y-3" : "space-y-4"
+          )}>
+            <div className="flex items-start justify-between gap-4">
+              <DialogHeader className="pr-2">
+                <DialogTitle>{summaryDetailBooking ? "Resumen de la cita" : summaryFilterLabel(summaryFilter)}</DialogTitle>
+                <DialogDescription>
+                  {summaryDetailBooking
+                    ? "Detalle operativo de la reserva seleccionada."
+                    : `Listado completo de citas de ${summaryFilterLabel(summaryFilter).toLowerCase()} en ${monthLabel}.`}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center gap-2">
+                {summaryDetailBooking ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 rounded-full border border-white/10 bg-background/95 backdrop-blur-xl"
+                    onClick={() => {
+                      setSummaryDetailBooking(null)
+                      setActiveBooking(null)
+                    }}
+                  >
+                    <Icon icon={ArrowLeft} size="sm" />
+                  </Button>
+                ) : null}
+                <DialogClose asChild>
+                  <Button type="button" variant="ghost" size="icon" className="shrink-0 rounded-full border border-white/10 bg-background/95 backdrop-blur-xl">
+                    <Icon icon={X} size="sm" />
+                  </Button>
+                </DialogClose>
+              </div>
+            </div>
+
+            <div className={cn("space-y-2 transition-all duration-300", summaryDetailBooking ? "hidden" : "block")}>
+              <label htmlFor="calendar-summary-search" className="text-sm font-medium">
+                Buscar cita por cliente
+              </label>
+              <div className="relative">
+                <Input
+                  id="calendar-summary-search"
+                  type="text"
+                  value={summarySearch}
+                  onChange={(event) => setSummarySearch(event.target.value)}
+                  placeholder="Cliente, email, fecha, hora o ID"
+                  className="pr-10"
+                />
+                {summaryModalLoading === "search" && (
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                    <Spinner size="sm" variant="accent" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className={cn("relative overflow-clip px-4 md:px-6", summaryDetailBooking ? "py-3" : "py-4")}>
+            <div
+              className={cn(
+                "space-y-3 transition-all duration-300 ease-out",
+                summaryDetailBooking
+                  ? "pointer-events-none absolute inset-0 -translate-x-10 opacity-0"
+                  : "relative translate-x-0 opacity-100"
+              )}
+            >
+              {pagedSummaryBookings.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/10 bg-background/40 px-4 py-6 text-sm text-muted-foreground">
+                  {summarySearch.trim()
+                    ? "No hay citas que coincidan con esta búsqueda."
+                    : "No hay citas en esta categoría para este mes."}
+                </div>
+              ) : (
+                pagedSummaryBookings.map((booking) => (
+                  <button
+                    key={booking.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(new Date(booking.date))
+                      setCalendarMonth(new Date(booking.date))
+                      setSummaryDetailBooking(booking)
+                      setActiveBooking(booking)
+                    }}
+                    className={bookingCardClass(booking.status)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold">
+                          {new Date(booking.date).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} · {booking.time} · {booking.duration} min
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          {booking.nombre || booking.clinica || booking.email || "Cita sin contacto asignado"}
+                        </div>
+                        {(booking.clinica || booking.email) && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {[booking.clinica, booking.email].filter(Boolean).join(" · ")}
+                          </div>
+                        )}
+                      </div>
+                      <Badge variant={statusBadgeVariant(booking.status)}>{statusLabel(booking.status)}</Badge>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <div
+              className={cn(
+                "transition-all duration-300 ease-out",
+                summaryDetailBooking
+                  ? "relative translate-x-0 opacity-100"
+                  : "pointer-events-none absolute inset-0 translate-x-10 opacity-0"
+              )}
+            >
+              {summaryDetailBooking ? (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div>
+                      <div className="text-sm font-semibold">
+                        {new Date(summaryDetailBooking.date).toLocaleDateString("es-ES", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                        })}{" "}
+                        · {summaryDetailBooking.time}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">{summaryDetailBooking.duration} min</div>
+                      <div className="mt-1 text-xs font-medium text-muted-foreground">
+                        ID {summaryDetailBooking.id}
+                      </div>
+                    </div>
+                    <Badge variant={statusBadgeVariant(summaryDetailBooking.status)}>
+                      {statusLabel(summaryDetailBooking.status)}
+                    </Badge>
+                  </div>
+
+                  <div className={cn("grid gap-3", summaryDetailMeetLink ? "sm:grid-cols-2" : "sm:grid-cols-1")}>
+                    <div className="rounded-xl border border-white/10 bg-background/45 p-4">
+                      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Cliente</div>
+                      <div className="mt-2 text-sm font-medium">
+                        {summaryDetailBooking.nombre || "Sin nombre"}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">ID {summaryDetailBooking.id}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {summaryDetailBooking.clinica || "Sin clínica"}
+                      </div>
+                      <div className="mt-1 break-all text-xs text-muted-foreground">
+                        {summaryDetailBooking.email || "Sin email"}
+                      </div>
+                    </div>
+
+                    {summaryDetailMeetLink ? (
+                      <div className="rounded-xl border border-white/10 bg-background/45 p-4">
+                        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Videollamada</div>
+                        <div className="mt-2 text-sm font-medium">Google Meet</div>
+                        <a
+                          href={summaryDetailMeetLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 block break-all text-xs text-primary underline-offset-2 hover:underline"
+                        >
+                          {summaryDetailMeetLink}
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {summaryDetailActions.length > 0 && (
+                    <DialogFooter
+                      className="grid gap-2 overflow-visible border-t-0 px-1 pb-1 pt-0"
+                      style={{ gridTemplateColumns: `repeat(${summaryDetailActions.length}, minmax(0, 1fr))` }}
+                    >
+                      {summaryDetailActions.map((action) => (
+                        <Popover key={action.key}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant={action.variant}
+                              className={`w-full px-3 text-xs sm:text-sm ${summaryDetailCompactActions ? "gap-0" : "gap-2"}`}
+                              disabled={Boolean(action.disabled)}
+                              onClick={() => setConfirmAction(action.key)}
+                              title={action.label}
+                              aria-label={action.label}
+                            >
+                              {action.disabled ? (
+                                <Spinner size="sm" variant={action.spinnerVariant} />
+                              ) : (
+                                <Icon icon={action.icon} size="sm" />
+                              )}
+                              {!summaryDetailCompactActions && <span className="truncate">{action.label}</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent side="top" className="px-3 py-2 text-xs font-medium">
+                            {action.label}
+                          </PopoverContent>
+                        </Popover>
+                      ))}
+                    </DialogFooter>
+                  )}
+                </div>
+              ) : null}
+            </div>
+            {summaryModalLoading && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl border border-white/10 bg-background/60 backdrop-blur-sm">
+                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <Spinner size="sm" variant="accent" />
+                  Cargando citas...
+                </div>
+              </div>
+            )}
+          </div>
+
+          </div>
+
+          <DialogFooter className={cn(
+            "shrink-0 items-center justify-between gap-3 border-t border-white/10 bg-background px-4 pb-4 pt-4 shadow-[0_-18px_40px_rgba(var(--black-rgb),0.45)] md:px-6 md:pb-6 sm:justify-between sm:[&>*]:flex-none",
+            summaryDetailBooking ? "m-0 h-0 overflow-hidden border-t-0 p-0 opacity-0" : "opacity-100"
+          )}>
+            <div className="text-xs text-muted-foreground">
+              Página {safeSummaryPage} de {totalSummaryPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="w-auto"
+                disabled={safeSummaryPage <= 1 || summaryModalLoading !== null}
+                onClick={() => changeSummaryPageWithLoader("prev")}
+              >
+                {summaryModalLoading === "prev" ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner size="sm" variant="accent" />
+                    Cargando...
+                  </span>
+                ) : "Anterior"}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="w-auto"
+                disabled={safeSummaryPage >= totalSummaryPages || summaryModalLoading !== null}
+                onClick={() => changeSummaryPageWithLoader("next")}
+              >
+                {summaryModalLoading === "next" ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner size="sm" variant="accent" />
+                    Cargando...
+                  </span>
+                ) : "Siguiente"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={Boolean(confirmAction)} onOpenChange={(open) => !open && setConfirmAction(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
@@ -488,7 +1183,13 @@ export default function AdminCalendarPage() {
               Volver
             </Button>
             <Button
-              variant={confirmAction === "cancel" ? "destructive" : "default"}
+              variant={
+                confirmAction === "cancel"
+                  ? "secondary"
+                  : confirmAction === "delete"
+                    ? "destructive"
+                    : "default"
+              }
               className="w-full sm:flex-1"
               onClick={executeConfirmedAction}
             >
@@ -539,15 +1240,7 @@ export default function AdminCalendarPage() {
                 return slot === rescheduleBooking.time &&
                   new Date(rescheduleBooking.date).toDateString() === date.toDateString()
               }}
-              loadAvailability={async (date) => {
-                const res = await fetch(`/api/availability?date=${encodeURIComponent(date.toISOString().slice(0, 10))}`, { cache: "no-store" })
-                if (!res.ok) {
-                  const payload = await res.json().catch(() => null)
-                  throw new Error(payload?.error || "No se pudieron cargar los horarios")
-                }
-                const data = await res.json()
-                return { slots: data.slots || [], unavailable: data.unavailable || [] }
-              }}
+              loadAvailability={loadAvailability}
               onSubmit={submitReschedule}
             />
           )}
@@ -559,7 +1252,62 @@ export default function AdminCalendarPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(activeBooking)} onOpenChange={(open) => !open && setActiveBooking(null)}>
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open)
+          if (!open) {
+            setCreateEmail("")
+            setCreateDate(null)
+          }
+        }}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nueva cita</DialogTitle>
+            <DialogDescription>
+              Selecciona la hora y completa el correo para enviar la nueva cita.
+            </DialogDescription>
+          </DialogHeader>
+          <BookingWizard
+            className="border-white/10 bg-transparent p-0 shadow-none"
+            title="Añadir cita"
+            subtitle="Elige la hora disponible y confirma el correo del cliente"
+            confirmCtaLabel="Crear cita"
+            confirmingLabel="Creando..."
+            showDurationSelector={false}
+            initialDate={createDate}
+            initialDuration={30}
+            initialStep="time"
+            confirmContent={
+              <div className="space-y-2">
+                <label htmlFor="calendar-create-booking-email" className="text-sm font-medium">
+                  Correo del cliente
+                </label>
+                <Input
+                  id="calendar-create-booking-email"
+                  type="email"
+                  value={createEmail}
+                  onChange={(event) => setCreateEmail(event.target.value)}
+                  placeholder="cliente@clinica.com"
+                  required
+                />
+              </div>
+            }
+            canSubmit={Boolean(createEmail.trim())}
+            loadAvailability={loadAvailability}
+            onSubmit={submitCreate}
+          />
+
+          <DialogFooter className="sm:[&>*]:flex-none">
+            <Button variant="ghost" onClick={() => setCreateOpen(false)} className="w-auto">
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(activeBooking) && !summaryModalOpen} onOpenChange={(open) => !open && setActiveBooking(null)}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Resumen de la cita</DialogTitle>
@@ -580,19 +1328,21 @@ export default function AdminCalendarPage() {
                     })}{" "}
                     · {activeBooking.time}
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {activeBooking.duration} min · ID {activeBooking.id}
+                  <div className="mt-1 text-xs text-muted-foreground">{activeBooking.duration} min</div>
+                  <div className="mt-1 text-xs font-medium text-muted-foreground">
+                    ID {activeBooking.id}
                   </div>
                 </div>
                 <Badge variant={statusBadgeVariant(activeBooking.status)}>{statusLabel(activeBooking.status)}</Badge>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className={cn("grid gap-3", activeMeetLink ? "sm:grid-cols-2" : "sm:grid-cols-1")}>
                 <div className="rounded-xl border border-white/10 bg-background/45 p-4">
                   <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Cliente</div>
                   <div className="mt-2 text-sm font-medium">
                     {activeBooking.nombre || "Sin nombre"}
                   </div>
+                  <div className="mt-1 text-xs text-muted-foreground">ID {activeBooking.id}</div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {activeBooking.clinica || "Sin clínica"}
                   </div>
@@ -601,10 +1351,10 @@ export default function AdminCalendarPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-background/45 p-4">
-                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Videollamada</div>
-                  <div className="mt-2 text-sm font-medium">Google Meet</div>
-                  {activeMeetLink ? (
+                {activeMeetLink ? (
+                  <div className="rounded-xl border border-white/10 bg-background/45 p-4">
+                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Videollamada</div>
+                    <div className="mt-2 text-sm font-medium">Google Meet</div>
                     <a
                       href={activeMeetLink}
                       target="_blank"
@@ -613,10 +1363,8 @@ export default function AdminCalendarPage() {
                     >
                       {activeMeetLink}
                     </a>
-                  ) : (
-                    <div className="mt-2 text-xs text-muted-foreground">Sin enlace disponible</div>
-                  )}
-                </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           )}
@@ -627,23 +1375,170 @@ export default function AdminCalendarPage() {
               style={{ gridTemplateColumns: `repeat(${modalActions.length}, minmax(0, 1fr))` }}
             >
               {modalActions.map((action) => (
-                <Button
-                  key={action.key}
-                  variant={action.variant}
-                  className={`w-full px-3 text-xs sm:text-sm ${compactModalActions ? "gap-0" : "gap-2"}`}
-                  disabled={Boolean(action.disabled)}
-                  onClick={() => setConfirmAction(action.key)}
-                  title={action.label}
-                  aria-label={action.label}
-                >
-                  {action.disabled ? (
-                    <Spinner size="sm" variant={action.spinnerVariant} />
-                  ) : (
-                    <Icon icon={action.icon} size="sm" />
-                  )}
-                  {!compactModalActions && <span className="truncate">{action.label}</span>}
-                </Button>
+                <Popover key={action.key}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={action.variant}
+                      className={`w-full px-3 text-xs sm:text-sm ${compactModalActions ? "gap-0" : "gap-2"}`}
+                      disabled={Boolean(action.disabled)}
+                      onClick={() => setConfirmAction(action.key)}
+                      title={action.label}
+                      aria-label={action.label}
+                    >
+                      {action.disabled ? (
+                        <Spinner size="sm" variant={action.spinnerVariant} />
+                      ) : (
+                        <Icon icon={action.icon} size="sm" />
+                      )}
+                      {!compactModalActions && <span className="truncate">{action.label}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" className="px-3 py-2 text-xs font-medium">
+                    {action.label}
+                  </PopoverContent>
+                </Popover>
               ))}
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={mobileDayAgendaOpen} onOpenChange={setMobileDayAgendaOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Agenda del día</DialogTitle>
+            <DialogDescription>
+              {selectedDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="relative mt-1 space-y-3">
+            {loading && (
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <Spinner size="sm" variant="primary" />
+                <span>Cargando agenda...</span>
+              </div>
+            )}
+            {!loading && canOperate && (
+              <button
+                type="button"
+                disabled={selectedDateIsPast || selectedDateBookingClosed}
+                onClick={() => {
+                  setMobileDayAgendaOpen(false)
+                  openCreateDialog(selectedDate)
+                }}
+                className={cn(
+                  "w-full rounded-2xl border p-4 text-left transition-all",
+                  selectedDateIsPast || selectedDateBookingClosed
+                    ? "cursor-not-allowed border-border/70 bg-background/40 text-muted-foreground opacity-55"
+                    : "cursor-pointer border-accent/65 bg-[rgba(var(--accent-rgb),0.16)] shadow-[0_0_24px_rgba(var(--accent-rgb),0.18)] hover:border-accent/85 hover:bg-[rgba(var(--accent-rgb),0.22)]"
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div
+                      className={cn(
+                        "text-sm font-semibold",
+                        selectedDateIsPast || selectedDateBookingClosed
+                          ? "text-muted-foreground"
+                          : "text-foreground drop-shadow-[0_0_10px_rgba(var(--accent-rgb),0.35)]"
+                      )}
+                    >
+                      Añadir cita
+                    </div>
+                    <div className={cn("mt-1 text-sm", selectedDateIsPast || selectedDateBookingClosed ? "text-muted-foreground" : "text-foreground/80")}>
+                      {selectedDateIsPast
+                        ? "No se pueden crear citas en días pasados."
+                        : selectedDateBookingClosed
+                          ? "Ya no se puede reservar para este día."
+                          : "Crear una nueva cita en este día."}
+                    </div>
+                  </div>
+                  <Badge variant={selectedDateIsPast || selectedDateBookingClosed ? "outline" : "accent"}>
+                    {selectedDateBookingClosed ? "Cerrado" : "Nuevo"}
+                  </Badge>
+                </div>
+              </button>
+            )}
+            {!loading && selectedDayBookings.length === 0 && (
+              <div className="rounded-xl border border-dashed border-white/10 bg-background/40 px-4 py-6 text-sm text-muted-foreground">
+                No hay citas programadas para este día.
+              </div>
+            )}
+            {!loading && pagedSelectedDayBookings.map((booking) => (
+              <button
+                key={booking.id}
+                type="button"
+                onClick={() => {
+                  setMobileDayAgendaOpen(false)
+                  setActiveBooking(booking)
+                }}
+                className={bookingCardClass(booking.status)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold">{booking.time} · {booking.duration} min</div>
+                    <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {booking.nombre || booking.clinica || booking.email || "Cita sin contacto asignado"}
+                    </div>
+                    {(booking.clinica || booking.email) && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {[booking.clinica, booking.email].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                  <Badge variant={statusBadgeVariant(booking.status)}>{statusLabel(booking.status)}</Badge>
+                </div>
+              </button>
+            ))}
+            {dayPageLoading && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl border border-white/10 bg-background/55 backdrop-blur-sm">
+                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <Spinner size="sm" variant="primary" />
+                  Cargando citas...
+                </div>
+              </div>
+            )}
+          </div>
+
+          {!loading && selectedDayBookings.length > dayPageSize && (
+            <DialogFooter className="flex items-center justify-between gap-3">
+              <div className="text-xs text-muted-foreground">
+                Página {safeDayPage} de {totalDayPages}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="w-auto"
+                  disabled={safeDayPage <= 1 || dayPageLoading !== null}
+                  onClick={() => changeDayPageWithLoader("prev")}
+                >
+                  {dayPageLoading === "prev" ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner size="sm" variant="primary" />
+                      Cargando...
+                    </span>
+                  ) : "Anterior"}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="w-auto"
+                  disabled={safeDayPage >= totalDayPages || dayPageLoading !== null}
+                  onClick={() => changeDayPageWithLoader("next")}
+                >
+                  {dayPageLoading === "next" ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner size="sm" variant="primary" />
+                      Cargando...
+                    </span>
+                  ) : "Siguiente"}
+                </Button>
+              </div>
             </DialogFooter>
           )}
         </DialogContent>
@@ -676,8 +1571,7 @@ export default function AdminCalendarPage() {
             onMonthChange={setCalendarMonth}
             onSelect={(date) => {
               if (!date) return
-              setSelectedDate(date)
-              setCalendarMonth(date)
+              selectDateWithLoader(date)
             }}
             modifiers={{ booked: bookedDates }}
             className="border-0 bg-transparent p-0 shadow-none"
@@ -688,32 +1582,96 @@ export default function AdminCalendarPage() {
               week: "mt-2 grid grid-cols-7 gap-2",
               day: "h-auto w-auto p-0",
               day_button:
-                "h-14 w-full rounded-2xl border border-white/10 bg-white/5 p-0 text-sm font-medium text-foreground shadow-none transition-all hover:border-[rgba(var(--primary-rgb),0.35)] hover:bg-primary/10 hover:text-primary md:h-16",
+                "min-h-14 h-auto w-full cursor-pointer rounded-2xl border border-border/80 bg-background/55 p-0 text-sm font-medium text-foreground shadow-none transition-all hover:border-[rgba(var(--primary-rgb),0.45)] hover:bg-primary/10 hover:text-primary md:min-h-16 md:h-auto",
               selected:
                 "[&>button]:border-[rgba(var(--primary-rgb),0.8)] [&>button]:bg-primary/20 [&>button]:text-primary [&>button]:shadow-[0_0_24px_rgba(var(--primary-rgb),0.24)]",
-              today: "[&>button]:border-[rgba(var(--accent-rgb),0.45)] [&>button]:bg-accent/10 [&>button]:text-accent",
+              today: "[&>button]:border-[rgba(var(--accent-rgb),0.45)] [&>button]:bg-accent/10",
               outside: "opacity-60",
             }}
             components={{ DayButton }}
           />
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-4">
-            <div className="rounded-xl border border-white/10 bg-background/50 px-3 py-2">
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Mes</div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-5">
+            <button
+              type="button"
+              onClick={() => {
+                setSummaryFilter("month")
+                setSummaryModalOpen(false)
+              }}
+              className={cn(
+                "min-w-0 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all",
+                summaryFilter === "month"
+                  ? "border-border bg-background/80 shadow-[0_0_20px_rgba(var(--foreground-rgb),0.08)]"
+                  : "border-border/80 bg-background/50 hover:border-border hover:bg-background/70"
+              )}
+            >
+              <HoverPopoverLabel label="Mes" className="text-[11px] uppercase tracking-wider text-muted-foreground" />
               <div className="mt-1 text-lg font-semibold">{monthSummary.total}</div>
-            </div>
-            <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
-              <div className="text-[11px] uppercase tracking-wider text-primary">Confirmadas</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSummaryFilter("confirmed")
+                setSummaryModalOpen(true)
+              }}
+              className={cn(
+                "min-w-0 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all",
+                summaryFilter === "confirmed" && summaryModalOpen
+                  ? "border-primary/45 bg-primary/12 shadow-[0_0_22px_rgba(var(--primary-rgb),0.16)]"
+                  : "border-primary/20 bg-primary/5 hover:border-primary/35 hover:bg-primary/10"
+              )}
+            >
+              <HoverPopoverLabel label="Confirmadas" className="text-[11px] uppercase tracking-wider text-primary" />
               <div className="mt-1 text-lg font-semibold text-primary">{monthSummary.confirmed}</div>
-            </div>
-            <div className="rounded-xl border border-warning/20 bg-warning/5 px-3 py-2">
-              <div className="text-[11px] uppercase tracking-wider text-warning">Pendientes</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSummaryFilter("pending")
+                setSummaryModalOpen(true)
+              }}
+              className={cn(
+                "min-w-0 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all",
+                summaryFilter === "pending" && summaryModalOpen
+                  ? "border-warning/45 bg-warning/12 shadow-[0_0_22px_rgba(var(--warning-rgb),0.16)]"
+                  : "border-warning/20 bg-warning/5 hover:border-warning/35 hover:bg-warning/10"
+              )}
+            >
+              <HoverPopoverLabel label="Pendientes" className="text-[11px] uppercase tracking-wider text-warning" />
               <div className="mt-1 text-lg font-semibold text-warning">{monthSummary.pending}</div>
-            </div>
-            <div className="rounded-xl border border-secondary/20 bg-secondary/5 px-3 py-2">
-              <div className="text-[11px] uppercase tracking-wider text-secondary">Canceladas</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSummaryFilter("cancelled")
+                setSummaryModalOpen(true)
+              }}
+              className={cn(
+                "min-w-0 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all",
+                summaryFilter === "cancelled" && summaryModalOpen
+                  ? "border-secondary/45 bg-secondary/12 shadow-[0_0_22px_rgba(var(--secondary-rgb),0.16)]"
+                  : "border-secondary/20 bg-secondary/5 hover:border-secondary/35 hover:bg-secondary/10"
+              )}
+            >
+              <HoverPopoverLabel label="Canceladas" className="text-[11px] uppercase tracking-wider text-secondary" />
               <div className="mt-1 text-lg font-semibold text-secondary">{monthSummary.cancelled}</div>
-            </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSummaryFilter("rescheduled")
+                setSummaryModalOpen(true)
+              }}
+              className={cn(
+                "min-w-0 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all",
+                summaryFilter === "rescheduled" && summaryModalOpen
+                  ? "border-accent bg-[rgba(var(--accent-rgb),0.34)] shadow-[0_0_28px_rgba(var(--accent-rgb),0.28)]"
+                  : "border-accent/90 bg-[rgba(var(--accent-rgb),0.28)] hover:border-accent hover:bg-[rgba(var(--accent-rgb),0.34)]"
+              )}
+            >
+              <HoverPopoverLabel label="Reagendadas" className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--accent))]" />
+              <div className="mt-1 text-lg font-semibold text-[hsl(var(--accent))]">{monthSummary.rescheduled}</div>
+            </button>
           </div>
         </GlassCard>
 
@@ -737,6 +1695,44 @@ export default function AdminCalendarPage() {
                 <span>Cargando agenda...</span>
               </div>
             )}
+            {!loading && canOperate && (
+              <button
+                type="button"
+                disabled={selectedDateIsPast || selectedDateBookingClosed}
+                onClick={() => openCreateDialog(selectedDate)}
+                className={cn(
+                  "w-full rounded-2xl border p-4 text-left transition-all",
+                  selectedDateIsPast || selectedDateBookingClosed
+                    ? "cursor-not-allowed border-border/70 bg-background/40 text-muted-foreground opacity-55"
+                    : "cursor-pointer border-accent/65 bg-[rgba(var(--accent-rgb),0.16)] shadow-[0_0_24px_rgba(var(--accent-rgb),0.18)] hover:border-accent/85 hover:bg-[rgba(var(--accent-rgb),0.22)]"
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                    <div
+                      className={cn(
+                        "text-sm font-semibold",
+                        selectedDateIsPast || selectedDateBookingClosed
+                          ? "text-muted-foreground"
+                          : "text-foreground drop-shadow-[0_0_10px_rgba(var(--accent-rgb),0.35)]"
+                      )}
+                    >
+                      Añadir cita
+                    </div>
+                    <div className={cn("mt-1 text-sm", selectedDateIsPast || selectedDateBookingClosed ? "text-muted-foreground" : "text-foreground/80")}>
+                      {selectedDateIsPast
+                        ? "No se pueden crear citas en días pasados."
+                        : selectedDateBookingClosed
+                          ? "Ya no se puede reservar para este día."
+                        : "Crear una nueva cita en este día."}
+                    </div>
+                  </div>
+                  <Badge variant={selectedDateIsPast || selectedDateBookingClosed ? "outline" : "accent"}>
+                    {selectedDateBookingClosed ? "Cerrado" : "Nuevo"}
+                  </Badge>
+                </div>
+              </button>
+            )}
             {!loading && selectedDayBookings.length === 0 && (
               <div className="rounded-xl border border-dashed border-white/10 bg-background/40 px-4 py-6 text-sm text-muted-foreground">
                 No hay citas programadas para este día.
@@ -747,21 +1743,12 @@ export default function AdminCalendarPage() {
                 key={booking.id}
                 type="button"
                 onClick={() => setActiveBooking(booking)}
-                className={
-                  booking.status === "pending"
-                    ? "w-full cursor-pointer rounded-2xl border border-warning/20 bg-warning/5 p-4 text-left transition-all hover:border-warning/40 hover:bg-warning/10"
-                    : booking.status === "confirmed"
-                      ? "w-full cursor-pointer rounded-2xl border border-primary/20 bg-primary/5 p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/10"
-                      : booking.status === "cancelled"
-                        ? "w-full cursor-pointer rounded-2xl border border-secondary/20 bg-secondary/5 p-4 text-left transition-all hover:border-secondary/40 hover:bg-secondary/10"
-                        : booking.status === "expired"
-                          ? "w-full cursor-pointer rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-left transition-all hover:border-destructive/40 hover:bg-destructive/10"
-                          : "w-full cursor-pointer rounded-2xl border border-white/10 bg-background/40 p-4 text-left transition-all hover:border-primary/30 hover:bg-primary/5"
-                }
+                className={bookingCardClass(booking.status)}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold">{booking.time} · {booking.duration} min</div>
+                    <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
                     <div className="mt-1 text-sm text-muted-foreground">
                       {booking.nombre || booking.clinica || booking.email || "Cita sin contacto asignado"}
                     </div>
@@ -865,11 +1852,10 @@ export default function AdminCalendarPage() {
                       type="button"
                       onClick={() => {
                         const nextDate = new Date(booking.date)
-                        setSelectedDate(nextDate)
-                        setCalendarMonth(nextDate)
+                        selectDateWithLoader(nextDate)
                         setActiveBooking(booking)
                       }}
-                      className="group relative z-10 w-full cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-background/45 p-4 text-left transition-all hover:border-primary/30 hover:bg-primary/5"
+                      className="group relative z-10 w-full cursor-pointer overflow-hidden rounded-2xl border border-border/80 bg-background/45 p-4 text-left transition-all hover:border-primary/45 hover:bg-primary/5"
                     >
                       <div className="absolute left-6 top-14 bottom-6 w-px bg-white/10 group-last:hidden md:hidden" aria-hidden="true" />
                       <div className="flex items-start gap-3">
@@ -882,6 +1868,7 @@ export default function AdminCalendarPage() {
                               <div className="text-sm font-medium">
                                 {new Date(booking.date).toLocaleDateString("es-ES", { day: "numeric", month: "short" })} · {booking.time}
                               </div>
+                              <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
                               <div className="mt-1 text-xs text-muted-foreground">
                                 {booking.nombre || booking.clinica || booking.email || "Sin contacto"}
                               </div>

@@ -7,6 +7,7 @@ import { GlassCard } from "@/components/ui/GlassCard"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { toast as sonnerToast } from "@/components/ui/sonner"
 import { Icon } from "@/components/ui/icon"
 import { Toggle } from "@/components/ui/toggle"
 import { Input } from "@/components/ui/input"
@@ -56,7 +57,7 @@ export default function AdminBookingsPage() {
   const [mode, setMode] = useState<"demo" | "superadmin" | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "expired">("all")
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "expired" | "rescheduled">("all")
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "tomorrow" | "week">("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
@@ -154,7 +155,13 @@ export default function AdminBookingsPage() {
         throw new Error(payload?.error || "No se pudo actualizar la cita")
       }
       await loadBookings()
+      sonnerToast.success(status === "confirmed" ? "Cita actualizada" : "Cita cancelada", {
+        description: status === "confirmed" ? "La cita ha quedado confirmada." : "La cita ha quedado cancelada.",
+      })
     } catch (err) {
+      sonnerToast.error("No se pudo actualizar la cita", {
+        description: err instanceof Error ? err.message : "No se pudo actualizar la cita",
+      })
       toast({
         variant: "destructive",
         title: "No se pudo actualizar la cita",
@@ -193,11 +200,17 @@ export default function AdminBookingsPage() {
         }
         await loadBookings()
         setCancelDialogBooking(null)
+        sonnerToast.success("Cita cancelada", {
+          description: "Modo demo: la cita quedó cancelada correctamente.",
+        })
         toast({
           title: "Cita cancelada",
           description: "Modo demo: la cita quedó cancelada correctamente.",
         })
       } catch (err) {
+        sonnerToast.error("No se pudo cancelar la cita", {
+          description: err instanceof Error ? err.message : "No se pudo cancelar la cita",
+        })
         toast({
           variant: "destructive",
           title: "No se pudo cancelar la cita",
@@ -259,11 +272,17 @@ export default function AdminBookingsPage() {
 
       await loadBookings()
       setCancelDialogBooking(null)
+      sonnerToast.success("Cita cancelada", {
+        description: "Se envió el correo personalizado al cliente y la cita quedó cancelada.",
+      })
       toast({
         title: "Cita cancelada",
         description: "Se envió el correo personalizado al cliente y la cita quedó cancelada.",
       })
     } catch (err) {
+      sonnerToast.error("No se pudo cancelar la cita", {
+        description: err instanceof Error ? err.message : "No se pudo cancelar la cita",
+      })
       toast({
         variant: "destructive",
         title: "No se pudo cancelar la cita",
@@ -287,8 +306,25 @@ export default function AdminBookingsPage() {
         const payload = await res.json().catch(() => null)
         throw new Error(payload?.error || "No se pudo eliminar la cita")
       }
+      const payload = await res.json().catch(() => null)
       await loadBookings()
+      sonnerToast.success(payload?.booking?.status === "cancelled" ? "Cita cancelada" : "Cita eliminada", {
+        description:
+          payload?.booking?.status === "cancelled"
+            ? "La cita seguía activa y se ha cancelado directamente."
+            : "La cita se ha eliminado correctamente.",
+      })
+      toast({
+        title: payload?.booking?.status === "cancelled" ? "Cita cancelada" : "Cita eliminada",
+        description:
+          payload?.booking?.status === "cancelled"
+            ? "La cita seguía activa y se ha cancelado directamente."
+            : "La cita se ha eliminado correctamente.",
+      })
     } catch (err) {
+      sonnerToast.error("No se pudo eliminar la cita", {
+        description: err instanceof Error ? err.message : "No se pudo eliminar la cita",
+      })
       toast({
         variant: "destructive",
         title: "No se pudo eliminar la cita",
@@ -314,9 +350,10 @@ export default function AdminBookingsPage() {
       if (booking.status === "pending") acc.pending += 1
       if (booking.status === "expired") acc.expired += 1
       if (booking.status === "cancelled") acc.cancelled += 1
+      if (booking.status === "rescheduled") acc.rescheduled += 1
       return acc
     },
-    { total: 0, confirmed: 0, pending: 0, expired: 0, cancelled: 0 }
+    { total: 0, confirmed: 0, pending: 0, expired: 0, cancelled: 0, rescheduled: 0 }
   )
 
   const filteredBookings = visibleBookings.filter((booking) => {
@@ -375,11 +412,12 @@ export default function AdminBookingsPage() {
     setPage(1)
   }, [filteredBookings.length, pageSize])
 
-  const badgeVariantForStatus = (status: string): "primary" | "warning" | "secondary" | "destructive" | "outline" => {
+  const badgeVariantForStatus = (status: string): "primary" | "warning" | "secondary" | "destructive" | "outline" | "accent" => {
     if (status === "confirmed") return "primary"
     if (status === "pending") return "warning"
     if (status === "cancelled") return "secondary"
     if (status === "expired") return "destructive"
+    if (status === "rescheduled") return "accent"
     return "outline"
   }
 
@@ -388,6 +426,7 @@ export default function AdminBookingsPage() {
     if (status === "pending") return "border-warning/20 bg-warning/5"
     if (status === "cancelled") return "border-secondary/20 bg-secondary/5"
     if (status === "expired") return "border-destructive/20 bg-destructive/5"
+    if (status === "rescheduled") return "border-accent/20 bg-accent/5"
     return "border-white/10 bg-white/5"
   }
 
@@ -396,6 +435,7 @@ export default function AdminBookingsPage() {
     if (status === "pending") return "Pendiente"
     if (status === "cancelled") return "Cancelada"
     if (status === "expired") return "Expirada"
+    if (status === "rescheduled") return "Reagendada"
     return status
   }
 
@@ -412,20 +452,25 @@ export default function AdminBookingsPage() {
     if (status === "expired") {
       return "border-destructive/30 bg-destructive/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_35px_rgba(var(--destructive-rgb),0.12)]"
     }
+    if (status === "rescheduled") {
+      return "border-accent/30 bg-accent/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_35px_rgba(var(--accent-rgb),0.12)]"
+    }
     return "border-white/10 bg-white/5"
   }
 
   const statusIcon = (status: string) => {
     if (status === "confirmed") return Check
     if (status === "cancelled" || status === "expired") return X
+    if (status === "rescheduled") return Check
     return AlertTriangle
   }
 
-  const statusIconVariant = (status: string): "primary" | "warning" | "secondary" | "destructive" | "muted" => {
+  const statusIconVariant = (status: string): "primary" | "warning" | "secondary" | "destructive" | "muted" | "accent" => {
     if (status === "confirmed") return "primary"
     if (status === "pending") return "warning"
     if (status === "cancelled") return "secondary"
     if (status === "expired") return "destructive"
+    if (status === "rescheduled") return "accent"
     return "muted"
   }
 
@@ -467,8 +512,14 @@ export default function AdminBookingsPage() {
       await loadBookings()
       setRescheduleOpen(false)
       setRescheduleBooking(null)
+      sonnerToast.success("Cita reagendada", {
+        description: "La cita se ha reagendado correctamente.",
+      })
     } catch (err) {
       const message = err instanceof Error ? err.message : "No se pudo reagendar la cita"
+      sonnerToast.error("No se pudo reagendar la cita", {
+        description: message,
+      })
       toast({
         variant: "destructive",
         title: "No se pudo reagendar la cita",
@@ -513,12 +564,18 @@ export default function AdminBookingsPage() {
       await loadBookings()
       setCreateOpen(false)
       setCreateEmail("")
+      sonnerToast.success("Cita creada", {
+        description: "La nueva cita se ha creado y enviado correctamente.",
+      })
       toast({
         title: "Cita creada",
         description: "La nueva cita se ha creado y enviado correctamente.",
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : "No se pudo crear la cita"
+      sonnerToast.error("No se pudo crear la cita", {
+        description: message,
+      })
       toast({
         variant: "destructive",
         title: "No se pudo crear la cita",
@@ -540,9 +597,11 @@ export default function AdminBookingsPage() {
             <DialogTitle>Confirmar eliminación</DialogTitle>
             <DialogDescription>
               {deleteBookingTarget
-                ? `Vas a eliminar la cita ${
-                    deleteBookingTarget.status === "expired" ? "expirada" : "cancelada"
-                  } del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time}.`
+                ? ["pending", "confirmed"].includes(deleteBookingTarget.status)
+                  ? `La cita del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time} sigue activa. Si continúas, se cancelará automáticamente y se avisará al cliente y a info@clinvetia.com.`
+                  : `Vas a eliminar la cita ${
+                      deleteBookingTarget.status === "expired" ? "expirada" : "cancelada"
+                    } del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time}.`
                 : "Confirma la eliminación de la cita."}
             </DialogDescription>
           </DialogHeader>
@@ -560,7 +619,9 @@ export default function AdminBookingsPage() {
                 await deleteBooking(id)
               }}
             >
-              Eliminar cita
+              {deleteBookingTarget && ["pending", "confirmed"].includes(deleteBookingTarget.status)
+                ? "Cancelar cita"
+                : "Eliminar cita"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -894,7 +955,10 @@ export default function AdminBookingsPage() {
         {!loading && (
           <div ref={listRef} className="relative mb-4 space-y-5">
             {pagedBookings.map((booking, index) => {
-              const meetLink = booking.googleMeetLink || `https://meet.google.com/new#booking-${booking.id}`
+              const meetLink =
+                booking.status !== "cancelled" && booking.status !== "expired" && booking.status !== "rescheduled"
+                  ? booking.googleMeetLink || `https://meet.google.com/new#booking-${booking.id}`
+                  : null
               return (
               <div
                 key={booking.id}
@@ -912,18 +976,22 @@ export default function AdminBookingsPage() {
                       {new Date(booking.date).toLocaleDateString("es-ES")} · {booking.time}
                     </div>
                     <div className="text-xs text-muted-foreground">{booking.duration} min</div>
-                    <div className="text-xs text-muted-foreground/80">ID {booking.id.slice(-6)}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Google Meet:{" "}
-                      <a
-                        href={meetLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary underline-offset-2 hover:underline break-all"
-                      >
-                        {meetLink}
-                      </a>
-                    </div>
+                    <div className="text-xs text-muted-foreground/80 break-all">ID {booking.id}</div>
+                    {meetLink ? (
+                      <div className="text-xs text-muted-foreground">
+                        Google Meet:{" "}
+                        <a
+                          href={meetLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary underline-offset-2 hover:underline break-all"
+                        >
+                          {meetLink}
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground">Google Meet no disponible</div>
+                    )}
                   </div>
 
                   <div className="h-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 space-y-3">
@@ -950,7 +1018,7 @@ export default function AdminBookingsPage() {
                     <div className="flex h-full flex-col justify-between gap-4 lg:min-w-[220px]">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          {(booking.status === "cancelled" || booking.status === "expired") && canOperate ? (
+                          {canOperate ? (
                             <Button
                               type="button"
                               variant="ghost"
@@ -959,14 +1027,22 @@ export default function AdminBookingsPage() {
                               onClick={() => setDeleteBookingTarget(booking)}
                               className="!w-auto shrink-0 cursor-pointer border border-destructive/30 bg-destructive/10 px-2.5 text-destructive hover:bg-destructive/15"
                               aria-label={
-                                booking.status === "expired"
-                                  ? "Eliminar cita expirada"
-                                  : "Eliminar cita cancelada"
+                                booking.status === "pending"
+                                  ? "Cancelar cita pendiente"
+                                  : booking.status === "confirmed"
+                                    ? "Cancelar cita activa"
+                                    : booking.status === "expired"
+                                      ? "Eliminar cita expirada"
+                                      : "Eliminar cita cancelada"
                               }
                               title={
-                                booking.status === "expired"
-                                  ? "Eliminar cita expirada"
-                                  : "Eliminar cita cancelada"
+                                booking.status === "pending"
+                                  ? "Cancelar cita pendiente"
+                                  : booking.status === "confirmed"
+                                    ? "Cancelar cita activa"
+                                    : booking.status === "expired"
+                                      ? "Eliminar cita expirada"
+                                      : "Eliminar cita cancelada"
                               }
                             >
                               {updatingId === booking.id ? (
@@ -988,7 +1064,7 @@ export default function AdminBookingsPage() {
 
                       {canOperate && (
                         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap lg:justify-end">
-                          {booking.status !== "expired" && (
+                          {booking.status !== "expired" && booking.status !== "rescheduled" && (
                             <Button
                               type="button"
                               variant="default"
@@ -1009,7 +1085,7 @@ export default function AdminBookingsPage() {
                           >
                             Reagendar
                           </Button>
-                          {booking.status !== "expired" ? (
+                          {booking.status !== "expired" && booking.status !== "rescheduled" ? (
                             <Button
                               type="button"
                               variant="destructive"

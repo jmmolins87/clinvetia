@@ -11,7 +11,7 @@ type ROINode = {
   roi?: number | null
 } | null | undefined
 
-const BOOKING_STATUSES = new Set(["pending", "confirmed", "expired", "cancelled"])
+const BOOKING_STATUSES = new Set(["pending", "confirmed", "expired", "cancelled", "rescheduled"])
 
 function hasCompleteROI(roi: ROINode) {
   return (
@@ -57,7 +57,7 @@ function normalizeStatuses(value: string | null) {
   return value
     .split(",")
     .map((status) => status.trim().toLowerCase())
-    .filter((status): status is "pending" | "confirmed" | "expired" | "cancelled" => BOOKING_STATUSES.has(status))
+    .filter((status): status is "pending" | "confirmed" | "expired" | "cancelled" | "rescheduled" => BOOKING_STATUSES.has(status))
 }
 
 function normalizeLimit(value: string | null, defaultValue: number) {
@@ -160,6 +160,7 @@ export async function getAgentCalendarPayload(filters: ReturnType<typeof parseCa
       confirmed: countsByStatus.confirmed ?? 0,
       expired: countsByStatus.expired ?? 0,
       cancelled: countsByStatus.cancelled ?? 0,
+      rescheduled: countsByStatus.rescheduled ?? 0,
     },
     bookings: bookings.map((booking) => {
       const contact = contactByBookingId[String(booking._id)]

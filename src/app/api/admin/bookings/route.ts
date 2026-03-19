@@ -23,6 +23,7 @@ import {
   deleteDemoBooking,
   getDemoBookingById,
   listDemoBookings,
+  normalizeDemoHistoricalBookings,
   rescheduleDemoBooking,
   updateDemoBookingStatus,
 } from "@/lib/admin-demo-bookings-state"
@@ -31,7 +32,7 @@ const updateBookingSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("status"),
     id: z.string().min(1),
-    status: z.enum(["pending", "confirmed", "cancelled", "expired"]),
+    status: z.enum(["pending", "confirmed", "cancelled", "expired", "rescheduled"]),
   }),
   z.object({
     action: z.literal("reschedule"),
@@ -53,18 +54,55 @@ const updateBookingSchema = z.discriminatedUnion("action", [
   }),
 ])
 
-function buildCreateBookingDeliveryTargets(customerEmail: string, adminEmail: string) {
+function buildCreateBookingDeliveryTargets(customerEmail: string) {
   const sharedMailbox = getSharedMailboxEmail()
   const normalizedCustomerEmail = customerEmail.trim().toLowerCase()
-  const normalizedAdminEmail = adminEmail.trim().toLowerCase()
 
   return Array.from(
     new Set([
       normalizedCustomerEmail,
       sharedMailbox,
-      normalizedAdminEmail !== sharedMailbox ? normalizedAdminEmail : null,
     ].filter((value): value is string => Boolean(value)))
   )
+}
+
+async function normalizeHistoricalBookingsByEmail(email: string, excludeBookingId?: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) return
+
+  const relatedContacts = await Contact.find({ email: normalizedEmail }).select("bookingId").lean()
+  const relatedBookingIds = relatedContacts
+    .map((contact) => contact.bookingId)
+    .filter(Boolean)
+    .map((id) => String(id))
+    .filter((id) => id !== excludeBookingId)
+
+  if (!relatedBookingIds.length) return
+
+  const relatedBookings = await Booking.find({ _id: { $in: relatedBookingIds } })
+    .select("_id date time")
+    .lean()
+
+  const sortedIds = relatedBookings
+    .map((booking) => {
+      const [hour = 0, minute = 0] = booking.time.split(":").map(Number)
+      const date = new Date(booking.date)
+      date.setHours(hour, minute, 0, 0)
+      return { id: String(booking._id), sortValue: date.getTime() }
+    })
+    .sort((left, right) => right.sortValue - left.sortValue)
+    .map((item) => item.id)
+
+  const rescheduledIds = sortedIds.slice(0, 2)
+  const cancelledIds = sortedIds.slice(2)
+
+  if (rescheduledIds.length) {
+    await Booking.updateMany({ _id: { $in: rescheduledIds } }, { $set: { status: "rescheduled" } })
+  }
+
+  if (cancelledIds.length) {
+    await Booking.updateMany({ _id: { $in: cancelledIds } }, { $set: { status: "cancelled" } })
+  }
 }
 
 export async function GET(req: Request) {
@@ -147,7 +185,7 @@ export async function POST(req: Request) {
         }
         const customerEmail = parsed.email.trim().toLowerCase()
         const supportEmail = getSharedMailboxEmail()
-        const deliveryTargets = buildCreateBookingDeliveryTargets(customerEmail, auth.data.admin.email)
+        const deliveryTargets = buildCreateBookingDeliveryTargets(customerEmail)
         const meetingLink = buildGoogleMeetLink(`demo-${crypto.randomUUID()}`)
         const start = new Date(parsed.date)
         const [hour, min] = parsed.time.split(":").map(Number)
@@ -201,6 +239,7 @@ export async function POST(req: Request) {
             body: htmlContent,
           })
         }
+        normalizeDemoHistoricalBookings(customerEmail)
         return NextResponse.json({ ok: true, booking: created })
       }
 
@@ -209,14 +248,15 @@ export async function POST(req: Request) {
         if (!booking) {
           return NextResponse.json({ error: "Booking not found" }, { status: 404 })
         }
-        if (!["cancelled", "expired"].includes(booking.status)) {
-          return NextResponse.json(
-            { error: "Solo se pueden eliminar citas canceladas o expiradas" },
-            { status: 409 }
-          )
+        if (["cancelled", "expired"].includes(booking.status)) {
+          deleteDemoBooking(parsed.id)
+          return NextResponse.json({ ok: true })
         }
-        deleteDemoBooking(parsed.id)
-        return NextResponse.json({ ok: true })
+        const updated = updateDemoBookingStatus(parsed.id, "cancelled")
+        if (!updated) {
+          return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+        }
+        return NextResponse.json({ ok: true, booking: updated })
       }
 
       if (parsed.action === "status") {
@@ -240,6 +280,9 @@ export async function POST(req: Request) {
       }
       if (!result.booking) {
         return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+      }
+      if (result.booking.email) {
+        normalizeDemoHistoricalBookings(result.booking.email, result.booking.id)
       }
       return NextResponse.json({ ok: true, booking: result.booking })
     }
@@ -368,7 +411,7 @@ export async function POST(req: Request) {
           contentType: "text/calendar",
         },
       ]
-      const deliveryTargets = buildCreateBookingDeliveryTargets(customerEmail, auth.data.admin.email)
+      const deliveryTargets = buildCreateBookingDeliveryTargets(customerEmail)
 
       for (const target of deliveryTargets) {
         const result = await sendBrevoEmail({
@@ -391,6 +434,7 @@ export async function POST(req: Request) {
           googleMeetLink: meetingLink,
         })
       }
+      await normalizeHistoricalBookingsByEmail(customerEmail, bookingId)
 
       try {
         await recordAdminAudit({
@@ -435,19 +479,94 @@ export async function POST(req: Request) {
     const bookingId = String(booking._id)
     const meetingLink = booking.googleMeetLink || buildGoogleMeetLink(bookingId)
 
+    const deleteCancelsBooking = parsed.action === "delete" && !["cancelled", "expired"].includes(booking.status)
+
     if (parsed.action === "delete") {
-      if (!["cancelled", "expired"].includes(booking.status)) {
-        return NextResponse.json(
-          { error: "Solo se pueden eliminar citas canceladas o expiradas" },
-          { status: 409 }
-        )
+      if (deleteCancelsBooking) {
+        await Booking.updateOne({ _id: booking._id }, { $set: { status: "cancelled" } })
+        booking.status = "cancelled"
+
+        if (contact?.email) {
+          const [hour, min] = booking.time.split(":").map(Number)
+          const start = new Date(booking.date)
+          start.setHours(hour, min, 0, 0)
+          const end = new Date(start)
+          end.setMinutes(end.getMinutes() + booking.duration)
+          const dateLabel = start.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+          const subject = "Tu demo ha sido cancelada"
+          const htmlContent = leadSummaryEmail({
+            brandName,
+            nombre: contact.nombre,
+            email: contact.email,
+            telefono: contact.telefono,
+            clinica: contact.clinica,
+            mensaje: contact.mensaje,
+            supportEmail,
+            booking: {
+              dateLabel,
+              timeLabel: booking.time,
+              duration: booking.duration,
+              meetingLink,
+            },
+            roi: contact.roi ?? null,
+          })
+          const attachments = [
+            {
+              name: "clinvetia-demo.ics",
+              content: Buffer.from(
+                buildICS({
+                  uid: bookingId,
+                  start,
+                  end,
+                  summary: "Demo Clinvetia",
+                  description: `Demo personalizada con Clinvetia. Enlace Google Meet: ${meetingLink}`,
+                  location: meetingLink,
+                  url: meetingLink,
+                  organizerEmail: supportEmail,
+                  attendeeEmail: contact.email,
+                })
+              ).toString("base64"),
+              contentType: "text/calendar",
+            },
+          ]
+          const deliveryTargets = buildCreateBookingDeliveryTargets(contact.email)
+
+          for (const target of deliveryTargets) {
+            const result = await sendBrevoEmail({
+              to: [{ email: target, name: target === contact.email ? contact.nombre : brandName }],
+              subject,
+              htmlContent,
+              attachments,
+              replyTo: { email: supportEmail },
+            })
+
+            await appendBookingEmailEvent({
+              bookingId,
+              category: "booking_cancelled",
+              subject,
+              intendedRecipient: contact.email,
+              deliveredTo: target,
+              status: result.ok ? "sent" : "failed",
+              error: result.error ?? null,
+              message: contact.mensaje,
+              googleMeetLink: meetingLink,
+            })
+          }
+        }
+
+        await clearRoiForBookingContext({
+          bookingId,
+          bookingSessionToken: booking.sessionToken ?? null,
+          contactSessionToken: contact?.sessionToken ? String(contact.sessionToken) : null,
+        })
+      } else {
+        await clearRoiForBookingContext({
+          bookingId,
+          bookingSessionToken: booking.sessionToken ?? null,
+          contactSessionToken: contact?.sessionToken ? String(contact.sessionToken) : null,
+        })
+        await Booking.deleteOne({ _id: booking._id })
       }
-      await clearRoiForBookingContext({
-        bookingId,
-        bookingSessionToken: booking.sessionToken ?? null,
-        contactSessionToken: contact?.sessionToken ? String(contact.sessionToken) : null,
-      })
-      await Booking.deleteOne({ _id: booking._id })
     } else if (parsed.action === "status") {
       await Booking.updateOne({ _id: booking._id }, { $set: { status: parsed.status } })
       booking.status = parsed.status
@@ -504,7 +623,7 @@ export async function POST(req: Request) {
               ]
             : undefined
 
-        const deliveryTargets = buildCreateBookingDeliveryTargets(contact.email, auth.data.admin.email)
+        const deliveryTargets = buildCreateBookingDeliveryTargets(contact.email)
         for (const target of deliveryTargets) {
           const result = await sendBrevoEmail({
             to: [{ email: target, name: target === contact.email ? contact.nombre : brandName }],
@@ -595,6 +714,7 @@ export async function POST(req: Request) {
       expiresAt.setHours(23, 59, 59, 999)
       const formExpiresAt = new Date()
       formExpiresAt.setMinutes(formExpiresAt.getMinutes() + 10)
+      const nextMeetingLink = buildGoogleMeetLink(`${bookingId}-${crypto.randomUUID()}`)
 
       await Booking.updateOne(
         { _id: booking._id },
@@ -607,6 +727,7 @@ export async function POST(req: Request) {
             formExpiresAt,
             demoExpiresAt,
             status: "confirmed",
+            googleMeetLink: nextMeetingLink,
           },
         }
       )
@@ -618,6 +739,7 @@ export async function POST(req: Request) {
       booking.formExpiresAt = formExpiresAt
       booking.demoExpiresAt = demoExpiresAt
       booking.status = "confirmed"
+      booking.googleMeetLink = nextMeetingLink
 
       if (!contact?.email) {
         return NextResponse.json(
@@ -639,9 +761,9 @@ export async function POST(req: Request) {
           start,
           end,
           summary: "Demo Clinvetia (reagendada)",
-          description: `Demo personalizada con Clinvetia - cita reagendada. Enlace Google Meet: ${meetingLink}`,
-          location: meetingLink,
-          url: meetingLink,
+          description: `Demo personalizada con Clinvetia - cita reagendada. Enlace Google Meet: ${nextMeetingLink}`,
+          location: nextMeetingLink,
+          url: nextMeetingLink,
           organizerEmail: supportEmail,
           attendeeEmail: contact.email,
         })
@@ -655,7 +777,7 @@ export async function POST(req: Request) {
           clinica: contact.clinica,
           mensaje: contact.mensaje,
           supportEmail,
-          booking: { dateLabel, timeLabel, duration: parsed.duration, meetingLink },
+          booking: { dateLabel, timeLabel, duration: parsed.duration, meetingLink: nextMeetingLink },
           roi: contact.roi ?? null,
         })
         const attachments = [
@@ -665,7 +787,7 @@ export async function POST(req: Request) {
             contentType: "text/calendar",
           },
         ]
-        const deliveryTargets = buildCreateBookingDeliveryTargets(contact.email, auth.data.admin.email)
+        const deliveryTargets = buildCreateBookingDeliveryTargets(contact.email)
         for (const target of deliveryTargets) {
           const result = await sendBrevoEmail({
             to: [{ email: target, name: target === contact.email ? contact.nombre : brandName }],
@@ -684,25 +806,30 @@ export async function POST(req: Request) {
             status: result.ok ? "sent" : "failed",
             error: result.error ?? null,
             message: contact.mensaje,
-            googleMeetLink: meetingLink,
+            googleMeetLink: nextMeetingLink,
           })
         }
+        await normalizeHistoricalBookingsByEmail(contact.email, bookingId)
       }
     }
+
+    const auditAction =
+      parsed.action === "delete"
+        ? deleteCancelsBooking
+          ? "CANCEL_BOOKING"
+          : "DELETE_BOOKING"
+        : parsed.action === "reschedule"
+          ? "RESCHEDULE_BOOKING"
+          : parsed.status === "confirmed"
+            ? "ACCEPT_BOOKING"
+            : parsed.status === "cancelled"
+              ? "CANCEL_BOOKING"
+              : "UPDATE_BOOKING_STATUS"
 
     try {
       await recordAdminAudit({
         adminId: auth.data.admin.id,
-        action:
-          parsed.action === "delete"
-            ? "DELETE_BOOKING"
-            : parsed.action === "reschedule"
-            ? "RESCHEDULE_BOOKING"
-            : parsed.status === "confirmed"
-              ? "ACCEPT_BOOKING"
-              : parsed.status === "cancelled"
-                ? "CANCEL_BOOKING"
-                : "UPDATE_BOOKING_STATUS",
+        action: auditAction,
         targetType: "booking",
         targetId: parsed.id,
         metadata: {
@@ -711,6 +838,7 @@ export async function POST(req: Request) {
           date: booking.date.toISOString(),
           duration: booking.duration,
           action: parsed.action,
+          deleteMode: parsed.action === "delete" ? (deleteCancelsBooking ? "cancel" : "hard-delete") : undefined,
         },
       })
     } catch (auditError) {
@@ -721,7 +849,7 @@ export async function POST(req: Request) {
       ok: true,
       booking: {
         id: String(booking._id),
-        status: parsed.action === "delete" ? "deleted" : booking.status,
+        status: parsed.action === "delete" && !deleteCancelsBooking ? "deleted" : booking.status,
         date: booking.date.toISOString(),
         time: booking.time,
         duration: booking.duration,

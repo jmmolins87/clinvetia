@@ -58,6 +58,13 @@ function sortBookings(items: DemoBooking[]) {
   return [...items].sort((a, b) => +new Date(b.createdAt || b.date) - +new Date(a.createdAt || a.date))
 }
 
+function toBookingSortValue(item: DemoBooking) {
+  const [hour = 0, minute = 0] = item.time.split(":").map(Number)
+  const date = new Date(item.date)
+  date.setHours(hour, minute, 0, 0)
+  return date.getTime()
+}
+
 export function listDemoBookings() {
   return sortBookings(demoBookingsState)
 }
@@ -124,7 +131,28 @@ export function rescheduleDemoBooking(
   booking.date = params.date
   booking.time = params.time
   booking.duration = params.duration
+  booking.googleMeetLink = `https://meet.google.com/new#booking-${booking.id}-${crypto.randomUUID()}`
   return { booking, conflict: false }
+}
+
+export function normalizeDemoHistoricalBookings(email: string, excludeId?: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) return
+
+  const relatedIds = demoBookingsState
+    .filter((booking) => booking.id !== excludeId && booking.email?.trim().toLowerCase() === normalizedEmail)
+    .sort((left, right) => toBookingSortValue(right) - toBookingSortValue(left))
+    .map((booking) => booking.id)
+
+  const nextStatusById = new Map(
+    relatedIds.map((id, index) => [id, index < 2 ? "rescheduled" : "cancelled"])
+  )
+
+  demoBookingsState = demoBookingsState.map((booking) =>
+    nextStatusById.has(booking.id)
+      ? { ...booking, status: nextStatusById.get(booking.id) as string }
+      : booking
+  )
 }
 
 export function deleteDemoBooking(id: string) {
