@@ -1,4 +1,4 @@
-import { DEMO_BOOKINGS, DEMO_CONTACTS } from "@/lib/admin-demo-data"
+import { createDemoBookings, createDemoContacts } from "@/lib/admin-demo-data"
 
 type DemoBooking = {
   id: string
@@ -29,7 +29,7 @@ type DemoContact = {
   nombre: string
   email: string
   telefono?: string
-  clinica: string
+  clinica: string 
   mensaje?: string
   roi?: {
     monthlyPatients?: number
@@ -51,8 +51,8 @@ function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
 }
 
-let demoBookingsState: DemoBooking[] = deepClone(DEMO_BOOKINGS)
-let demoContactsState: DemoContact[] = deepClone(DEMO_CONTACTS)
+let demoBookingsState: DemoBooking[] = deepClone(createDemoBookings())
+let demoContactsState: DemoContact[] = deepClone(createDemoContacts())
 
 function sortBookings(items: DemoBooking[]) {
   return [...items].sort((a, b) => +new Date(b.createdAt || b.date) - +new Date(a.createdAt || a.date))
@@ -192,6 +192,6 @@ export function deleteDemoContact(id: string) {
 }
 
 export function resetDemoBookingsState() {
-  demoBookingsState = deepClone(DEMO_BOOKINGS)
-  demoContactsState = deepClone(DEMO_CONTACTS)
+  demoBookingsState = deepClone(createDemoBookings())
+  demoContactsState = deepClone(createDemoContacts())
 }

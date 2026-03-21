@@ -378,10 +378,20 @@ function ContactFormWithROI() {
       (!!storedBooking?.demoExpiresAt && new Date(storedBooking.demoExpiresAt).getTime() <= Date.now()))
 
   useEffect(() => {
+    if (!mounted) return
+    if (!storedBooking || storedBooking.contactSubmitted || storedBooking.contact) {
+      setFormExpiration(null)
+      return
+    }
+    setFormExpiration(storedBooking.formExpiresAt ?? null)
+  }, [mounted, setFormExpiration, storedBooking])
+
+  useEffect(() => {
     if (!mounted || expirationHandled) return
     if (!isExpired && !isDemoExpired) return
 
     setExpirationHandled(true)
+    setFormExpiration(null)
     setExpiredDialogOpen(true)
     setStoredBooking((prev) => (prev ? { ...prev, status: "expired" } : prev))
 
@@ -398,11 +408,12 @@ function ContactFormWithROI() {
     storage.remove("local", "demo_access_token")
     setBookingAccessToken(null)
     setBookingId(null)
-  }, [mounted, expirationHandled, isExpired, isDemoExpired, bookingId, bookingAccessToken])
+  }, [mounted, expirationHandled, isExpired, isDemoExpired, bookingId, bookingAccessToken, setFormExpiration])
 
   useEffect(() => {
     if (!mounted) return
     const onExpired = () => {
+      setFormExpiration(null)
       setExpiredDialogOpen(true)
       try {
         localStorage.setItem("clinvetia:booking-expired-at", String(Date.now()))
@@ -438,7 +449,7 @@ function ContactFormWithROI() {
       window.removeEventListener("clinvetia:booking-expired", onExpired)
       window.removeEventListener("storage", onStorage)
     }
-  }, [mounted, router, searchParams, toast])
+  }, [mounted, router, searchParams, setFormExpiration, toast])
 
   useEffect(() => {
     if (!mounted) return

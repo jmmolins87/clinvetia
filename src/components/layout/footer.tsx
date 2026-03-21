@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { BrandName } from "@/components/ui/brand-name"
 import { SkeletonWrapper } from "@/components/ui/skeleton-wrapper"
@@ -127,11 +128,16 @@ function FooterColumn({
 // ── Footer ────────────────────────────────────────────────────────────────────
 export function Footer() {
   const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
   const { t } = useTranslationSkeleton()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  if (pathname?.startsWith("/admin")) {
+    return null
+  }
 
   return (
     <footer

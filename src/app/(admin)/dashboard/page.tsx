@@ -14,6 +14,7 @@ import {
   Clock3,
   Inbox,
   Mail,
+  FolderOpen,
   Search,
   Send,
   TimerReset,
@@ -380,10 +381,13 @@ export default function AdminDashboardPage() {
   const [emailMailbox, setEmailMailbox] = useState<"shared" | "self">("self")
   const [canUseSharedMailbox, setCanUseSharedMailbox] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
-  const [bookingSearch, setBookingSearch] = useState("")
+  const [bookingSearchInput, setBookingSearchInput] = useState("")
+  const [appliedBookingSearch, setAppliedBookingSearch] = useState("")
+  const [bookingSearchPending, setBookingSearchPending] = useState(false)
   const [desktopBookingIndex, setDesktopBookingIndex] = useState(0)
   const [desktopBookingTransitioning, setDesktopBookingTransitioning] = useState(false)
   const desktopSwitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const bookingSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const openEmailDialog = (target: { nombre: string; email: string }) => {
     setEmailTarget(target)
@@ -510,7 +514,7 @@ export default function AdminDashboardPage() {
 
   const ratio = kpis.totalBookings > 0 ? Math.round((kpis.confirmedBookings / kpis.totalBookings) * 100) : 0
   const recentBookings = useMemo(() => data?.recentBookings ?? [], [data])
-  const normalizedBookingSearch = bookingSearch.trim().toLowerCase()
+  const normalizedBookingSearch = appliedBookingSearch.trim().toLowerCase()
   const filteredRecentBookings = useMemo(() => {
     if (!normalizedBookingSearch) return recentBookings
     return recentBookings.filter((booking) => {
@@ -543,8 +547,26 @@ export default function AdminDashboardPage() {
         clearTimeout(desktopSwitchTimeoutRef.current)
         desktopSwitchTimeoutRef.current = null
       }
+      if (bookingSearchTimeoutRef.current) {
+        clearTimeout(bookingSearchTimeoutRef.current)
+        bookingSearchTimeoutRef.current = null
+      }
     }
   }, [])
+
+  useEffect(() => {
+    if (bookingSearchTimeoutRef.current) {
+      clearTimeout(bookingSearchTimeoutRef.current)
+    }
+    setBookingSearchPending(true)
+    bookingSearchTimeoutRef.current = setTimeout(() => {
+      setAppliedBookingSearch(bookingSearchInput)
+      setDesktopBookingIndex(0)
+      setDesktopBookingTransitioning(false)
+      setBookingSearchPending(false)
+      bookingSearchTimeoutRef.current = null
+    }, 500)
+  }, [bookingSearchInput])
 
   const changeDesktopBooking = useCallback((nextIndex: number) => {
     if (totalRecentBookings <= 1 || desktopBookingTransitioning) return
@@ -795,8 +817,8 @@ export default function AdminDashboardPage() {
               <div className="relative min-w-0">
                 <Icon icon={Search} size="xs" variant="muted" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  value={bookingSearch}
-                  onChange={(event) => setBookingSearch(event.target.value)}
+                  value={bookingSearchInput}
+                  onChange={(event) => setBookingSearchInput(event.target.value)}
                   placeholder="Buscar por nombre, email, clínica, teléfono o ID"
                   className="h-10 w-full min-w-0 pl-9"
                   aria-label="Buscar reserva reciente"
@@ -812,12 +834,22 @@ export default function AdminDashboardPage() {
                 <span>Cargando citas...</span>
               </div>
             )}
-            {!loading && totalRecentBookings === 0 && (
+            {!loading && !bookingSearchPending && totalRecentBookings === 0 && (
               <div className="text-sm text-muted-foreground">
-                {bookingSearch.trim() ? "Sin reservas para la búsqueda actual" : "Sin reservas"}
+                {bookingSearchInput.trim() ? "Sin reservas para la búsqueda actual" : "Sin reservas"}
               </div>
             )}
-            {!loading && totalRecentBookings > 0 && (
+            {!loading && bookingSearchPending && (
+              <div className="relative min-h-[360px]">
+                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-white/10 bg-background/60">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Spinner size="sm" variant="primary" />
+                    <span>Buscando citas...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {!loading && !bookingSearchPending && totalRecentBookings > 0 && (
               <>
                 <div className="relative min-w-0">
                   <div className={desktopBookingTransitioning ? "transition-all duration-200 blur-[2px] opacity-70" : "transition-all duration-200"}>
@@ -989,6 +1021,12 @@ export default function AdminDashboardPage() {
                     <Badge variant="secondary">
                       {new Date(contact.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" })}
                     </Badge>
+                    <Button type="button" variant="outline" size="sm" className="!w-auto px-3" asChild>
+                      <Link href={`/admin/contacts/${contact.id}/trabajos`}>
+                        <Icon icon={FolderOpen} size="xs" variant="default" className="text-current" />
+                        Trabajos
+                      </Link>
+                    </Button>
                     <Button
                       type="button"
                       variant="accent"

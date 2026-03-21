@@ -59,7 +59,9 @@ export default function AdminBookingsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed" | "cancelled" | "expired" | "rescheduled">("all")
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "tomorrow" | "week">("all")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQueryInput, setSearchQueryInput] = useState("")
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState("")
+  const [searchPending, setSearchPending] = useState(false)
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
   const [rescheduleBooking, setRescheduleBooking] = useState<BookingRow | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
@@ -75,6 +77,7 @@ export default function AdminBookingsPage() {
   const listRef = useRef<HTMLDivElement | null>(null)
   const itemRef = useRef<HTMLDivElement | null>(null)
   const footerRef = useRef<HTMLDivElement | null>(null)
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pageSize = useDynamicPageSize({
     listRef,
     itemRef,
@@ -377,7 +380,7 @@ export default function AdminBookingsPage() {
             ? bookingDate >= tomorrow && bookingDate < dayAfterTomorrow
             : bookingDate >= today && bookingDate < weekEnd
 
-    const normalizedQuery = searchQuery.trim().toLowerCase()
+    const normalizedQuery = appliedSearchQuery.trim().toLowerCase()
     const searchOk =
       normalizedQuery.length === 0 ||
       [booking.clinica, booking.nombre, booking.email]
@@ -389,7 +392,7 @@ export default function AdminBookingsPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [statusFilter, dateFilter, searchQuery])
+  }, [statusFilter, dateFilter, appliedSearchQuery])
 
   const totalPages = Math.max(1, Math.ceil(filteredBookings.length / pageSize))
   const pageSafe = Math.min(page, totalPages)
@@ -411,6 +414,31 @@ export default function AdminBookingsPage() {
   useEffect(() => {
     setPage(1)
   }, [filteredBookings.length, pageSize])
+
+  useEffect(() => {
+    if (searchQueryInput === appliedSearchQuery) {
+      setSearchPending(false)
+      return
+    }
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+    setSearchPending(true)
+    searchTimeoutRef.current = setTimeout(() => {
+      setAppliedSearchQuery(searchQueryInput)
+      setPage(1)
+      setSearchPending(false)
+      searchTimeoutRef.current = null
+    }, 500)
+  }, [appliedSearchQuery, searchQueryInput])
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const badgeVariantForStatus = (status: string): "primary" | "warning" | "secondary" | "destructive" | "outline" | "accent" => {
     if (status === "confirmed") return "primary"
@@ -932,8 +960,8 @@ export default function AdminBookingsPage() {
 
             <div className="max-w-md">
               <Input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                value={searchQueryInput}
+                onChange={(event) => setSearchQueryInput(event.target.value)}
                 placeholder="Buscar por clínica, persona o email"
                 className="glass"
               />
@@ -949,7 +977,7 @@ export default function AdminBookingsPage() {
             <span>Cargando citas...</span>
           </div>
         )}
-        {!loading && filteredBookings.length === 0 && (
+        {!loading && !searchPending && filteredBookings.length === 0 && (
           <div className="text-sm text-muted-foreground">Sin reservas para los filtros/búsqueda seleccionados</div>
         )}
         {!loading && (
@@ -966,7 +994,7 @@ export default function AdminBookingsPage() {
                 className={cn(
                   "rounded-xl border p-4 md:p-5 transition-all duration-200",
                   rowClassForStatus(booking.status),
-                  pageNavLoading && "blur-[2px] opacity-70"
+                  (pageNavLoading || searchPending) && "blur-[2px] opacity-70"
                 )}
               >
                 <div className="grid gap-4 lg:grid-cols-[minmax(220px,1fr)_minmax(260px,1.1fr)_minmax(220px,0.95fr)] lg:items-stretch">
@@ -1130,11 +1158,11 @@ export default function AdminBookingsPage() {
                 )}
               </div>
             )})}
-            {pageNavLoading && (
+            {(pageNavLoading || searchPending) && (
               <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-white/10 bg-background/55 backdrop-blur-sm">
                 <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                   <Spinner size="sm" variant="primary" />
-                  Cargando citas...
+                  {searchPending ? "Buscando citas..." : "Cargando citas..."}
                 </div>
               </div>
             )}

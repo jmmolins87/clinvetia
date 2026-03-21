@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { GlassCard } from "@/components/ui/GlassCard"
@@ -8,7 +9,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
 import { Input } from "@/components/ui/input"
-import { Trash2 } from "lucide-react"
+import { FolderOpen, Trash2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -50,12 +51,15 @@ export default function AdminContactsPage() {
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; nombre: string } | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQueryInput, setSearchQueryInput] = useState("")
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState("")
+  const [searchPending, setSearchPending] = useState(false)
   const [page, setPage] = useState(1)
   const [pageNavLoading, setPageNavLoading] = useState<"prev" | "next" | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
   const itemRef = useRef<HTMLDivElement | null>(null)
   const footerRef = useRef<HTMLDivElement | null>(null)
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pageSize = useDynamicPageSize({
     listRef,
     itemRef,
@@ -97,7 +101,7 @@ export default function AdminContactsPage() {
   }, [load])
 
   const filteredContacts = contacts.filter((contact) => {
-    const normalizedQuery = searchQuery.trim().toLowerCase()
+    const normalizedQuery = appliedSearchQuery.trim().toLowerCase()
     if (!normalizedQuery) return true
     return [contact.clinica, contact.nombre, contact.email]
       .filter((value): value is string => Boolean(value))
@@ -106,7 +110,32 @@ export default function AdminContactsPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [filteredContacts.length, pageSize, searchQuery])
+  }, [filteredContacts.length, pageSize, appliedSearchQuery])
+
+  useEffect(() => {
+    if (searchQueryInput === appliedSearchQuery) {
+      setSearchPending(false)
+      return
+    }
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+    setSearchPending(true)
+    searchTimeoutRef.current = setTimeout(() => {
+      setAppliedSearchQuery(searchQueryInput)
+      setPage(1)
+      setSearchPending(false)
+      searchTimeoutRef.current = null
+    }, 500)
+  }, [appliedSearchQuery, searchQueryInput])
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const totalPages = Math.max(1, Math.ceil(filteredContacts.length / pageSize))
   const pageSafe = Math.min(page, totalPages)
@@ -199,8 +228,8 @@ export default function AdminContactsPage() {
         <h2 className="text-2xl font-semibold">Contactos</h2>
         <div className="w-full sm:w-auto sm:min-w-[320px]">
           <Input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
+            value={searchQueryInput}
+            onChange={(event) => setSearchQueryInput(event.target.value)}
             placeholder="Buscar por clínica, persona o email"
             className="glass"
           />
@@ -217,7 +246,7 @@ export default function AdminContactsPage() {
         {!loading && contacts.length === 0 && (
           <div className="text-sm text-muted-foreground">Sin contactos</div>
         )}
-        {!loading && contacts.length > 0 && filteredContacts.length === 0 && (
+        {!loading && contacts.length > 0 && !searchPending && filteredContacts.length === 0 && (
           <div className="text-sm text-muted-foreground">Sin resultados para la búsqueda</div>
         )}
         {!loading && (
@@ -227,7 +256,7 @@ export default function AdminContactsPage() {
                 key={contact.id}
                 ref={index === 0 ? itemRef : undefined}
                 className={
-                  pageNavLoading
+                  pageNavLoading || searchPending
                     ? "space-y-4 rounded-xl border border-border/70 bg-background/70 px-4 py-4 shadow-sm transition-all duration-200 blur-[2px] opacity-70"
                     : "space-y-4 rounded-xl border border-border/70 bg-background/70 px-4 py-4 shadow-sm transition-all duration-200"
                 }
@@ -235,6 +264,12 @@ export default function AdminContactsPage() {
                 <div className="space-y-3 border-b border-border/60 pb-3">
                   <div className="flex w-full items-center gap-2">
                     <Badge variant="secondary">{new Date(contact.createdAt).toLocaleDateString("es-ES")}</Badge>
+                    <Button type="button" size="sm" variant="outline" className="!w-auto px-3" asChild>
+                      <Link href={`/admin/contacts/${contact.id}/trabajos`}>
+                        <Icon icon={FolderOpen} size="xs" variant="default" />
+                        Trabajos
+                      </Link>
+                    </Button>
                     <Button
                       type="button"
                       size="sm"
@@ -309,11 +344,11 @@ export default function AdminContactsPage() {
                 )}
               </div>
             ))}
-            {pageNavLoading && (
+            {(pageNavLoading || searchPending) && (
               <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-white/10 bg-background/55 backdrop-blur-sm">
                 <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                   <Spinner size="sm" variant="secondary" />
-                  Cargando contactos...
+                  {searchPending ? "Buscando contactos..." : "Cargando contactos..."}
                 </div>
               </div>
             )}

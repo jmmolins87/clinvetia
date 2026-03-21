@@ -13,7 +13,8 @@ function currentMonthDate(dayOfMonth: number, hour: number, minute: number) {
   return date.toISOString()
 }
 
-const demoBookingFixtures = [
+function createDemoBookingFixtures() {
+  return [
   {
     id: "DEMO-001",
     contactId: "CNT-001",
@@ -484,13 +485,19 @@ const demoBookingFixtures = [
     emailEvents: [],
   },
 ]
+}
 
-export const DEMO_BOOKINGS = demoBookingFixtures.map(({ contactId, ...booking }) => {
-  void contactId
-  return booking
-})
+export function createDemoBookings() {
+  const demoBookingFixtures = createDemoBookingFixtures()
+  return demoBookingFixtures.map(({ contactId, ...booking }) => {
+    void contactId
+    return booking
+  })
+}
 
-export const DEMO_CONTACTS = [
+export function createDemoContacts() {
+  const demoBookingFixtures = createDemoBookingFixtures()
+  return [
   {
     id: "CNT-001",
     nombre: "Dra. Ana Martín",
@@ -1050,6 +1057,10 @@ export const DEMO_CONTACTS = [
     createdAt: relativeDate(-1, 9, 50),
   },
 ]
+}
+
+export const DEMO_BOOKINGS = createDemoBookings()
+export const DEMO_CONTACTS = createDemoContacts()
 
 export const DEMO_ADMIN_USERS: Array<{
   id: string
