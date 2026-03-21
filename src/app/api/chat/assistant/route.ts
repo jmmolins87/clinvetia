@@ -177,7 +177,7 @@ function sanitizeHistory(
     .map<ChatHistoryMessage>((msg) => ({
       role: msg.role === "assistant" ? ("assistant" as const) : ("user" as const),
       content: msg.content.replace(/\s+/g, " ").trim().slice(0, 400),
-      timestamp: msg.timestamp,
+      timestamp: msg.timestamp instanceof Date ? msg.timestamp.toISOString() : msg.timestamp,
     }))
     .filter((msg) => {
       if (!msg.content.length) return false

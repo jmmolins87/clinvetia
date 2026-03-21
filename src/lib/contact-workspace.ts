@@ -162,7 +162,7 @@ export function buildContactWorkspace(contact: ContactWorkspaceDetail): ContactW
       label: "Lead registrado",
       detail: `${contact.nombre} dejó sus datos para ${contact.clinica}.`,
       date: contact.createdAt,
-      tone: "secondary",
+      tone: "secondary" as const,
     },
     ...(contact.booking
       ? [
