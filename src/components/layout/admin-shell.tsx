@@ -203,7 +203,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="admin-no-glow min-h-screen bg-[radial-gradient(circle_at_10%_0%,rgba(var(--primary-rgb),0.12),transparent_35%),radial-gradient(circle_at_100%_20%,rgba(var(--secondary-rgb),0.10),transparent_40%)] no-scroll-dashboard">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1920px] flex-col px-3 py-4 md:px-5 md:py-6 2xl:px-8">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1920px] flex-col px-3 py-4 sm:px-4 md:px-5 md:py-6 2xl:px-8">
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent className="glass sm:max-w-[520px]">
             <DialogHeader>
@@ -412,9 +412,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </GlassCard>
         </div>
 
-        <div className="flex flex-1 items-start gap-4 lg:gap-5 xl:gap-6">
-        <aside className="sticky top-6 hidden h-fit w-[250px] shrink-0 self-start xl:block 2xl:w-[280px]">
-              <GlassCard className="flex h-fit flex-col p-5">
+        <div className="flex flex-1 flex-col gap-4 lg:gap-5 xl:flex-row xl:items-start xl:gap-6">
+        <aside className="hidden w-[250px] shrink-0 self-start xl:block 2xl:w-[280px]">
+          <div className="fixed top-6 left-[max(1.25rem,calc((100vw-1920px)/2+1.25rem))] z-20 w-[250px] 2xl:left-[max(2rem,calc((100vw-1920px)/2+2rem))] 2xl:w-[280px]">
+              <GlassCard className="flex max-h-[calc(100dvh-3rem)] flex-col overflow-y-auto p-5">
             <div className="space-y-4 border-b border-white/10 pb-5">
               <div className="space-y-2.5">
                 <div className="text-lg font-semibold leading-tight">
@@ -473,16 +474,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
             </div>
               </GlassCard>
+          </div>
         </aside>
 
-        <div className="min-w-0 flex-1 pr-1">
-          <GlassCard className="mb-5 hidden p-5 md:p-6 xl:block">
+        <div className="min-w-0 w-full flex-1 pr-1 xl:max-w-[calc(100%-274px)] 2xl:max-w-[calc(100%-304px)]">
+          <GlassCard className="mb-5 hidden p-4 lg:p-5 2xl:p-6 xl:block">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-sm text-muted-foreground">Administración</div>
-                <div className="text-xl font-semibold tracking-tight">Centro de operaciones Clinvetia</div>
+                <div className="text-lg font-semibold tracking-tight 2xl:text-xl">Centro de operaciones Clinvetia</div>
               </div>
-              <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 md:w-auto md:max-w-full md:flex-nowrap">
+              <div className="ml-auto flex w-full flex-col gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 lg:px-4 xl:items-stretch 2xl:w-auto 2xl:min-w-[520px] 2xl:flex-row 2xl:items-center 2xl:justify-end 2xl:gap-2">
                 <div className="flex min-w-0 items-center gap-2 pl-1">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full border border-primary/40 bg-primary/15">
                     <Icon icon={Settings} size="sm" variant="primary" />
@@ -496,7 +498,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex w-full flex-wrap items-center justify-end gap-2 md:w-auto md:flex-nowrap">
+                <div className="flex w-full flex-wrap items-center justify-end gap-2 2xl:w-auto 2xl:flex-nowrap">
                   <ThemeSwitcher />
                   <Button
                     variant="ghost"
