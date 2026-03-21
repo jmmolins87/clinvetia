@@ -14,10 +14,12 @@
 /coverage
 /playwright-report
 /test-results
+/.playwright-cli
 
 # next.js
 /.next/
 /out/
+/storybook-static
 
 # production
 /build
@@ -48,5 +50,8 @@ next-env.d.ts
 .n8n
 .n8n*
 n8n
+!n8n/
+n8n/*
+!n8n/clinvetia-moka-chat-render.json
 .activepieces
 activepieces

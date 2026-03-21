@@ -32,41 +32,11 @@ import { getRecaptchaToken } from "@/lib/recaptcha-client"
 import { useROIStore } from "@/store/roi-store"
 import { BookingCalendar } from "@/components/marketing/booking-calendar"
 import { useTranslationSkeleton } from "@/components/providers/translation-skeleton"
+import type { ChatAssistantResponse as ChatApiResponse, ChatState } from "@/lib/chat-contract"
 
 type ChatMessage = {
   role: "assistant" | "user"
   content: string
-}
-
-type ChatState = {
-  intent?: "book" | "reschedule" | "cancel" | "none"
-  step?: "idle" | "await_timezone" | "await_booking_id" | "await_slot" | "await_email" | "await_email_confirm" | "await_phone" | "await_phone_confirm" | "await_more_help"
-  proposedSlots?: Array<{ date: string; time: string; label: string }>
-  selectedSlot?: { date: string; time: string; label: string } | null
-  email?: string | null
-  phone?: string | null
-  targetBookingId?: string | null
-  targetBookingToken?: string | null
-  city?: string | null
-  objectionAttempts?: number
-  qualificationStage?: number
-  leadContext?: string | null
-}
-
-type ChatApiResponse = {
-  reply: string
-  openCalendar?: boolean
-  openRoiCalculator?: boolean
-  state?: ChatState
-  booking?:
-    | {
-        bookingId: string
-        accessToken: string
-        date: string
-        time: string
-        duration: number
-      }
-    | null
 }
 
 function getInitialMessage(locale: "es" | "en"): ChatMessage {
@@ -74,8 +44,8 @@ function getInitialMessage(locale: "es" | "en"): ChatMessage {
     role: "assistant",
     content:
       locale === "en"
-        ? "Hi, I can help you book, reschedule, or cancel your appointment. Tell me what you need. I can also answer questions about what ClinvetIA is."
-        : "Hola, te ayudo a reservar, reagendar o cancelar tu cita. Dime qué necesitas. También puedo resolver dudas sobre qué es ClinvetIA.",
+        ? "Hi, I'm Moka. I'm here to help you."
+        : "Hola, soy Moka. Estoy aquí para ayudarte.",
   }
 }
 
@@ -110,9 +80,9 @@ function RoiDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent data-chat-scrollable="true" className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Calcula tu ROI antes de reservar</DialogTitle>
+          <DialogTitle>Moka necesita tu ROI antes de reservar</DialogTitle>
           <DialogDescription>
-            Necesitamos estos datos para personalizar el resumen que recibiras por correo.
+            Usaremos estos datos para personalizar el resumen que recibirás por correo.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-5">
@@ -146,7 +116,7 @@ function RoiDialog({
             Cancelar
           </Button>
           <Button onClick={onContinue} disabled={isSubmitting}>
-            {isSubmitting ? "Guardando..." : "Continuar"}
+            {isSubmitting ? "Moka está guardando..." : "Continuar con Moka"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -198,9 +168,9 @@ function ChatPanel({
       <SheetHeader className="px-6 pt-6 pb-4 border-b border-[rgba(var(--white-rgb),0.10)] bg-background/60 backdrop-blur-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <SheetTitle className="text-xl">Chat ClinvetIA</SheetTitle>
+            <SheetTitle className="text-xl">Moka</SheetTitle>
             <SheetDescription className="text-sm">
-              {locale === "en" ? "Manage your appointments without wasting time." : "Gestión de tus citas sin perder el tiempo."}
+              {locale === "en" ? "Your Clinvetia assistant for appointments and questions." : "Tu asistente de Clinvetia para citas y dudas."}
             </SheetDescription>
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
               <span
@@ -218,7 +188,7 @@ function ChatPanel({
               variant="ghost"
               size="icon"
               className="h-9 w-9"
-              aria-label="Cerrar chat"
+              aria-label="Cerrar Moka"
               onClick={onClose}
               disabled={!canClose}
             >
@@ -231,7 +201,7 @@ function ChatPanel({
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9"
-                aria-label="Cerrar chat"
+                aria-label="Cerrar Moka"
                 disabled={!canClose}
               >
                 <Icon icon={X} size="sm" variant="muted" />
@@ -305,7 +275,7 @@ function ChatPanel({
                 </video>
               </div>
               <div className="rounded-2xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 py-3 text-sm text-muted-foreground">
-                {locale === "en" ? "typing..." : "escribiendo..."}
+                {locale === "en" ? "Moka is typing..." : "Moka está escribiendo..."}
               </div>
             </div>
           )}
@@ -321,7 +291,7 @@ function ChatPanel({
             onKeyDown={onInputKeyDown}
             rows={1}
             className="min-h-14 max-h-none flex-1 resize-none overflow-hidden rounded-xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-primary/40"
-            placeholder={locale === "en" ? "Write your message..." : "Escribe tu mensaje..."}
+            placeholder={locale === "en" ? "Write to Moka..." : "Escribe a Moka..."}
             disabled={isSending}
           />
           <Button size="icon" className="h-11 w-11 rounded-xl" type="submit" disabled={isSending || !input.trim()}>
@@ -491,11 +461,13 @@ export function ChatPortal() {
           sessionToken: liveSessionToken,
           bookingToken: liveBookingToken,
           locale,
+          pathname,
+          pageUrl: typeof window !== "undefined" ? window.location.href : null,
         }),
       })
       const data = (await res.json()) as ChatApiResponse & { error?: string }
       if (!res.ok) {
-        throw new Error(data.error || "No se pudo procesar el mensaje")
+        throw new Error(data.error || "Moka no pudo procesar tu mensaje")
       }
 
       if (data.state) {
@@ -536,15 +508,19 @@ export function ChatPortal() {
       const initialDelayMs = 5000 + Math.floor(Math.random() * 5001)
       await new Promise((resolve) => setTimeout(resolve, initialDelayMs))
       setShowTyping(true)
-      const fallbackText = error instanceof Error ? error.message : locale === "en" ? "An error occurred" : "Ha ocurrido un error"
-      const typingDurationMs = Math.min(9000, Math.max(1500, Math.floor(fallbackText.length * 24)))
+      const safeFallbackText = error instanceof Error
+        ? error.message
+        : locale === "en"
+          ? "Moka couldn't respond right now."
+          : "Moka no pudo responder en este momento."
+      const typingDurationMs = Math.min(9000, Math.max(1500, Math.floor(safeFallbackText.length * 24)))
       await new Promise((resolve) => setTimeout(resolve, typingDurationMs))
       setShowTyping(false)
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: fallbackText,
+          content: safeFallbackText,
         },
       ])
     } finally {
@@ -585,7 +561,7 @@ export function ChatPortal() {
           role: "assistant",
           content:
             locale === "en"
-              ? "Perfect, I already have your ROI. I'll open the calendar so you can choose day and time."
+              ? "Perfect, I already have your ROI. I'm opening the calendar so you can choose a day and time."
               : "Perfecto, ya tengo tu ROI. Te abro el calendario para que elijas día y hora.",
         },
       ])
@@ -632,7 +608,7 @@ export function ChatPortal() {
             <SheetTrigger asChild>
               <button
                 type="button"
-                aria-label="Abrir chat"
+                aria-label="Abrir Moka"
                 className={cn(
                   "group relative h-40 w-24 overflow-hidden rounded-[26px] border cursor-pointer",
                   "md:h-36 md:w-28 lg:h-48 lg:w-32 xl:h-52 xl:w-36",
@@ -663,7 +639,7 @@ export function ChatPortal() {
                   <Icon icon={Sparkles} size="xs" variant="primary" />
                 </div>
                 <div className="absolute inset-x-2 bottom-1 rounded-full border border-[rgba(var(--white-rgb),0.20)] bg-[rgba(var(--black-rgb),0.30)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[rgba(var(--white-rgb),0.80)] backdrop-blur">
-                  Chat
+                  Moka
                 </div>
               </button>
             </SheetTrigger>
@@ -694,7 +670,7 @@ export function ChatPortal() {
           size="icon"
           className="h-14 w-14 rounded-full shadow-[0_0_25px_rgba(var(--primary-rgb),0.45)]"
           onClick={() => setOpen(true)}
-          aria-label="Abrir chat"
+          aria-label="Abrir Moka"
         >
           <Icon icon={MessageCircle} size="lg" variant="primary" />
         </Button>
@@ -751,7 +727,7 @@ export function ChatPortal() {
       >
         <DialogContent data-chat-scrollable="true" className="w-[98vw] sm:max-w-5xl max-h-[94vh] overflow-y-auto p-3 md:p-5">
           <DialogHeader>
-            <DialogTitle>Selecciona tu cita</DialogTitle>
+            <DialogTitle>Moka te ayuda a seleccionar tu cita</DialogTitle>
             <DialogDescription>
               Elige uno de los horarios disponibles y confirma tu cita.
             </DialogDescription>

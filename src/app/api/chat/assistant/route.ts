@@ -10,83 +10,18 @@ import { buildICS } from "@/lib/ics"
 import { appendBookingEmailEvent, buildGoogleMeetLink } from "@/lib/booking-communication"
 import { clearRoiForBookingContext } from "@/lib/roi-cleanup"
 import { DEMO_BOOKABLE_TIME_SLOTS, isBookableDemoTimeSlot, isValidDemoTimeSlot } from "@/lib/demo-schedule"
-import { callN8nWebhook, isN8nConfigured } from "@/lib/n8n-integration"
+import {
+  chatAssistantRequestSchema,
+  chatAssistantResponseSchema,
+  type ChatHistoryMessage,
+  type ChatLocale,
+  type ChatSlot,
+  type ChatState,
+  type N8nChatWebhookPayload,
+} from "@/lib/chat-contract"
+import { callN8nChatWebhook, isN8nChatConfigured } from "@/lib/n8n-integration"
 
-type ChatSlot = {
-  date: string
-  time: string
-  label: string
-}
-
-type ChatState = {
-  intent?: "book" | "reschedule" | "cancel" | "none"
-  step?: "idle" | "await_timezone" | "await_booking_id" | "await_slot" | "await_email" | "await_email_confirm" | "await_phone" | "await_phone_confirm" | "await_more_help"
-  proposedSlots?: ChatSlot[]
-  selectedSlot?: ChatSlot | null
-  email?: string | null
-  phone?: string | null
-  targetBookingId?: string | null
-  targetBookingToken?: string | null
-  city?: string | null
-  objectionAttempts?: number
-  qualificationStage?: number
-  leadContext?: string | null
-}
-
-type ChatLocale = "es" | "en"
-type ChatHistoryMessage = {
-  role: "assistant" | "user"
-  content: string
-  timestamp?: string | Date
-}
-
-const schema = z.object({
-  message: z.string().trim().min(1).max(1200),
-  history: z
-    .array(
-      z.object({
-        role: z.enum(["assistant", "user"]),
-        content: z.string().trim().min(1).max(400),
-        timestamp: z.string().datetime().optional(),
-      }),
-    )
-    .max(12)
-    .optional(),
-  state: z
-    .object({
-      intent: z.enum(["book", "reschedule", "cancel", "none"]).optional(),
-      step: z.enum(["idle", "await_timezone", "await_booking_id", "await_slot", "await_email", "await_email_confirm", "await_phone", "await_phone_confirm", "await_more_help"]).optional(),
-      proposedSlots: z
-        .array(
-          z.object({
-            date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-            time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-            label: z.string().min(1).max(120),
-          }),
-        )
-        .optional(),
-      selectedSlot: z
-        .object({
-          date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-          time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-          label: z.string().min(1).max(120),
-        })
-        .nullable()
-        .optional(),
-      email: z.string().email().nullable().optional(),
-      phone: z.string().nullable().optional(),
-      targetBookingId: z.string().nullable().optional(),
-      targetBookingToken: z.string().nullable().optional(),
-      city: z.string().nullable().optional(),
-      objectionAttempts: z.number().int().min(0).max(4).optional(),
-      qualificationStage: z.number().int().min(0).max(6).optional(),
-      leadContext: z.string().nullable().optional(),
-    })
-    .optional(),
-  sessionToken: z.string().optional().nullable(),
-  bookingToken: z.string().optional().nullable(),
-  locale: z.enum(["es", "en"]).optional(),
-})
+const schema = chatAssistantRequestSchema
 
 function isAffirmative(text: string) {
   return /\b(si|sí|correcto|ok|okey|vale|perfecto|confirmo|claro|exacto|de acuerdo|yes|yep|yeah|confirm|sure|correct)\b/i.test(text)
@@ -337,10 +272,11 @@ function detectIntents(text: string) {
 }
 
 const CHAT_SYSTEM_PROMPT = [
-  "Eres el setter comercial de WhatsApp de ClinvetIA.",
+  "Eres Moka, el asistente conversacional de Clinvetia.",
   "Objetivo comercial: mover la conversacion hacia cita consultiva con datos completos.",
   "Regla critica de objeciones: ante rechazo, reintenta 4 veces con estrategias diferentes (curiosidad, identificacion, comparacion social, vision futura).",
   "No menciones IA, herramientas, APIs ni procesos internos.",
+  "Habla de forma cercana, clara y tranquila.",
   "Escribe mensajes cortos y naturales, tono humano, una pregunta por mensaje.",
   "Valida emocion antes de redirigir y referencia lo que dijo el lead.",
   "Si hay objecion, responde con enfoque consultivo y orientado a cita.",
@@ -755,25 +691,43 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const parsed = schema.parse(body)
+    const locale: ChatLocale = parsed.locale === "en" ? "en" : "es"
+    const bypassHeader = req.headers.get("x-clinvetia-chat-bypass-n8n")?.trim()
+    const canBypassN8n = Boolean(
+      bypassHeader &&
+        process.env.N8N_CHAT_WEBHOOK_SECRET &&
+        bypassHeader === process.env.N8N_CHAT_WEBHOOK_SECRET,
+    )
 
-    if (isN8nConfigured()) {
-      const n8nResult = await callN8nWebhook<{
-        reply?: string
-        intent?: string
-        email?: Record<string, unknown>
-      }>({
+    if (!canBypassN8n && isN8nChatConfigured()) {
+      const payload: N8nChatWebhookPayload = {
+        event: "chat.message",
         channel: "web",
-        ...parsed,
-      })
+        source: "website-chatbot",
+        requestId: crypto.randomUUID(),
+        sentAt: new Date().toISOString(),
+        message: parsed.message,
+        locale,
+        history: parsed.history ?? [],
+        state: parsed.state,
+        sessionToken: typeof parsed.sessionToken === "string" && parsed.sessionToken.trim().length > 0 ? parsed.sessionToken.trim() : null,
+        bookingToken: typeof parsed.bookingToken === "string" && parsed.bookingToken.trim().length > 0 ? parsed.bookingToken.trim() : null,
+        pathname: typeof parsed.pathname === "string" && parsed.pathname.trim().length > 0 ? parsed.pathname.trim() : null,
+        pageUrl: typeof parsed.pageUrl === "string" && parsed.pageUrl.trim().length > 0 ? parsed.pageUrl.trim() : null,
+      }
+
+      const n8nResult = await callN8nChatWebhook(payload)
 
       if (n8nResult?.ok && n8nResult.data) {
-        return NextResponse.json(n8nResult.data)
+        const externalResponse = chatAssistantResponseSchema.safeParse(n8nResult.data)
+        if (externalResponse.success) {
+          return NextResponse.json(externalResponse.data)
+        }
       }
     }
 
     await dbConnect()
 
-    const locale: ChatLocale = parsed.locale === "en" ? "en" : "es"
     const t = (es: string, en: string) => (locale === "en" ? en : es)
     const message = parsed.message.trim()
     const lower = message.toLowerCase()
@@ -908,8 +862,8 @@ export async function POST(req: Request) {
     if (current.step === "idle" && /\b(clinvetia|clinvetia\.com|que es clinvetia|quien sois|quienes sois|what is clinvetia|who are you)\b/i.test(lower)) {
       return respond({
         reply: t(
-          "ClinvetIA desarrolla agentes para clinicas veterinarias que organizan citas y mejoran la atencion al cliente. Si te va bien, te propongo ahora mismo tres horarios y te reservo cita en un minuto.",
-          "ClinvetIA builds agents for veterinary clinics that organize appointments and improve client support. If you want, I can suggest three slots right now and book you in under a minute.",
+          "Clinvetia desarrolla agentes para clínicas veterinarias que organizan citas y mejoran la atención al cliente. Soy Moka, y si quieres te propongo ahora mismo tres horarios para una demo.",
+          "Clinvetia builds agents for veterinary clinics that organize appointments and improve client support. I'm Moka, and if you want I can suggest three slots for a demo right now.",
         ),
         state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1 },
       })
@@ -918,8 +872,8 @@ export async function POST(req: Request) {
     if (current.step === "idle" && isGreeting(lower) && !wantsBooking && !wantsReschedule && !wantsCancel) {
       return respond({
         reply: t(
-          "Hola 😊 Soy el agente de ClinvetIA. Me cuentas un poco de tu clínica y cómo captáis nuevos clientes?",
-          "Hi 😊 I'm ClinvetIA's agent. Can you tell me a bit about your clinic and how you currently attract new clients?",
+          "Hola 😊 Soy Moka. Estoy aquí para ayudarte. ¿Me cuentas un poco de tu clínica y cómo captáis nuevos clientes?",
+          "Hi 😊 I'm Moka. I'm here to help you. Can you tell me a bit about your clinic and how you currently attract new clients?",
         ),
         state: { ...current, step: "idle", qualificationStage: 1, objectionAttempts: 0 },
       })
@@ -1510,8 +1464,8 @@ export async function POST(req: Request) {
       }
       return respond({
         reply: t(
-          "Para reservar una cita nueva, hazlo desde el flujo web de ClinvetIA para completar tus datos. Cuando quieras, yo te ayudo a reagendar o cancelar con tu ID de cita.",
-          "To book a new appointment, use ClinvetIA's web flow to complete your details. Whenever you want, I can help you reschedule or cancel using your booking ID.",
+          "Para reservar una cita nueva, usa el flujo web de Clinvetia para completar tus datos. Cuando quieras, yo te ayudo a reagendar o cancelar con tu ID de cita.",
+          "To book a new appointment, use Clinvetia's web flow to complete your details. Whenever you want, I can help you reschedule or cancel using your booking ID.",
         ),
         state: { intent: "none", step: "idle", objectionAttempts: 0 },
       })
@@ -1528,8 +1482,8 @@ export async function POST(req: Request) {
     })
     return respond({
       reply: fallbackAiReply?.text || t(
-        "Te ayudo con lo que necesites: puedo explicarte cómo funcionan nuestros agentes o ayudarte con tu cita. Qué prefieres?",
-        "I can help with whatever you need: I can explain how our agents work or help with your booking. Which do you prefer?",
+        "Soy Moka. Puedo explicarte cómo funciona Clinvetia o ayudarte con tu cita. ¿Qué prefieres?",
+        "I'm Moka. I can explain how Clinvetia works or help with your booking. Which do you prefer?",
       ),
       provider: fallbackAiReply?.provider || "fallback",
       state: { intent: "none", step: "idle", objectionAttempts: 0 },
@@ -1538,6 +1492,11 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid payload", details: error.flatten() }, { status: 400 })
     }
-    return NextResponse.json({ error: "Server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Moka no pudo responder en este momento. Inténtalo de nuevo en unos segundos.",
+      },
+      { status: 500 },
+    )
   }
 }

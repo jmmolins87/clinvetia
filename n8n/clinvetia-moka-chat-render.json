@@ -1,0 +1,100 @@
+{
+  "name": "Clinvetia - Moka Chat Render",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "moka-chat",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -680,
+        -20
+      ],
+      "id": "6c51dc25-8ab9-46b7-9bcb-a71fd69665f4",
+      "name": "Moka Chat Webhook",
+      "webhookId": "clinvetia-moka-chat-render"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const expectedSecret = $env.N8N_CHAT_WEBHOOK_SECRET || '';\nconst input = items[0]?.json || {};\nconst headers = input.headers || {};\nconst receivedSecret = headers['x-clinvetia-n8n-secret'] || headers['X-Clinvetia-N8n-Secret'] || '';\nif (!expectedSecret || receivedSecret !== expectedSecret) {\n  return [{ json: { reply: 'Moka no está disponible ahora mismo.', state: { intent: 'none', step: 'idle' }, booking: null } }];\n}\nconst body = input.body && typeof input.body === 'object' ? input.body : {};\nreturn [{ json: body }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -420,
+        -20
+      ],
+      "id": "312f8ceb-5206-46b4-8aa5-a5de143998e2",
+      "name": "Validate Secret And Normalize"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.CLINVETIA_BASE_URL || 'https://clinvetia.com').replace(/\\/$/, '') + '/api/chat/assistant' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-clinvetia-chat-bypass-n8n",
+              "value": "={{ $env.N8N_CHAT_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": $json.message,\n  \"history\": $json.history || [],\n  \"state\": $json.state || { intent: 'none', step: 'idle' },\n  \"sessionToken\": $json.sessionToken || null,\n  \"bookingToken\": $json.bookingToken || null,\n  \"locale\": $json.locale || 'es',\n  \"pathname\": $json.pathname || null,\n  \"pageUrl\": $json.pageUrl || null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -120,
+        -20
+      ],
+      "id": "71236262-dde9-475a-a06a-4e80c37b3955",
+      "name": "Forward To Clinvetia Chat"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Moka Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Secret And Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Secret And Normalize": {
+      "main": [
+        [
+          {
+            "node": "Forward To Clinvetia Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "779c0848-e1c4-4dd5-bd7d-d2ad476f2f48",
+  "meta": {},
+  "id": "clinvetia-moka-chat-render",
+  "tags": []
+}

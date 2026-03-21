@@ -1,5 +1,10 @@
+function getTrimmedEnv(name: string) {
+  const value = process.env[name]?.trim()
+  return value || null
+}
+
 export function getN8nWebhookUrl() {
-  const url = process.env.N8N_WEBHOOK_URL?.trim()
+  const url = getTrimmedEnv("N8N_WEBHOOK_URL")
   return url || null
 }
 
@@ -7,15 +12,27 @@ export function isN8nConfigured() {
   return Boolean(getN8nWebhookUrl())
 }
 
-export async function callN8nWebhook<T = Record<string, unknown>>(
+export function getN8nChatWebhookUrl() {
+  return getTrimmedEnv("N8N_CHAT_WEBHOOK_URL") || getN8nWebhookUrl()
+}
+
+export function getN8nChatWebhookSecret() {
+  return getTrimmedEnv("N8N_CHAT_WEBHOOK_SECRET") || getTrimmedEnv("N8N_WEBHOOK_SECRET")
+}
+
+export function isN8nChatConfigured() {
+  return Boolean(getN8nChatWebhookUrl())
+}
+
+async function postToWebhook<T = Record<string, unknown>>(
+  webhookUrl: string | null,
+  secret: string | null,
   payload: Record<string, unknown>,
   options?: { timeoutMs?: number },
 ) {
-  const webhookUrl = getN8nWebhookUrl()
   if (!webhookUrl) return null
 
   const timeoutMs = options?.timeoutMs ?? 45000
-  const secret = process.env.N8N_WEBHOOK_SECRET?.trim()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
@@ -57,4 +74,18 @@ export async function callN8nWebhook<T = Record<string, unknown>>(
   } finally {
     clearTimeout(timeout)
   }
+}
+
+export async function callN8nWebhook<T = Record<string, unknown>>(
+  payload: Record<string, unknown>,
+  options?: { timeoutMs?: number },
+) {
+  return postToWebhook<T>(getN8nWebhookUrl(), getTrimmedEnv("N8N_WEBHOOK_SECRET"), payload, options)
+}
+
+export async function callN8nChatWebhook<T = Record<string, unknown>>(
+  payload: Record<string, unknown>,
+  options?: { timeoutMs?: number },
+) {
+  return postToWebhook<T>(getN8nChatWebhookUrl(), getN8nChatWebhookSecret(), payload, options)
 }
