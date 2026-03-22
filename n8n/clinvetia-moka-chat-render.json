@@ -11,7 +11,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -680,
+        -1120,
         -20
       ],
       "id": "6c51dc25-8ab9-46b7-9bcb-a71fd69665f4",
@@ -21,16 +21,115 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const expectedSecret = 'd1683be39187b1559a38c8f80293cb0866778d55613596ba45125c6de3abf37b';\nconst input = items[0]?.json || {};\nconst headers = input.headers || {};\nconst receivedSecret = headers['x-clinvetia-n8n-secret'] || headers['X-Clinvetia-N8n-Secret'] || '';\nif (receivedSecret !== expectedSecret) {\n  return [{ json: { reply: 'Moka no está disponible ahora mismo.', state: { intent: 'none', step: 'idle' }, booking: null } }];\n}\nconst body = input.body && typeof input.body === 'object' ? input.body : {};\nreturn [{ json: body }];"
+        "jsCode": "const CONFIG = {\n  webhookSecret: 'd1683be39187b1559a38c8f80293cb0866778d55613596ba45125c6de3abf37b'\n};\nconst input = items[0]?.json || {};\nconst headers = input.headers || {};\nconst receivedSecret = headers['x-clinvetia-n8n-secret'] || headers['X-Clinvetia-N8n-Secret'] || '';\nif (receivedSecret !== CONFIG.webhookSecret) {\n  return [{ json: { reply: 'Moka no está disponible ahora mismo.', state: { intent: 'none', step: 'idle' }, booking: null, shouldDelegate: false } }];\n}\nconst payload = input.body && typeof input.body === 'object' ? input.body : {};\nconst state = payload.state && typeof payload.state === 'object' ? payload.state : { intent: 'none', step: 'idle' };\nconst message = typeof payload.message === 'string' ? payload.message.trim() : '';\nconst locale = payload.locale === 'en' ? 'en' : 'es';\nconst lower = message.toLowerCase();\nconst history = Array.isArray(payload.history) ? payload.history.slice(-6) : [];\nconst shouldDelegate = Boolean(\n  payload.sessionToken ||\n  payload.bookingToken ||\n  state.intent === 'book' ||\n  state.intent === 'reschedule' ||\n  state.intent === 'cancel' ||\n  /(reserv|reserva|demo|cita|agenda|reagend|reprogram|cancel|horario|slot|booking|appointment|reschedule|roi|presupuesto|factura|trabajo)/i.test(lower)\n);\nconst transcript = history.map((item) => `${item.role === 'assistant' ? 'assistant' : 'user'}: ${String(item.content || '').replace(/\\s+/g, ' ').trim()}`).join('\\n');\nconst triagePrompt = [\n  locale === 'en' ? 'You are Moka, Clinvetia\\'s website assistant.' : 'Eres Moka, el asistente web de Clinvetia.',\n  locale === 'en' ? 'Respond ONLY with valid JSON using this exact format: {\"mode\":\"answer\"|\"delegate\",\"reply\":\"text\"}.' : 'Responde SOLO con JSON valido usando este formato exacto: {\"mode\":\"answer\"|\"delegate\",\"reply\":\"texto\"}.',\n  locale === 'en' ? 'Use mode=answer only for greetings, who-is-Clinvetia, what-do-you-do, simple product questions and general guidance.' : 'Usa mode=answer solo para saludos, quien es Clinvetia, que haceis, dudas simples del servicio y orientacion general.',\n  locale === 'en' ? 'Use mode=delegate for booking, rescheduling, cancellation, times, availability, ROI, forms, client data, tokens, invoices, jobs, quotes, or if unsure.' : 'Usa mode=delegate para reservas, reagendados, cancelaciones, horarios, disponibilidad, ROI, formularios, datos del cliente, tokens, facturas, trabajos, presupuestos o si tienes dudas.',\n  `locale: ${locale}`,\n  `message: ${message}`,\n  `stateIntent: ${state.intent || 'none'}`,\n  `stateStep: ${state.step || 'idle'}`,\n  `history:\\n${transcript || 'none'}`\n].join('\\n');\nreturn [{ json: { payload, message, locale, state, history, triagePrompt, shouldDelegate } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -420,
+        -860,
         -20
       ],
       "id": "312f8ceb-5206-46b4-8aa5-a5de143998e2",
-      "name": "Validate Secret And Normalize"
+      "name": "Validate And Prepare"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.shouldDelegate }}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -620,
+        -20
+      ],
+      "id": "0a4bf3fe-267b-4d00-9f7f-afd7b17c639c",
+      "name": "Must Delegate?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_OPENAI_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4.1-mini', input: $json.triagePrompt, max_output_tokens: 220 }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -360,
+        140
+      ],
+      "id": "4a945a07-a3ab-48d7-b9f1-d9923f4403b9",
+      "name": "OpenAI Triage"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const current = items[0]?.json || {};\nconst payload = current.payload && typeof current.payload === 'object' ? current.payload : {};\nconst state = current.state && typeof current.state === 'object' ? current.state : { intent: 'none', step: 'idle' };\nconst rawText = typeof current.output_text === 'string'\n  ? current.output_text\n  : Array.isArray(current.output)\n    ? current.output.flatMap((entry) => Array.isArray(entry?.content) ? entry.content : []).map((entry) => entry?.text || '').join('\\n')\n    : '';\nlet mode = 'delegate';\nlet reply = '';\nif (rawText) {\n  const cleaned = rawText.replace(/^```json\\s*/i, '').replace(/^```\\s*/i, '').replace(/```$/i, '').trim();\n  try {\n    const parsed = JSON.parse(cleaned);\n    if (parsed && typeof parsed === 'object') {\n      mode = parsed.mode === 'answer' ? 'answer' : 'delegate';\n      reply = typeof parsed.reply === 'string' ? parsed.reply.trim() : '';\n    }\n  } catch {}\n}\nreturn [{ json: { payload, state, aiMode: mode, aiReply: reply, shouldDelegate: !(mode === 'answer' && reply) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        140
+      ],
+      "id": "7f7586de-1381-4670-a19d-a63c83d50bd6",
+      "name": "Parse AI Triage"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.shouldDelegate }}",
+              "operation": "isTrue"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        120,
+        140
+      ],
+      "id": "382c9ab8-c6ea-4fe7-84cc-6594aa17ef14",
+      "name": "Delegate After AI?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = items[0]?.json || {};\nreturn [{ json: { reply: item.aiReply, state: item.state || { intent: 'none', step: 'idle' }, booking: null } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        280
+      ],
+      "id": "183319a8-3784-4124-a0ec-d93ae34e8105",
+      "name": "Return Direct AI Reply"
     },
     {
       "parameters": {
@@ -51,17 +150,48 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"message\": $json.message,\n  \"history\": $json.history || [],\n  \"state\": $json.state || { intent: 'none', step: 'idle' },\n  \"sessionToken\": $json.sessionToken || null,\n  \"bookingToken\": $json.bookingToken || null,\n  \"locale\": $json.locale || 'es',\n  \"pathname\": $json.pathname || null,\n  \"pageUrl\": $json.pageUrl || null\n}",
+        "jsonBody": "={{ JSON.stringify({ message: ($json.payload || {}).message || $json.message || '', history: ($json.payload || {}).history || $json.history || [], state: ($json.payload || {}).state || $json.state || { intent: 'none', step: 'idle' }, sessionToken: ($json.payload || {}).sessionToken || null, bookingToken: ($json.payload || {}).bookingToken || null, locale: ($json.payload || {}).locale || $json.locale || 'es', pathname: ($json.payload || {}).pathname || null, pageUrl: ($json.payload || {}).pageUrl || null }) }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
         -120,
-        -20
+        -140
       ],
       "id": "71236262-dde9-475a-a06a-4e80c37b3955",
-      "name": "Forward To Clinvetia Chat"
+      "name": "Delegate To Clinvetia"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://clinvetia.com/api/chat/assistant",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-clinvetia-chat-bypass-n8n",
+              "value": "d1683be39187b1559a38c8f80293cb0866778d55613596ba45125c6de3abf37b"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: ($json.payload || {}).message || '', history: ($json.payload || {}).history || [], state: ($json.payload || {}).state || { intent: 'none', step: 'idle' }, sessionToken: ($json.payload || {}).sessionToken || null, bookingToken: ($json.payload || {}).bookingToken || null, locale: ($json.payload || {}).locale || 'es', pathname: ($json.payload || {}).pathname || null, pageUrl: ($json.payload || {}).pageUrl || null }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        20
+      ],
+      "id": "d6c73188-ab24-4440-9225-be36b41296eb",
+      "name": "Delegate To Clinvetia After AI"
     }
   ],
   "pinData": {},
@@ -70,18 +200,76 @@
       "main": [
         [
           {
-            "node": "Validate Secret And Normalize",
+            "node": "Validate And Prepare",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Validate Secret And Normalize": {
+    "Validate And Prepare": {
       "main": [
         [
           {
-            "node": "Forward To Clinvetia Chat",
+            "node": "Must Delegate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Must Delegate?": {
+      "main": [
+        [
+          {
+            "node": "Delegate To Clinvetia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Triage": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Triage": {
+      "main": [
+        [
+          {
+            "node": "Delegate After AI?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delegate After AI?": {
+      "main": [
+        [
+          {
+            "node": "Delegate To Clinvetia After AI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Direct AI Reply",
             "type": "main",
             "index": 0
           }
@@ -93,7 +281,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "779c0848-e1c4-4dd5-bd7d-d2ad476f2f48",
+  "versionId": "d0929522-2552-4c0e-b4d0-7526a718dc59",
   "meta": {},
   "id": "clinvetia-moka-chat-render",
   "tags": []
