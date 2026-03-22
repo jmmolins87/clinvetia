@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react"
-import { CalendarDays, Calculator, MessageSquare } from "lucide-react"
 import { CtaSection } from "@/components/marketing/cta-section"
 
 const meta = {
@@ -33,14 +32,13 @@ Bloque CTA reutilizable usado al final de cada página de marketing.
 
 \`\`\`tsx
 import { CtaSection } from "@/components/marketing/cta-section"
-import { CalendarDays, Calculator } from "lucide-react"
 
 <CtaSection
   title="¿Listo para transformar tu clínica?"
   description="Reserva una demo y empieza en 30 minutos."
   actions={[
-    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
-    { label: "Calcular ROI",  href: "/#roi", variant: "secondary", icon: Calculator },
+    { label: "Reservar demo", href: "/contacto", icon: "calendar" },
+    { label: "Calcular ROI",  href: "/#roi", variant: "secondary", icon: "calculator" },
   ]}
 />
 \`\`\`
@@ -59,8 +57,8 @@ export const Glass: Story = {
     title: "¿Listo para transformar la atención de tu clínica?",
     description: "Reserva una demo personalizada y descubre cómo Clinvetia puede aumentar tu capacidad de atención.",
     actions: [
-      { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
-      { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+      { label: "Reservar demo", href: "/contacto", icon: "calendar" },
+      { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: "calculator" },
     ],
     variant: "glass",
   },
@@ -71,14 +69,13 @@ export const Glass: Story = {
       },
       source: {
         code: `import { CtaSection } from "@/components/marketing/cta-section"
-import { CalendarDays, Calculator } from "lucide-react"
 
 <CtaSection
   title="¿Listo para transformar la atención de tu clínica?"
   description="Reserva una demo personalizada y descubre cómo Clinvetia puede aumentar tu capacidad de atención."
   actions={[
-    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
-    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+    { label: "Reservar demo", href: "/contacto", icon: "calendar" },
+    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: "calculator" },
   ]}
   variant="glass"
 />`,
@@ -94,8 +91,8 @@ export const Glow: Story = {
     title: "Prueba Clinvetia gratis",
     description: "Configuramos tu clínica en 30 minutos. Sin compromiso.",
     actions: [
-      { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: CalendarDays },
-      { label: "Chatear", href: "#", variant: "ghost", icon: MessageSquare },
+      { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: "calendar" },
+      { label: "Chatear", href: "#", variant: "ghost", icon: "message" },
     ],
     variant: "glow",
   },
@@ -106,15 +103,14 @@ export const Glow: Story = {
       },
       source: {
         code: `import { CtaSection } from "@/components/marketing/cta-section"
-import { CalendarDays, MessageSquare } from "lucide-react"
 
 <CtaSection
   badge="¿Hablamos?"
   title="Prueba Clinvetia gratis"
   description="Configuramos tu clínica en 30 minutos. Sin compromiso."
   actions={[
-    { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: CalendarDays },
-    { label: "Chatear", href: "#", variant: "ghost", icon: MessageSquare },
+    { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: "calendar" },
+    { label: "Chatear", href: "#", variant: "ghost", icon: "message" },
   ]}
   variant="glow"
 />`,
@@ -129,7 +125,7 @@ export const SingleAction: Story = {
     title: "¿Tu clínica vive alguna de estas situaciones?",
     description: "Descubre cómo Clinvetia puede transformar la atención de tu clínica.",
     actions: [
-      { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
+      { label: "Reservar demo", href: "/contacto", icon: "calendar" },
     ],
     variant: "glass",
   },
@@ -140,13 +136,12 @@ export const SingleAction: Story = {
       },
       source: {
         code: `import { CtaSection } from "@/components/marketing/cta-section"
-import { CalendarDays } from "lucide-react"
 
 <CtaSection
   title="¿Tu clínica vive alguna de estas situaciones?"
   description="Descubre cómo Clinvetia puede transformar la atención de tu clínica."
   actions={[
-    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
+    { label: "Reservar demo", href: "/contacto", icon: "calendar" },
   ]}
   variant="glass"
 />`,
@@ -162,8 +157,8 @@ export const WithBadge: Story = {
     title: "¿Listo para transformar la atención de tu clínica?",
     description: "Reserva una demo personalizada y descubre cómo Clinvetia puede aumentar tu capacidad de atención.",
     actions: [
-      { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
-      { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+      { label: "Reservar demo", href: "/contacto", icon: "calendar" },
+      { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: "calculator" },
     ],
     variant: "glass",
   },
@@ -174,15 +169,14 @@ export const WithBadge: Story = {
       },
       source: {
         code: `import { CtaSection } from "@/components/marketing/cta-section"
-import { CalendarDays, Calculator } from "lucide-react"
 
 <CtaSection
   badge="Nuevo"
   title="¿Listo para transformar la atención de tu clínica?"
   description="Reserva una demo personalizada."
   actions={[
-    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
-    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+    { label: "Reservar demo", href: "/contacto", icon: "calendar" },
+    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: "calculator" },
   ]}
   variant="glass"
 />`,
@@ -206,15 +200,14 @@ export const DarkAndLight: Story = {
       },
       source: {
         code: `import { CtaSection } from "@/components/marketing/cta-section"
-import { CalendarDays, Calculator, MessageSquare } from "lucide-react"
 
 // Variante glass
 <CtaSection
   title="¿Listo para transformar la atención de tu clínica?"
   description="Reserva una demo personalizada."
   actions={[
-    { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
-    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+    { label: "Reservar demo", href: "/contacto", icon: "calendar" },
+    { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: "calculator" },
   ]}
   variant="glass"
 />
@@ -225,8 +218,8 @@ import { CalendarDays, Calculator, MessageSquare } from "lucide-react"
   title="Prueba Clinvetia gratis"
   description="Configuramos tu clínica en 30 minutos. Sin compromiso."
   actions={[
-    { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: CalendarDays },
-    { label: "Chatear", href: "#", variant: "ghost", icon: MessageSquare },
+    { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: "calendar" },
+    { label: "Chatear", href: "#", variant: "ghost", icon: "message" },
   ]}
   variant="glow"
 />`,
@@ -239,8 +232,8 @@ import { CalendarDays, Calculator, MessageSquare } from "lucide-react"
         title="¿Listo para transformar la atención de tu clínica?"
         description="Reserva una demo personalizada y descubre cómo Clinvetia puede aumentar tu capacidad de atención."
         actions={[
-          { label: "Reservar demo", href: "/contacto", icon: CalendarDays },
-          { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: Calculator },
+          { label: "Reservar demo", href: "/contacto", icon: "calendar" },
+          { label: "Calcular mi ROI", href: "/#roi", variant: "secondary", icon: "calculator" },
         ]}
         variant="glass"
       />
@@ -249,8 +242,8 @@ import { CalendarDays, Calculator, MessageSquare } from "lucide-react"
         title="Prueba Clinvetia gratis"
         description="Configuramos tu clínica en 30 minutos. Sin compromiso."
         actions={[
-          { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: CalendarDays },
-          { label: "Chatear", href: "#", variant: "ghost", icon: MessageSquare },
+          { label: "Agendar Demo", href: "mailto:hola@clinvetia.com", icon: "calendar" },
+          { label: "Chatear", href: "#", variant: "ghost", icon: "message" },
         ]}
         variant="glow"
       />

@@ -23,6 +23,20 @@ const FOOTER_COLUMNS = [
     ],
   },
   {
+    heading: "Temas",
+    links: [
+      { href: "/recursos-ia-veterinaria", label: "Recursos de IA veterinaria" },
+      { href: "/software-veterinario-con-ia", label: "Software veterinario con IA" },
+      { href: "/marketing-digital-para-veterinarios", label: "Marketing digital para veterinarios" },
+      { href: "/automatizacion-clinica-veterinaria", label: "Automatización clínica veterinaria" },
+      { href: "/whatsapp-para-clinicas-veterinarias", label: "WhatsApp para clínicas veterinarias" },
+      { href: "/gestion-de-citas-veterinarias", label: "Gestión de citas veterinarias" },
+      { href: "/conversion-de-leads-veterinarios", label: "Conversión de leads veterinarios" },
+      { href: "/embudo-de-citas-veterinarias", label: "Embudo de citas veterinarias" },
+      { href: "/triaje-veterinario-con-ia", label: "Triaje veterinario con IA" },
+    ],
+  },
+  {
     heading: "Compañía",
     links: [
       { href: "/contacto", label: "Contacto" },
@@ -151,7 +165,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* Grid 4 columnas — 2 en mobile */}
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 md:gap-10">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-5 md:gap-10">
           <FooterLogo />
           {FOOTER_COLUMNS.map((col) => (
             <FooterColumn key={col.heading} heading={col.heading} links={col.links} />

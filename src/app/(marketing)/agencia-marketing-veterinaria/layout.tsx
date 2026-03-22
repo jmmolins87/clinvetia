@@ -4,7 +4,7 @@ import { Suspense } from "react"
 export const metadata: Metadata = {
   title: "Agencia marketing veterinaria",
   description:
-    "ClinvetIA es una agencia de marketing veterinario especializada en captación, automatización IA y seguimiento comercial para clínicas veterinarias.",
+    "Clinvetia es una agencia de marketing veterinario especializada en captación, automatización IA y seguimiento comercial para clínicas veterinarias.",
   alternates: {
     canonical: "/agencia-marketing-veterinaria",
   },

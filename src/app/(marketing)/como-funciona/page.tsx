@@ -13,14 +13,13 @@ import {
   Heart,
   HelpCircle,
   FileText,
-  CalendarDays,
-  Calculator,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Icon } from "@/components/ui/icon"
 import { CtaSection } from "@/components/marketing/cta-section"
+import { SeoLinkCluster } from "@/components/marketing/seo-link-cluster"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { MarketingCard } from "@/components/ui/marketing-card"
 import { Separator } from "@/components/ui/separator"
@@ -108,6 +107,29 @@ const faqs = [
     a: "Sí. Está diseñado para veterinarias independientes donde cada consulta cuenta y el equipo está saturado.",
   },
 ]
+
+const SEO_CLUSTER_ITEMS = [
+  {
+    href: "/solucion",
+    title: "Ver la solución completa",
+    description: "Pasa del flujo a la propuesta global de atención inteligente para veterinarias.",
+  },
+  {
+    href: "/escenarios",
+    title: "Explorar escenarios",
+    description: "Comprueba cómo se comporta el sistema en diferentes tipos de consulta.",
+  },
+  {
+    href: "/calculadora",
+    title: "Calcular ROI",
+    description: "Aterriza el impacto operativo y comercial en números para tu clínica.",
+  },
+  {
+    href: "/faqs",
+    title: "Resolver preguntas frecuentes",
+    description: "Aclara dudas comunes antes de pedir una demo.",
+  },
+] as const
 
 export default function ComoFuncionaPage() {
   return (
@@ -241,12 +263,20 @@ export default function ComoFuncionaPage() {
       </section>
       <Separator />
 
+      <SeoLinkCluster
+        badge="Recorrido recomendado"
+        title="Continúa la evaluación con páginas relacionadas"
+        description="Estas páginas refuerzan la intención comercial y completan el contexto operativo del producto."
+        items={SEO_CLUSTER_ITEMS}
+      />
+      <Separator />
+
       <CtaSection
         title="¿Tu clínica vive alguna de estas situaciones?"
-        description="Descubre cómo ClinvetIA puede transformar la atención de tu clínica."
+        description="Descubre cómo Clinvetia puede transformar la atención de tu clínica."
         actions={[
-          { label: "Agendar Demo", href: "/contacto", icon: CalendarDays },
-          { label: "Calcular ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
+          { label: "Agendar Demo", href: "/contacto", icon: "calendar" },
+          { label: "Calcular ROI", href: "/calculadora", variant: "secondary", icon: "calculator" },
         ]}
         className="pb-8"
       />

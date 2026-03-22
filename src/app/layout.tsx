@@ -14,11 +14,11 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://clinvetia.com"
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "ClinvetIA - Software Veterinario con IA",
-    template: "%s · ClinvetIA",
+    default: "Clinvetia - Software Veterinario con IA",
+    template: "%s · Clinvetia",
   },
   description: "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
-  applicationName: "ClinvetIA",
+  applicationName: "Clinvetia",
   category: "software",
   keywords: [
     "software veterinario",
@@ -32,21 +32,21 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_ES",
     url: appUrl,
-    siteName: "ClinvetIA",
-    title: "ClinvetIA - Software Veterinario con IA",
+    siteName: "Clinvetia",
+    title: "Clinvetia - Software Veterinario con IA",
     description: "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
     images: [
       {
         url: "/logo.png",
         width: 1200,
         height: 630,
-        alt: "ClinvetIA",
+        alt: "Clinvetia",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "ClinvetIA - Software Veterinario con IA",
+    title: "Clinvetia - Software Veterinario con IA",
     description: "Software veterinario potenciado con IA. Más tiempo para tus pacientes, menos papeleo.",
     images: ["/logo.png"],
   },
@@ -89,7 +89,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "ClinvetIA",
+              name: "Clinvetia",
               url: appUrl,
               logo: `${appUrl}/logo.png`,
               sameAs: [],
@@ -102,7 +102,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              name: "ClinvetIA",
+              name: "Clinvetia",
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web",
               offers: {
@@ -121,7 +121,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              name: "ClinvetIA",
+              name: "Clinvetia",
               url: appUrl,
               inLanguage: "es",
             }),

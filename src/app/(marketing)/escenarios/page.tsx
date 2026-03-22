@@ -4,8 +4,6 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import {
-  CalendarDays,
-  Calculator,
   MessageSquare,
   Cog,
   CheckCircle2,
@@ -28,6 +26,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog"
+import { SeoLinkCluster } from "@/components/marketing/seo-link-cluster"
 
 const casos = [
   {
@@ -126,6 +125,29 @@ const fadeUp = {
   viewport: { once: true },
   transition: { duration: 0.5 },
 } as const
+
+const SEO_CLUSTER_ITEMS = [
+  {
+    href: "/triaje-veterinario-con-ia",
+    title: "Triaje veterinario con IA",
+    description: "Profundiza en la lógica de clasificación detrás de estos escenarios.",
+  },
+  {
+    href: "/recordatorios-veterinarios-automaticos",
+    title: "Recordatorios veterinarios automáticos",
+    description: "Conecta los casos de seguimiento y prevención con su caso de uso SEO.",
+  },
+  {
+    href: "/gestion-de-citas-veterinarias",
+    title: "Gestión de citas veterinarias",
+    description: "Ve cómo estos escenarios terminan en una agenda mejor gestionada.",
+  },
+  {
+    href: "/recepcion-veterinaria-con-ia",
+    title: "Recepción veterinaria con IA",
+    description: "Aterriza el impacto operativo en el equipo que gestiona las consultas.",
+  },
+] as const
 
 // ── Sub-componentes Reutilizables ─────────────────────────────────────────────
 
@@ -234,12 +256,19 @@ export default function EscenariosPage() {
       </section>
       <Separator />
 
+      <SeoLinkCluster
+        title="Relaciona estos casos con búsquedas concretas"
+        description="Estas páginas convierten escenarios reales en landings orientadas a intención de búsqueda."
+        items={SEO_CLUSTER_ITEMS}
+      />
+      <Separator />
+
       <CtaSection
         title="¿Tu clínica vive alguna de estas situaciones?"
-        description="Descubre cómo ClinvetIA puede transformar la atención de tu clínica."
+        description="Descubre cómo Clinvetia puede transformar la atención de tu clínica."
         actions={[
-          { label: "Agendar Demo", href: "/contacto", icon: CalendarDays },
-          { label: "Calcular ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
+          { label: "Agendar Demo", href: "/contacto", icon: "calendar" },
+          { label: "Calcular ROI", href: "/calculadora", variant: "secondary", icon: "calculator" },
         ]}
         className="pb-8"
       />

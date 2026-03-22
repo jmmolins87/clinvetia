@@ -1,0 +1,16 @@
+import { createSeoSocialImage, socialImageContentType, socialImageSize } from "@/components/marketing/seo-social-image"
+import { getSeoLandingConfig } from "@/lib/seo-landings"
+
+const config = getSeoLandingConfig("automatizacion-de-leads-veterinarios")
+
+export const size = socialImageSize
+export const contentType = socialImageContentType
+
+export default function OpenGraphImage() {
+  return createSeoSocialImage({
+    eyebrow: "Automatización comercial",
+    title: config.metaTitle,
+    description: config.metaDescription,
+    footerLabel: "Automatización de leads",
+  })
+}

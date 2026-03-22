@@ -20,10 +20,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { CtaSection } from "@/components/marketing/cta-section"
+import { SeoLinkCluster } from "@/components/marketing/seo-link-cluster"
 import { BrandName } from "@/components/ui/brand-name"
 import { MarketingCard } from "@/components/ui/marketing-card"
 import { Icon } from "@/components/ui/icon"
 import { Separator } from "@/components/ui/separator"
+
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://clinvetia.com"
 
 const features = [
   {
@@ -62,7 +65,7 @@ const flujoPasos = [
   {
     numero: "02",
     titulo: "Clasificación IA",
-    descripcion: "ClinvetIA analiza el mensaje y clasifica: urgencia, sintomatología o consulta general.",
+    descripcion: "Clinvetia analiza el mensaje y clasifica: urgencia, sintomatología o consulta general.",
   },
   {
     numero: "03",
@@ -83,6 +86,39 @@ const seguridadItems = [
   { text: "Mantiene tono profesional siempre", icon: ShieldCheck },
 ]
 
+const SEO_CLUSTER_ITEMS = [
+  {
+    href: "/como-funciona",
+    title: "Ver el flujo completo",
+    description: "Consulta paso a paso cómo Clinvetia atiende, clasifica y agenda.",
+  },
+  {
+    href: "/escenarios",
+    title: "Revisar casos reales",
+    description: "Aterriza la solución en urgencias, vacunas, revisiones y seguimiento.",
+  },
+  {
+    href: "/faqs",
+    title: "Resolver dudas frecuentes",
+    description: "Aclara implementación, tiempos, operación y control humano.",
+  },
+  {
+    href: "/embudo-de-citas-veterinarias",
+    title: "Embudo de citas veterinarias",
+    description: "Conecta atención, marketing y agenda dentro de un mismo recorrido comercial.",
+  },
+  {
+    href: "/gestion-de-citas-veterinarias",
+    title: "Gestión de citas veterinarias",
+    description: "Aterriza la parte operativa de confirmaciones, cambios y cierre de agenda.",
+  },
+  {
+    href: "/contacto",
+    title: "Hablar con el equipo",
+    description: "Solicita una demo personalizada para tu clínica veterinaria.",
+  },
+] as const
+
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
   whileInView: { opacity: 1, y: 0 },
@@ -91,8 +127,49 @@ const fadeUp = {
 } as const
 
 export default function SolucionPage() {
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "Clinvetia",
+    serviceType: "Software veterinario con IA para atención, triaje y agenda",
+    provider: {
+      "@type": "Organization",
+      name: "Clinvetia",
+      url: appUrl,
+    },
+    areaServed: "ES",
+    audience: {
+      "@type": "Audience",
+      audienceType: "Clínicas veterinarias",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `${appUrl}/demo`,
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+    },
+    url: `${appUrl}/solucion`,
+  }
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: appUrl },
+      { "@type": "ListItem", position: 2, name: "Solución", item: `${appUrl}/solucion` },
+    ],
+  }
+
   return (
     <div className="relative">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* ═══════════════════════════════════════════════════════════════════════
           HERO SECTION
       ═══════════════════════════════════════════════════════════════════════ */}
@@ -286,15 +363,23 @@ export default function SolucionPage() {
       </section>
       <Separator />
 
+      <SeoLinkCluster
+        badge="Siguiente paso"
+        title="Profundiza en la solución según tu momento de compra"
+        description="Si ya entiendes la propuesta, usa estos enlaces para seguir el recorrido comercial con contexto, agenda y conversión."
+        items={SEO_CLUSTER_ITEMS}
+      />
+      <Separator />
+
       {/* ═══════════════════════════════════════════════════════════════════════
           CTA FINAL
       ═══════════════════════════════════════════════════════════════════════ */}
       <CtaSection
         title="¿Listo para transformar la atención de tu clínica?"
-        description="Reserva una demo personalizada y descubre cómo ClinvetIA puede aumentar tu capacidad de atención."
+        description="Reserva una demo personalizada y descubre cómo Clinvetia puede aumentar tu capacidad de atención."
         actions={[
-          { label: "Agendar Demo", href: "/contacto", icon: CalendarDays },
-          { label: "Ver ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
+          { label: "Agendar Demo", href: "/contacto", icon: "calendar" },
+          { label: "Ver ROI", href: "/calculadora", variant: "secondary", icon: "calculator" },
         ]}
       />
     </div>

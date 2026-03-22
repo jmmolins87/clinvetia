@@ -16,6 +16,7 @@ import { Icon } from "@/components/ui/icon"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { CtaSection } from "@/components/marketing/cta-section"
+import { SeoLinkCluster } from "@/components/marketing/seo-link-cluster"
 import { MarketingCard } from "@/components/ui/marketing-card"
 import { TranslatableText } from "@/components/providers/translation-skeleton"
 
@@ -68,6 +69,69 @@ const ROI_DATOS = [
   { value: "80%", label: "esperan respuesta inmediata", color: "primary" as const },
   { value: "67%", label: "se van tras 24h", color: "secondary" as const },
   { value: "+35%", label: "aumento en consultas", color: "accent" as const }
+] as const
+
+const SEO_CLUSTER_ITEMS = [
+  {
+    href: "/recursos-ia-veterinaria",
+    title: "Recursos de IA veterinaria",
+    description: "Accede al hub completo con landings de operaciones, atención y marketing veterinario.",
+  },
+  {
+    href: "/solucion",
+    title: "Solución de IA veterinaria",
+    description: "Entiende qué hace Clinvetia y cómo automatiza atención, triaje y agenda.",
+  },
+  {
+    href: "/como-funciona",
+    title: "Cómo funciona",
+    description: "Revisa el flujo real desde la consulta del dueño hasta la cita confirmada.",
+  },
+  {
+    href: "/escenarios",
+    title: "Escenarios de uso",
+    description: "Descubre casos reales para urgencias, vacunas y seguimiento clínico.",
+  },
+  {
+    href: "/faqs",
+    title: "Preguntas frecuentes",
+    description: "Aclara dudas sobre implementación, tiempos, operación y retorno.",
+  },
+  {
+    href: "/software-veterinario-con-ia",
+    title: "Software veterinario con IA",
+    description: "Página orientada a la búsqueda principal del cluster comercial.",
+  },
+  {
+    href: "/gestion-de-citas-veterinarias",
+    title: "Gestión de citas veterinarias",
+    description: "Conecta la intención de agenda con la propuesta operativa de Clinvetia.",
+  },
+  {
+    href: "/marketing-digital-para-veterinarios",
+    title: "Marketing digital para veterinarios",
+    description: "Aborda el crecimiento comercial desde leads, seguimiento y citas reales.",
+  },
+  {
+    href: "/whatsapp-para-clinicas-veterinarias",
+    title: "WhatsApp para clínicas veterinarias",
+    description: "Empuja uno de los canales con más intención hacia seguimiento y cierre de citas.",
+  },
+  {
+    href: "/automatizacion-de-leads-veterinarios",
+    title: "Automatización de leads veterinarios",
+    description: "Ordena respuesta, seguimiento y trazabilidad del funnel comercial de la clínica.",
+  },
+  {
+    href: "/conversion-de-leads-veterinarios",
+    title: "Conversión de leads veterinarios",
+    description: "Enlaza marketing y respuesta rápida para convertir más consultas en agenda.",
+  },
+  {
+    href: "/embudo-de-citas-veterinarias",
+    title: "Embudo de citas veterinarias",
+    description: "Conecta captación, conversación y agenda dentro de un mismo recorrido comercial.",
+  },
 ] as const
 
 function AnimatedNumber({ value, className }: { value: string; className?: string }) {
@@ -230,7 +294,7 @@ export default function MarketingPage() {
               <TranslatableText text="Sistema de Atención Inteligente" />
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              <TranslatableText text="ClinvetIA no solo responde. Entiende el contexto, verifica tu disponibilidad y cierra la cita sin que nadie intervenga." lines={2} />
+              <TranslatableText text="Clinvetia no solo responde. Entiende el contexto, verifica tu disponibilidad y cierra la cita sin que nadie intervenga." lines={2} />
             </p>
             <ul className="mt-8 space-y-4">
               {SOLUCION_FEATURES.map((feat) => (
@@ -248,7 +312,7 @@ export default function MarketingPage() {
                 <Icon icon={AlertCircle} size="sm" variant="primary" />
                 <p className="text-sm">
                   <span className="font-bold text-primary">40%</span>{" "}
-                  <TranslatableText text="de las consultas llegan fuera de horario. ClinvetIA las atiende" />{" "}
+                  <TranslatableText text="de las consultas llegan fuera de horario. Clinvetia las atiende" />{" "}
                   <span className="font-bold text-foreground"><TranslatableText text="inmediatamente" /></span>.
                 </p>
               </div>
@@ -334,7 +398,7 @@ export default function MarketingPage() {
       {/* ESCENARIOS */}
       <Section id="escenarios">
         <div className="mx-auto max-w-4xl text-center">
-          <SectionHeader badge="Casos reales" title="Escenarios de uso" subtitle="ClinvetIA se adapta a todo tipo de clínicas y necesidades." />
+          <SectionHeader badge="Casos reales" title="Escenarios de uso" subtitle="Clinvetia se adapta a todo tipo de clínicas y necesidades." />
           <div className="flex w-full flex-col gap-3 md:grid md:grid-cols-2 md:mx-auto md:max-w-2xl">
             {ESCENARIOS.map((esc, idx) => (
               <motion.div key={esc.label} {...fadeUp} transition={{ delay: idx * 0.05 }}>
@@ -375,15 +439,23 @@ export default function MarketingPage() {
       </Section>
       <Separator />
 
+      <SeoLinkCluster
+        badge="Explora Clinvetia"
+        title="Empieza por la página que mejor encaja con tu búsqueda"
+        description="Este bloque refuerza el recorrido entre páginas comerciales e informacionales para que encuentres la información clave más rápido."
+        items={SEO_CLUSTER_ITEMS}
+      />
+      <Separator />
+
       {/* ═══════════════════════════════════════════════════════════════════════
           CTA FINAL
       ═══════════════════════════════════════════════════════════════════════ */}
       <CtaSection
         title="¿Listo para transformar la atención de tu clínica?"
-        description="Reserva una demo personalizada y descubre cómo ClinvetIA puede aumentar tu capacidad de atención."
+        description="Reserva una demo personalizada y descubre cómo Clinvetia puede aumentar tu capacidad de atención."
         actions={[
-          { label: "Agendar Demo", href: "/contacto", icon: CalendarDays },
-          { label: "Ver ROI", href: "/calculadora", variant: "secondary", icon: Calculator },
+          { label: "Agendar Demo", href: "/contacto", icon: "calendar" },
+          { label: "Ver ROI", href: "/calculadora", variant: "secondary", icon: "calculator" },
         ]}
       />
     </>

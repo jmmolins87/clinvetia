@@ -8,14 +8,22 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Icon } from "@/components/ui/icon"
-import { type LucideIcon } from "lucide-react"
+import { CalendarDays, Calculator, MessageSquare } from "lucide-react"
 import { TranslatableText } from "@/components/providers/translation-skeleton"
+
+const ctaIcons = {
+  calendar: CalendarDays,
+  calculator: Calculator,
+  message: MessageSquare,
+} as const
+
+export type CtaIcon = keyof typeof ctaIcons
 
 export interface CtaAction {
   label: string
   href: string
   variant?: "default" | "secondary" | "ghost" | "accent" | "outline" | "destructive"
-  icon?: LucideIcon
+  icon?: CtaIcon
 }
 
 export interface CtaSectionProps {
@@ -55,6 +63,8 @@ export function CtaSection({
 
       <div className="flex flex-col items-center justify-center gap-4 sm:flex-row md:mx-auto md:max-w-lg">
         {actions.map((action) => {
+          const ActionIcon = action.icon ? ctaIcons[action.icon] : null
+
           return (
             <Button
               key={action.href}
@@ -64,7 +74,7 @@ export function CtaSection({
               asChild
             >
               <Link href={action.href} className="gap-2">
-                {action.icon && <Icon icon={action.icon} size="sm" />}
+                {ActionIcon ? <Icon icon={ActionIcon} size="sm" /> : null}
                 <TranslatableText text={action.label} />
               </Link>
             </Button>

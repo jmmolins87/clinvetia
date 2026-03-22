@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { SeoLinkCluster } from "@/components/marketing/seo-link-cluster"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { GlassCard } from "@/components/ui/GlassCard"
@@ -22,6 +23,49 @@ const blocks = [
   },
 ] as const
 
+const SEO_CLUSTER_ITEMS = [
+  {
+    href: "/captacion-de-leads-para-clinicas-veterinarias",
+    title: "Captación de leads para clínicas veterinarias",
+    description: "Aterriza la parte de marketing y conversión en una búsqueda específica.",
+  },
+  {
+    href: "/marketing-digital-para-veterinarios",
+    title: "Marketing digital para veterinarios",
+    description: "Amplía la parte de canal, campaña y retorno comercial.",
+  },
+  {
+    href: "/seguimiento-comercial-para-clinicas-veterinarias",
+    title: "Seguimiento comercial para clínicas veterinarias",
+    description: "Profundiza en el tramo que más suele frenar la conversión.",
+  },
+  {
+    href: "/whatsapp-para-clinicas-veterinarias",
+    title: "WhatsApp para clínicas veterinarias",
+    description: "Lleva el canal conversacional a captación, seguimiento y citas.",
+  },
+  {
+    href: "/conversion-de-leads-veterinarios",
+    title: "Conversión de leads veterinarios",
+    description: "Conecta marketing y respuesta rápida con citas reales.",
+  },
+  {
+    href: "/software-veterinario-con-ia",
+    title: "Software veterinario con IA",
+    description: "Amplía la visión desde marketing hacia atención, triaje y agenda.",
+  },
+  {
+    href: "/embudo-de-citas-veterinarias",
+    title: "Embudo de citas veterinarias",
+    description: "Ordena el paso del lead a la agenda confirmada dentro de la clínica.",
+  },
+  {
+    href: "/calculadora",
+    title: "Calcular ROI",
+    description: "Mide el impacto económico de captar y convertir mejor.",
+  },
+] as const
+
 export default function AgenciaMarketingVeterinariaPage() {
   return (
     <div className="container mx-auto px-4 py-20">
@@ -32,7 +76,7 @@ export default function AgenciaMarketingVeterinariaPage() {
             Agencia marketing veterinaria especializada en crecimiento
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-muted-foreground">
-            En ClinvetIA combinamos estrategia de captación, automatización y seguimiento para ayudarte a convertir más
+            En Clinvetia combinamos estrategia de captación, automatización y seguimiento para ayudarte a convertir más
             leads en citas y ventas recurrentes.
           </p>
         </div>
@@ -61,6 +105,12 @@ export default function AgenciaMarketingVeterinariaPage() {
             </Button>
           </div>
         </GlassCard>
+
+        <SeoLinkCluster
+          title="Explora páginas relacionadas con captación y conversión"
+          description="Estas páginas conectan marketing, WhatsApp, seguimiento y cierre de citas en un mismo recorrido."
+          items={SEO_CLUSTER_ITEMS}
+        />
       </div>
     </div>
   )
