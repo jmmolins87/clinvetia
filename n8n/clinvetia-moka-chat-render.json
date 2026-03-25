@@ -21,7 +21,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const CONFIG = {\n  webhookSecret: 'd1683be39187b1559a38c8f80293cb0866778d55613596ba45125c6de3abf37b'\n};\nconst input = items[0]?.json || {};\nconst headers = input.headers || {};\nconst receivedSecret = headers['x-clinvetia-n8n-secret'] || headers['X-Clinvetia-N8n-Secret'] || '';\nif (receivedSecret !== CONFIG.webhookSecret) {\n  return [{ json: { reply: 'Moka no está disponible ahora mismo.', state: { intent: 'none', step: 'idle' }, booking: null, shouldDelegate: false } }];\n}\nconst payload = input.body && typeof input.body === 'object' ? input.body : {};\nconst state = payload.state && typeof payload.state === 'object' ? payload.state : { intent: 'none', step: 'idle' };\nconst message = typeof payload.message === 'string' ? payload.message.trim() : '';\nconst locale = payload.locale === 'en' ? 'en' : 'es';\nconst lower = message.toLowerCase();\nconst history = Array.isArray(payload.history) ? payload.history.slice(-6) : [];\nconst shouldDelegate = Boolean(\n  payload.sessionToken ||\n  payload.bookingToken ||\n  state.intent === 'book' ||\n  state.intent === 'reschedule' ||\n  state.intent === 'cancel' ||\n  /(reserv|reserva|demo|cita|agenda|reagend|reprogram|cancel|horario|slot|booking|appointment|reschedule|roi|presupuesto|factura|trabajo)/i.test(lower)\n);\nconst transcript = history.map((item) => `${item.role === 'assistant' ? 'assistant' : 'user'}: ${String(item.content || '').replace(/\\s+/g, ' ').trim()}`).join('\\n');\nconst triagePrompt = [\n  locale === 'en' ? 'You are Moka, Clinvetia\\'s website assistant.' : 'Eres Moka, el asistente web de Clinvetia.',\n  locale === 'en' ? 'Respond ONLY with valid JSON using this exact format: {\"mode\":\"answer\"|\"delegate\",\"reply\":\"text\"}.' : 'Responde SOLO con JSON valido usando este formato exacto: {\"mode\":\"answer\"|\"delegate\",\"reply\":\"texto\"}.',\n  locale === 'en' ? 'Use mode=answer only for greetings, who-is-Clinvetia, what-do-you-do, simple product questions and general guidance.' : 'Usa mode=answer solo para saludos, quien es Clinvetia, que haceis, dudas simples del servicio y orientacion general.',\n  locale === 'en' ? 'Use mode=delegate for booking, rescheduling, cancellation, times, availability, ROI, forms, client data, tokens, invoices, jobs, quotes, or if unsure.' : 'Usa mode=delegate para reservas, reagendados, cancelaciones, horarios, disponibilidad, ROI, formularios, datos del cliente, tokens, facturas, trabajos, presupuestos o si tienes dudas.',\n  `locale: ${locale}`,\n  `message: ${message}`,\n  `stateIntent: ${state.intent || 'none'}`,\n  `stateStep: ${state.step || 'idle'}`,\n  `history:\\n${transcript || 'none'}`\n].join('\\n');\nreturn [{ json: { payload, message, locale, state, history, triagePrompt, shouldDelegate } }];"
+        "jsCode": "const webhookSecret = process.env.N8N_CHAT_WEBHOOK_SECRET || process.env.N8N_WEBHOOK_SECRET || '';\nconst input = items[0]?.json || {};\nconst headers = input.headers || {};\nconst receivedSecret = headers['x-clinvetia-n8n-secret'] || headers['X-Clinvetia-N8n-Secret'] || '';\nif (!webhookSecret || receivedSecret !== webhookSecret) {\n  return [{ json: { reply: 'Moka no está disponible ahora mismo.', state: { intent: 'none', step: 'idle' }, booking: null, shouldDelegate: false } }];\n}\nconst payload = input.body && typeof input.body === 'object' ? input.body : {};\nconst state = payload.state && typeof payload.state === 'object' ? payload.state : { intent: 'none', step: 'idle' };\nconst message = typeof payload.message === 'string' ? payload.message.trim() : '';\nconst locale = payload.locale === 'en' ? 'en' : 'es';\nconst lower = message.toLowerCase();\nconst history = Array.isArray(payload.history) ? payload.history.slice(-6) : [];\nconst shouldDelegate = Boolean(\n  payload.sessionToken ||\n  payload.bookingToken ||\n  state.intent === 'book' ||\n  state.intent === 'reschedule' ||\n  state.intent === 'cancel' ||\n  /(reserv|reserva|demo|cita|agenda|reagend|reprogram|cancel|horario|slot|booking|appointment|reschedule|roi|presupuesto|factura|trabajo)/i.test(lower)\n);\nconst transcript = history.map((item) => `${item.role === 'assistant' ? 'assistant' : 'user'}: ${String(item.content || '').replace(/\\s+/g, ' ').trim()}`).join('\\n');\nconst triagePrompt = [\n  locale === 'en' ? 'You are Moka, Clinvetia\\'s website assistant.' : 'Eres Moka, el asistente web de Clinvetia.',\n  locale === 'en' ? 'Respond ONLY with valid JSON using this exact format: {\"mode\":\"answer\"|\"delegate\",\"reply\":\"text\"}.' : 'Responde SOLO con JSON valido usando este formato exacto: {\"mode\":\"answer\"|\"delegate\",\"reply\":\"texto\"}.',\n  locale === 'en' ? 'Use mode=answer only for greetings, who-is-Clinvetia, what-do-you-do, simple product questions and general guidance.' : 'Usa mode=answer solo para saludos, quien es Clinvetia, que haceis, dudas simples del servicio y orientacion general.',\n  locale === 'en' ? 'Use mode=delegate for booking, rescheduling, cancellation, times, availability, ROI, forms, client data, tokens, invoices, jobs, quotes, or if unsure.' : 'Usa mode=delegate para reservas, reagendados, cancelaciones, horarios, disponibilidad, ROI, formularios, datos del cliente, tokens, facturas, trabajos, presupuestos o si tienes dudas.',\n  `locale: ${locale}`,\n  `message: ${message}`,\n  `stateIntent: ${state.intent || 'none'}`,\n  `stateStep: ${state.step || 'idle'}`,\n  `history:\\n${transcript || 'none'}`\n].join('\\n');\nreturn [{ json: { payload, message, locale, state, history, triagePrompt, shouldDelegate } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -65,7 +65,7 @@
             },
             {
               "name": "Authorization",
-              "value": "Bearer REPLACE_WITH_OPENAI_API_KEY"
+              "value": "=Bearer {{$env.OPENAI_API_KEY}}"
             }
           ]
         },
@@ -134,7 +134,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://clinvetia.com/api/chat/assistant",
+        "url": "={{ (($env.CLINVETIA_BASE_URL || 'https://clinvetia.com').replace(/\\/+$/, '')) + '/api/chat/assistant' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -144,7 +144,7 @@
             },
             {
               "name": "x-clinvetia-chat-bypass-n8n",
-              "value": "d1683be39187b1559a38c8f80293cb0866778d55613596ba45125c6de3abf37b"
+              "value": "={{ $env.N8N_CHAT_WEBHOOK_SECRET || $env.N8N_WEBHOOK_SECRET }}"
             }
           ]
         },
@@ -165,7 +165,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://clinvetia.com/api/chat/assistant",
+        "url": "={{ (($env.CLINVETIA_BASE_URL || 'https://clinvetia.com').replace(/\\/+$/, '')) + '/api/chat/assistant' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -175,7 +175,7 @@
             },
             {
               "name": "x-clinvetia-chat-bypass-n8n",
-              "value": "d1683be39187b1559a38c8f80293cb0866778d55613596ba45125c6de3abf37b"
+              "value": "={{ $env.N8N_CHAT_WEBHOOK_SECRET || $env.N8N_WEBHOOK_SECRET }}"
             }
           ]
         },

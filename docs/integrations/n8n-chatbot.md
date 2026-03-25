@@ -20,11 +20,12 @@ N8N_CHAT_WEBHOOK_SECRET=change-me-moka-secret
 
 ### En n8n en Render
 
-En Render, en el servicio donde corre `n8n`, añade estas variables:
+En Render, o en cualquier instancia de `n8n`, añade estas variables:
 
 ```env
 CLINVETIA_BASE_URL=https://clinvetia.com
-N8N_CHAT_WEBHOOK_SECRET=d1683be39187b1559a38c8f80293cb0866778d55613596ba45125c6de3abf37b
+OPENAI_API_KEY=sk-...
+N8N_CHAT_WEBHOOK_SECRET=change-me-moka-secret
 ```
 
 Luego importa el workflow [clinvetia-moka-chat-render.json](/Users/juanmamolinscortes/Documentos/clinvetia-glass/n8n/clinvetia-moka-chat-render.json).
@@ -34,9 +35,16 @@ Ese workflow ya viene preparado para:
 - un nodo `Webhook`
 - path: `moka-chat`
 - method: `POST`
-- validacion del header `x-clinvetia-n8n-secret`
+- validacion del header `x-clinvetia-n8n-secret` con `N8N_CHAT_WEBHOOK_SECRET`
+- uso de `OPENAI_API_KEY` desde variables de entorno
 - reenvio a `CLINVETIA_BASE_URL/api/chat/assistant`
 - bypass controlado para que la app no vuelva a entrar en `n8n`
+
+Para desarrollo local, `CLINVETIA_BASE_URL` debe apuntar a tu Next.js local:
+
+```env
+CLINVETIA_BASE_URL=http://127.0.0.1:3000
+```
 
 ## Variables de entorno opcionales
 
