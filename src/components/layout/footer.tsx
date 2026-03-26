@@ -65,7 +65,7 @@ function FooterLogo() {
   const { t } = useTranslationSkeleton()
 
   return (
-    <div className="col-span-2 flex flex-col gap-4 md:col-span-1">
+    <div className="flex w-full flex-col gap-4">
       <Link
         href="/"
         aria-label={t("Inicio Clinvetia")}
@@ -166,7 +166,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* Grid 4 columnas — 2 en mobile */}
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-5 md:gap-10">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-5 md:gap-10">
           <FooterLogo />
           {FOOTER_COLUMNS.map((col) => (
             <FooterColumn key={col.heading} heading={col.heading} links={col.links} />
