@@ -11,6 +11,16 @@ declare global {
   }
 }
 
+const DEV_BYPASS_TOKEN = "recaptcha-dev-bypass-token"
+
+function shouldBypassRecaptcha() {
+  if (typeof window === "undefined") return false
+  if (process.env.NODE_ENV === "production") return false
+
+  const hostname = window.location.hostname
+  return hostname === "localhost" || hostname === "127.0.0.1"
+}
+
 function loadRecaptchaScript(siteKey: string): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("No browser environment"))
   if (window.grecaptcha) return Promise.resolve()
@@ -60,10 +70,14 @@ function loadRecaptchaScriptStandard(siteKey: string): Promise<void> {
 }
 
 export async function getRecaptchaToken(action: string) {
+  if (shouldBypassRecaptcha()) {
+    return DEV_BYPASS_TOKEN
+  }
+
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
   if (!siteKey) {
     if (process.env.NODE_ENV !== "production") {
-      return "recaptcha-dev-bypass-token"
+      return DEV_BYPASS_TOKEN
     }
     throw new Error("Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY")
   }

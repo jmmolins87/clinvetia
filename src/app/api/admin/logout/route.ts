@@ -19,13 +19,18 @@ function getCookie(req: Request, name: string) {
 export async function POST(req: Request) {
   const cookieName = getAdminCookieName()
   const token = getCookie(req, cookieName)
+  const isExplicitDemoLogout = req.headers.get("x-clinvetia-demo-logout") === "1"
+  let shouldResetDemoState = isExplicitDemoLogout
+
   if (token) {
     await dbConnect()
     const session = await AdminSession.findOneAndDelete({ token }).lean<{ role?: string } | null>()
-    if (session?.role === "demo") {
-      resetDemoBookingsState()
-      resetDemoMailMessages()
-    }
+    shouldResetDemoState = shouldResetDemoState || session?.role === "demo"
+  }
+
+  if (shouldResetDemoState) {
+    resetDemoBookingsState()
+    resetDemoMailMessages()
   }
 
   const res = NextResponse.json({ ok: true })

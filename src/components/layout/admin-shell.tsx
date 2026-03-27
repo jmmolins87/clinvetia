@@ -148,7 +148,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     if (loggingOut) return
     setLoggingOut(true)
     try {
-      await fetch("/api/admin/logout", { method: "POST" })
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        headers: admin?.role === "demo" ? { "x-clinvetia-demo-logout": "1" } : undefined,
+      })
     } finally {
       router.push("/admin")
       router.refresh()

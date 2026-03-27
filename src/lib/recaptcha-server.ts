@@ -4,6 +4,8 @@ export type RecaptchaVerifyResult = {
   score?: number
 }
 
+const DEV_BYPASS_TOKEN = "recaptcha-dev-bypass-token"
+
 type RecaptchaResponse = {
   success: boolean
   score?: number
@@ -32,6 +34,10 @@ export async function verifyRecaptchaToken(params: {
   const { token, action, minScore = 0.5, ip } = params
   if (!token) {
     return { ok: false, reason: "Missing reCAPTCHA token" }
+  }
+
+  if (process.env.NODE_ENV !== "production" && token === DEV_BYPASS_TOKEN) {
+    return { ok: true, reason: "recaptcha-dev-bypass", score: 1 }
   }
 
   const projectId = process.env.RECAPTCHA_ENTERPRISE_PROJECT_ID

@@ -165,11 +165,6 @@ export default function AdminBookingsPage() {
       sonnerToast.error("No se pudo actualizar la cita", {
         description: err instanceof Error ? err.message : "No se pudo actualizar la cita",
       })
-      toast({
-        variant: "destructive",
-        title: "No se pudo actualizar la cita",
-        description: err instanceof Error ? err.message : "No se pudo actualizar la cita",
-      })
     } finally {
       setUpdatingId(null)
     }
@@ -206,17 +201,8 @@ export default function AdminBookingsPage() {
         sonnerToast.success("Cita cancelada", {
           description: "Modo demo: la cita quedó cancelada correctamente.",
         })
-        toast({
-          title: "Cita cancelada",
-          description: "Modo demo: la cita quedó cancelada correctamente.",
-        })
       } catch (err) {
         sonnerToast.error("No se pudo cancelar la cita", {
-          description: err instanceof Error ? err.message : "No se pudo cancelar la cita",
-        })
-        toast({
-          variant: "destructive",
-          title: "No se pudo cancelar la cita",
           description: err instanceof Error ? err.message : "No se pudo cancelar la cita",
         })
       } finally {
@@ -278,17 +264,8 @@ export default function AdminBookingsPage() {
       sonnerToast.success("Cita cancelada", {
         description: "Se envió el correo personalizado al cliente y la cita quedó cancelada.",
       })
-      toast({
-        title: "Cita cancelada",
-        description: "Se envió el correo personalizado al cliente y la cita quedó cancelada.",
-      })
     } catch (err) {
       sonnerToast.error("No se pudo cancelar la cita", {
-        description: err instanceof Error ? err.message : "No se pudo cancelar la cita",
-      })
-      toast({
-        variant: "destructive",
-        title: "No se pudo cancelar la cita",
         description: err instanceof Error ? err.message : "No se pudo cancelar la cita",
       })
     } finally {
@@ -311,26 +288,14 @@ export default function AdminBookingsPage() {
       }
       const payload = await res.json().catch(() => null)
       await loadBookings()
-      sonnerToast.success(payload?.booking?.status === "cancelled" ? "Cita cancelada" : "Cita eliminada", {
+      sonnerToast.success("Cita eliminada", {
         description:
-          payload?.booking?.status === "cancelled"
-            ? "La cita seguía activa y se ha cancelado directamente."
-            : "La cita se ha eliminado correctamente.",
-      })
-      toast({
-        title: payload?.booking?.status === "cancelled" ? "Cita cancelada" : "Cita eliminada",
-        description:
-          payload?.booking?.status === "cancelled"
-            ? "La cita seguía activa y se ha cancelado directamente."
+          payload?.booking?.status === "deleted"
+            ? "La cita se ha eliminado correctamente del sistema."
             : "La cita se ha eliminado correctamente.",
       })
     } catch (err) {
       sonnerToast.error("No se pudo eliminar la cita", {
-        description: err instanceof Error ? err.message : "No se pudo eliminar la cita",
-      })
-      toast({
-        variant: "destructive",
-        title: "No se pudo eliminar la cita",
         description: err instanceof Error ? err.message : "No se pudo eliminar la cita",
       })
     } finally {
@@ -548,11 +513,6 @@ export default function AdminBookingsPage() {
       sonnerToast.error("No se pudo reagendar la cita", {
         description: message,
       })
-      toast({
-        variant: "destructive",
-        title: "No se pudo reagendar la cita",
-        description: message,
-      })
       throw new Error(message)
     } finally {
       setUpdatingId(null)
@@ -595,18 +555,9 @@ export default function AdminBookingsPage() {
       sonnerToast.success("Cita creada", {
         description: "La nueva cita se ha creado y enviado correctamente.",
       })
-      toast({
-        title: "Cita creada",
-        description: "La nueva cita se ha creado y enviado correctamente.",
-      })
     } catch (err) {
       const message = err instanceof Error ? err.message : "No se pudo crear la cita"
       sonnerToast.error("No se pudo crear la cita", {
-        description: message,
-      })
-      toast({
-        variant: "destructive",
-        title: "No se pudo crear la cita",
         description: message,
       })
       throw new Error(message)
@@ -626,7 +577,7 @@ export default function AdminBookingsPage() {
             <DialogDescription>
               {deleteBookingTarget
                 ? ["pending", "confirmed"].includes(deleteBookingTarget.status)
-                  ? `La cita del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time} sigue activa. Si continúas, se cancelará automáticamente y se avisará al cliente y a info@clinvetia.com.`
+                  ? `La cita del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time} sigue activa. Si continúas, se cancelará para notificar al cliente y después se eliminará del sistema.`
                   : `Vas a eliminar la cita ${
                       deleteBookingTarget.status === "expired" ? "expirada" : "cancelada"
                     } del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time}.`
@@ -647,9 +598,7 @@ export default function AdminBookingsPage() {
                 await deleteBooking(id)
               }}
             >
-              {deleteBookingTarget && ["pending", "confirmed"].includes(deleteBookingTarget.status)
-                ? "Cancelar cita"
-                : "Eliminar cita"}
+              Eliminar cita
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1091,7 +1040,7 @@ export default function AdminBookingsPage() {
                       <div className="border-t border-white/10 sm:hidden" />
 
                       {canOperate && (
-                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap lg:justify-end">
+                        <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:max-w-[380px] lg:grid-cols-3">
                           {booking.status !== "expired" && booking.status !== "rescheduled" && (
                             <Button
                               type="button"
@@ -1099,7 +1048,7 @@ export default function AdminBookingsPage() {
                               size="sm"
                               disabled={booking.status === "confirmed" || booking.status === "cancelled" || updatingId === booking.id}
                               onClick={() => updateBookingStatus(booking.id, "confirmed")}
-                              className="w-full sm:w-[120px] shrink-0 cursor-pointer px-3"
+                              className="w-full min-w-0 cursor-pointer px-3"
                             >
                               {updatingId === booking.id ? "Actualizando..." : "Aceptar"}
                             </Button>
@@ -1109,7 +1058,7 @@ export default function AdminBookingsPage() {
                             variant="accent"
                             size="sm"
                             onClick={() => openRescheduleDialog(booking)}
-                            className="w-full sm:w-[120px] shrink-0 cursor-pointer px-3 shadow-[0_0_14px_rgba(var(--accent-rgb),0.22)] disabled:opacity-100"
+                            className="w-full min-w-0 cursor-pointer px-3 shadow-[0_0_14px_rgba(var(--accent-rgb),0.22)] disabled:opacity-100"
                           >
                             Reagendar
                           </Button>
@@ -1120,12 +1069,12 @@ export default function AdminBookingsPage() {
                               size="sm"
                               disabled={booking.status === "cancelled" || updatingId === booking.id}
                               onClick={() => openCancelDialog(booking)}
-                              className="w-full sm:w-[120px] shrink-0 cursor-pointer px-3"
+                              className="w-full min-w-0 cursor-pointer px-3"
                             >
                               {updatingId === booking.id ? "Actualizando..." : "Cancelar"}
                             </Button>
                           ) : (
-                            <span className="hidden sm:block w-[120px] shrink-0" aria-hidden="true" />
+                            <span className="hidden lg:block" aria-hidden="true" />
                           )}
                         </div>
                       )}

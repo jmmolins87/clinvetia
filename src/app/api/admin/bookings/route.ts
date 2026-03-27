@@ -553,20 +553,14 @@ export async function POST(req: Request) {
             })
           }
         }
-
-        await clearRoiForBookingContext({
-          bookingId,
-          bookingSessionToken: booking.sessionToken ?? null,
-          contactSessionToken: contact?.sessionToken ? String(contact.sessionToken) : null,
-        })
-      } else {
-        await clearRoiForBookingContext({
-          bookingId,
-          bookingSessionToken: booking.sessionToken ?? null,
-          contactSessionToken: contact?.sessionToken ? String(contact.sessionToken) : null,
-        })
-        await Booking.deleteOne({ _id: booking._id })
       }
+
+      await clearRoiForBookingContext({
+        bookingId,
+        bookingSessionToken: booking.sessionToken ?? null,
+        contactSessionToken: contact?.sessionToken ? String(contact.sessionToken) : null,
+      })
+      await Booking.deleteOne({ _id: booking._id })
     } else if (parsed.action === "status") {
       await Booking.updateOne({ _id: booking._id }, { $set: { status: parsed.status } })
       booking.status = parsed.status
@@ -815,9 +809,7 @@ export async function POST(req: Request) {
 
     const auditAction =
       parsed.action === "delete"
-        ? deleteCancelsBooking
-          ? "CANCEL_BOOKING"
-          : "DELETE_BOOKING"
+        ? "DELETE_BOOKING"
         : parsed.action === "reschedule"
           ? "RESCHEDULE_BOOKING"
           : parsed.status === "confirmed"
@@ -838,7 +830,7 @@ export async function POST(req: Request) {
           date: booking.date.toISOString(),
           duration: booking.duration,
           action: parsed.action,
-          deleteMode: parsed.action === "delete" ? (deleteCancelsBooking ? "cancel" : "hard-delete") : undefined,
+          deleteMode: parsed.action === "delete" ? (deleteCancelsBooking ? "cancel-and-delete" : "hard-delete") : undefined,
         },
       })
     } catch (auditError) {
@@ -849,7 +841,7 @@ export async function POST(req: Request) {
       ok: true,
       booking: {
         id: String(booking._id),
-        status: parsed.action === "delete" && !deleteCancelsBooking ? "deleted" : booking.status,
+        status: parsed.action === "delete" ? "deleted" : booking.status,
         date: booking.date.toISOString(),
         time: booking.time,
         duration: booking.duration,

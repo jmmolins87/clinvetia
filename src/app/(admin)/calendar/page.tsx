@@ -638,6 +638,13 @@ export default function AdminCalendarPage() {
     )
   }, [bookingStatusCountsByDate, canOperate, isMobileViewport, openCreateDialog, openMobileDayAgenda])
 
+  const closeBookingDetailLayers = useCallback(() => {
+    setConfirmAction(null)
+    setActiveBooking(null)
+    setSummaryDetailBooking(null)
+    setSummaryModalOpen(false)
+  }, [])
+
   const updateBookingStatus = useCallback(async (booking: CalendarBooking, status: "confirmed" | "cancelled") => {
     setUpdatingId(booking.id)
     try {
@@ -651,11 +658,7 @@ export default function AdminCalendarPage() {
         throw new Error(payload?.error || "No se pudo actualizar la cita")
       }
       await load()
-      setActiveBooking((current) => (current?.id === booking.id ? { ...current, status } : current))
-      toast({
-        title: status === "confirmed" ? "Cita actualizada" : "Cita cancelada",
-        description: status === "confirmed" ? "La cita ha quedado confirmada." : "La cita ha quedado cancelada.",
-      })
+      closeBookingDetailLayers()
       sonnerToast.success(status === "confirmed" ? "Cita actualizada" : "Cita cancelada", {
         description: status === "confirmed" ? "La cita ha quedado confirmada." : "La cita ha quedado cancelada.",
       })
@@ -663,15 +666,10 @@ export default function AdminCalendarPage() {
       sonnerToast.error("No se pudo actualizar la cita", {
         description: error instanceof Error ? error.message : "No se pudo actualizar la cita",
       })
-      toast({
-        variant: "destructive",
-        title: "No se pudo actualizar la cita",
-        description: error instanceof Error ? error.message : "No se pudo actualizar la cita",
-      })
     } finally {
       setUpdatingId(null)
     }
-  }, [load, toast])
+  }, [closeBookingDetailLayers, load])
 
   const openRescheduleDialog = useCallback((booking: CalendarBooking) => {
     if (!booking.email?.trim()) {
@@ -711,11 +709,8 @@ export default function AdminCalendarPage() {
       await load()
       setRescheduleOpen(false)
       setRescheduleBooking(null)
+      closeBookingDetailLayers()
       sonnerToast.success("Cita reagendada", {
-        description: "La cita se ha reagendado correctamente.",
-      })
-      toast({
-        title: "Cita reagendada",
         description: "La cita se ha reagendado correctamente.",
       })
     } catch (error) {
@@ -723,16 +718,11 @@ export default function AdminCalendarPage() {
       sonnerToast.error("No se pudo reagendar la cita", {
         description: message,
       })
-      toast({
-        variant: "destructive",
-        title: "No se pudo reagendar la cita",
-        description: message,
-      })
       throw new Error(message)
     } finally {
       setUpdatingId(null)
     }
-  }, [load, rescheduleBooking, toast])
+  }, [closeBookingDetailLayers, load, rescheduleBooking])
 
   const submitCreate = useCallback(async (payload: BookingWizardSubmitPayload) => {
     const email = createEmail.trim().toLowerCase()
@@ -771,18 +761,9 @@ export default function AdminCalendarPage() {
       sonnerToast.success("Cita creada", {
         description: "La nueva cita se ha creado y enviado correctamente.",
       })
-      toast({
-        title: "Cita creada",
-        description: "La nueva cita se ha creado y enviado correctamente.",
-      })
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo crear la cita"
       sonnerToast.error("No se pudo crear la cita", {
-        description: message,
-      })
-      toast({
-        variant: "destructive",
-        title: "No se pudo crear la cita",
         description: message,
       })
       throw new Error(message)
@@ -805,39 +786,21 @@ export default function AdminCalendarPage() {
       }
       const payload = await res.json().catch(() => null)
       await load()
-      setActiveBooking((current) =>
-        current?.id !== booking.id
-          ? current
-          : payload?.booking?.status === "deleted"
-            ? null
-            : { ...current, status: payload?.booking?.status ?? "cancelled" }
-      )
-      sonnerToast.success(payload?.booking?.status === "cancelled" ? "Cita cancelada" : "Cita eliminada", {
+      closeBookingDetailLayers()
+      sonnerToast.success("Cita eliminada", {
         description:
-          payload?.booking?.status === "cancelled"
-            ? "La cita seguía activa y se ha cancelado directamente."
-            : "La cita se ha eliminado correctamente.",
-      })
-      toast({
-        title: payload?.booking?.status === "cancelled" ? "Cita cancelada" : "Cita eliminada",
-        description:
-          payload?.booking?.status === "cancelled"
-            ? "La cita seguía activa y se ha cancelado directamente."
+          payload?.booking?.status === "deleted"
+            ? "La cita se ha eliminado correctamente del sistema."
             : "La cita se ha eliminado correctamente.",
       })
     } catch (error) {
       sonnerToast.error("No se pudo borrar la cita", {
         description: error instanceof Error ? error.message : "No se pudo borrar la cita",
       })
-      toast({
-        variant: "destructive",
-        title: "No se pudo borrar la cita",
-        description: error instanceof Error ? error.message : "No se pudo borrar la cita",
-      })
     } finally {
       setUpdatingId(null)
     }
-  }, [load, toast])
+  }, [closeBookingDetailLayers, load])
 
   const confirmActionTitle =
     confirmAction === "confirm"
@@ -851,9 +814,7 @@ export default function AdminCalendarPage() {
           : confirmAction === "meet"
             ? "Abrir Google Meet"
             : confirmAction === "delete"
-              ? activeBooking && ["pending", "confirmed"].includes(activeBooking.status)
-                ? "Cancelar cita"
-                : "Eliminar cita"
+              ? "Eliminar cita"
             : ""
 
   const confirmActionDescription =
@@ -867,7 +828,7 @@ export default function AdminCalendarPage() {
             ? "Se abrirá el enlace de videollamada asociado a esta cita."
             : confirmAction === "delete"
               ? activeBooking && ["pending", "confirmed"].includes(activeBooking.status)
-                ? "La cita sigue activa. Si continúas, se cancelará automáticamente y se avisará al cliente y a info@clinvetia.com."
+                ? "La cita sigue activa. Si continúas, se cancelará para notificar al cliente y después se eliminará del sistema."
                 : "La cita se eliminará definitivamente."
             : ""
 
@@ -912,10 +873,10 @@ export default function AdminCalendarPage() {
           }
         }}
       >
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-2xl [&>button]:hidden">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden border-[rgba(var(--black-rgb),0.08)] bg-[linear-gradient(180deg,rgba(var(--white-rgb),0.82)_0%,rgba(var(--white-rgb),0.72)_100%)] p-0 shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.92),0_22px_60px_rgba(var(--black-rgb),0.14)] dark:border-white/10 dark:bg-background/80 dark:shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.10),0_25px_60px_rgba(var(--black-rgb),0.70)] sm:max-h-[85vh] sm:max-w-2xl [&>button]:hidden">
           <div className={cn("min-h-0 flex-1 overflow-y-auto", summaryDetailBooking && "overflow-clip")}>
           <div className={cn(
-            "sticky top-0 z-20 border-b border-white/10 bg-background/95 px-4 pb-4 pt-5 backdrop-blur-xl md:px-6 md:pt-6",
+            "sticky top-0 z-20 border-b border-[rgba(var(--black-rgb),0.06)] bg-[linear-gradient(180deg,rgba(var(--white-rgb),0.94)_0%,rgba(var(--white-rgb),0.84)_100%)] px-4 pb-4 pt-5 backdrop-blur-xl dark:border-white/10 dark:bg-background/95 md:px-6 md:pt-6",
             summaryDetailBooking ? "space-y-3" : "space-y-4"
           )}>
             <div className="flex items-start justify-between gap-4">
@@ -933,7 +894,7 @@ export default function AdminCalendarPage() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="shrink-0 rounded-full border border-white/10 bg-background/95 backdrop-blur-xl"
+                    className="shrink-0 rounded-full border border-[rgba(var(--black-rgb),0.08)] bg-[rgba(var(--white-rgb),0.72)] backdrop-blur-xl dark:border-white/10 dark:bg-background/95"
                     onClick={() => {
                       setSummaryDetailBooking(null)
                       setActiveBooking(null)
@@ -943,7 +904,7 @@ export default function AdminCalendarPage() {
                   </Button>
                 ) : null}
                 <DialogClose asChild>
-                  <Button type="button" variant="ghost" size="icon" className="shrink-0 rounded-full border border-white/10 bg-background/95 backdrop-blur-xl">
+                  <Button type="button" variant="ghost" size="icon" className="shrink-0 rounded-full border border-[rgba(var(--black-rgb),0.08)] bg-[rgba(var(--white-rgb),0.72)] backdrop-blur-xl dark:border-white/10 dark:bg-background/95">
                     <Icon icon={X} size="sm" />
                   </Button>
                 </DialogClose>
@@ -972,7 +933,7 @@ export default function AdminCalendarPage() {
             </div>
           </div>
 
-          <div className={cn("relative overflow-clip px-4 md:px-6", summaryDetailBooking ? "py-3" : "py-4")}>
+          <div className={cn("relative overflow-clip bg-[linear-gradient(180deg,rgba(var(--white-rgb),0.28)_0%,rgba(var(--secondary-rgb),0.05)_100%)] px-4 dark:bg-transparent md:px-6", summaryDetailBooking ? "py-3" : "py-4")}>
             <div
               className={cn(
                 "space-y-3 transition-all duration-300 ease-out",
@@ -1130,7 +1091,7 @@ export default function AdminCalendarPage() {
           </div>
 
           <DialogFooter className={cn(
-            "shrink-0 items-center justify-between gap-3 border-t border-white/10 bg-background px-4 pb-4 pt-4 shadow-[0_-18px_40px_rgba(var(--black-rgb),0.45)] md:px-6 md:pb-6 sm:justify-between sm:[&>*]:flex-none",
+            "shrink-0 items-center justify-between gap-3 border-t border-[rgba(var(--black-rgb),0.06)] bg-[linear-gradient(180deg,rgba(var(--white-rgb),0.88)_0%,rgba(var(--white-rgb),0.96)_100%)] px-4 pb-4 pt-4 shadow-[0_-14px_32px_rgba(var(--black-rgb),0.08)] dark:border-white/10 dark:bg-background dark:shadow-[0_-18px_40px_rgba(var(--black-rgb),0.45)] md:px-6 md:pb-6 sm:justify-between sm:[&>*]:flex-none",
             summaryDetailBooking ? "m-0 h-0 overflow-hidden border-t-0 p-0 opacity-0" : "opacity-100"
           )}>
             <div className="text-xs text-muted-foreground">
