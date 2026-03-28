@@ -14,7 +14,7 @@ Si desarrollas en local, van en `.env`.
 Si despliegas la web en Vercel o Render, van en las variables de entorno de ese servicio.
 
 ```env
-N8N_CHAT_WEBHOOK_URL=https://n8n-yl0e.onrender.com/webhook/moka-chat
+N8N_CHAT_WEBHOOK_URL=https://n8n-hhef.onrender.com/webhook/moka-chat
 N8N_CHAT_WEBHOOK_SECRET=change-me-moka-secret
 ```
 
