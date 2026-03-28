@@ -16,6 +16,7 @@ import {
 } from "@/lib/booking-communication"
 import { getSharedMailboxEmail } from "@/lib/admin-mailbox"
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
+import { callN8nChatWebhook, isN8nChatConfigured } from "@/lib/n8n-integration"
 
 interface SessionLeanView {
   _id: { toString(): string }
@@ -145,6 +146,37 @@ export async function POST(req: Request) {
         role: "external",
       },
     })
+
+    if (isN8nChatConfigured()) {
+      const n8nResult = await callN8nChatWebhook({
+        event: "lead.submitted",
+        channel: "web",
+        source: bookingId ? "contact-form-booking" : "contact-form-session",
+        requestId: crypto.randomUUID(),
+        sentAt: new Date().toISOString(),
+        contactId: createdContact._id.toString(),
+        bookingId,
+        sessionToken: parsed.sessionToken ?? null,
+        lead: {
+          nombre: parsed.nombre,
+          email: parsed.email,
+          telefono: parsed.telefono,
+          clinica: parsed.clinica,
+          mensaje: parsed.mensaje,
+        },
+        roi: parsed.roi ?? {},
+      })
+
+      if (n8nResult && !n8nResult.ok) {
+        console.error("N8N lead webhook failed", {
+          contactId: createdContact._id.toString(),
+          bookingId,
+          email: parsed.email,
+          status: n8nResult.status,
+          error: n8nResult.error,
+        })
+      }
+    }
 
     const supportEmail = process.env.BREVO_REPLY_TO || "info@clinvetia.com"
     const brandName = "Clinvetia"
