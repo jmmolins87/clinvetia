@@ -484,11 +484,16 @@ export function ChatPortal() {
         storage.set("local", "booking_access_token", data.booking.accessToken)
         storage.set("local", "booking", data.booking)
         setHasConfirmedBooking(true)
+        setShowTyping(false)
+        setOpen(false)
+        setCalendarDialogOpen(false)
+        setRoiDialogOpen(false)
         const sessionToken = liveSessionToken || storage.get<string | null>("local", "roi_access_token", null) || ""
         const params = new URLSearchParams({ booking_id: data.booking.bookingId })
         if (data.booking.accessToken) params.set("booking_token", data.booking.accessToken)
         if (sessionToken) params.set("session_token", sessionToken)
         router.push(`/contacto?${params.toString()}`)
+        return
       }
 
       const initialDelayMs = 5000 + Math.floor(Math.random() * 5001)
