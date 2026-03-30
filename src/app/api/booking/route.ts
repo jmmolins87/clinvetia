@@ -40,6 +40,13 @@ const bookingSchema = z.object({
   recaptchaToken: z.string().min(10),
 })
 
+const bookingRescheduleSchema = z.object({
+  bookingId: z.string().min(1),
+  accessToken: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+})
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -276,6 +283,98 @@ export async function GET(req: Request) {
         : null,
     })
   } catch {
+    return NextResponse.json({ error: "Server error" }, { status: 500 })
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json()
+    const parsed = bookingRescheduleSchema.parse(body)
+
+    await dbConnect()
+
+    const rawBooking = await Booking.findById(parsed.bookingId).lean<BookingLeanView>()
+    const booking = Array.isArray(rawBooking) ? rawBooking[0] : rawBooking
+
+    if (!booking) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+    }
+
+    if (booking.accessToken !== parsed.accessToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    }
+
+    if (!["pending", "confirmed"].includes(booking.status) || new Date(booking.demoExpiresAt).getTime() <= Date.now()) {
+      return NextResponse.json({ error: "Booking is no longer active" }, { status: 409 })
+    }
+
+    if (!isValidDemoTimeSlot(parsed.time) || !isBookableDemoTimeSlot(parsed.time)) {
+      return NextResponse.json({ error: "Slot unavailable" }, { status: 409 })
+    }
+
+    const date = new Date(`${parsed.date}T00:00:00.000Z`)
+    if (Number.isNaN(date.getTime())) {
+      return NextResponse.json({ error: "Invalid date" }, { status: 400 })
+    }
+
+    const [hour, min] = parsed.time.split(":").map(Number)
+    const demoDateTime = new Date(date)
+    demoDateTime.setHours(hour, min, 0, 0)
+
+    const demoExpiresAt = new Date(demoDateTime)
+    demoExpiresAt.setMinutes(demoExpiresAt.getMinutes() + booking.duration)
+
+    const expiresAt = new Date(date)
+    expiresAt.setHours(23, 59, 59, 999)
+
+    const start = new Date(date)
+    start.setHours(0, 0, 0, 0)
+
+    const end = new Date(date)
+    end.setHours(23, 59, 59, 999)
+
+    const rawConflict = await Booking.findOne({
+      _id: { $ne: booking._id },
+      date: { $gte: start, $lte: end },
+      time: parsed.time,
+      status: "confirmed",
+    }).lean<BookingLeanView>()
+    const conflict = Array.isArray(rawConflict) ? rawConflict[0] : rawConflict
+
+    if (conflict) {
+      return NextResponse.json({ error: "Slot unavailable" }, { status: 409 })
+    }
+
+    await Booking.updateOne(
+      { _id: booking._id },
+      {
+        $set: {
+          date,
+          time: parsed.time,
+          status: "confirmed",
+          expiresAt,
+          demoExpiresAt,
+        },
+      },
+    )
+
+    return NextResponse.json({
+      bookingId: booking._id.toString(),
+      accessToken: booking.accessToken,
+      date: date.toISOString(),
+      time: parsed.time,
+      duration: booking.duration,
+      expiresAt: expiresAt.toISOString(),
+      formExpiresAt: booking.formExpiresAt.toISOString(),
+      demoExpiresAt: demoExpiresAt.toISOString(),
+      googleMeetLink: booking.googleMeetLink || buildGoogleMeetLink(booking._id.toString()),
+      status: "confirmed",
+    })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid payload", details: error.flatten() }, { status: 400 })
+    }
     return NextResponse.json({ error: "Server error" }, { status: 500 })
   }
 }

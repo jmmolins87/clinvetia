@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Types } from "mongoose"
 import { z } from "zod"
 import { dbConnect } from "@/lib/db"
 import { Booking } from "@/models/Booking"
@@ -24,11 +25,17 @@ import { callN8nChatWebhook, isN8nChatConfigured } from "@/lib/n8n-integration"
 const schema = chatAssistantRequestSchema
 
 function isAffirmative(text: string) {
-  return /\b(si|sí|correcto|ok|okey|vale|perfecto|confirmo|claro|exacto|de acuerdo|yes|yep|yeah|confirm|sure|correct)\b/i.test(text)
+  const normalized = normalizeText(text)
+  return /\b(si|correcto|ok|okey|vale|perfecto|confirmo|claro|exacto|de acuerdo|yes|yep|yeah|confirm|sure|correct|esa misma|ese mismo|esa|ese)\b/i.test(normalized) ||
+    normalized.includes("mejor si")
 }
 
 function isNegative(text: string) {
   return /\b(no|incorrecto|mal|cambiar|otro|equivocado|para nada|wrong|incorrect|change|different|nope|nah)\b/i.test(text)
+}
+
+function wantsNewBooking(text: string) {
+  return /\b(reservar|reservas|reserva|nueva|nuevo|otra cita|otra demo|book|new booking|new appointment)\b/i.test(text)
 }
 
 function extractEmail(text: string) {
@@ -126,6 +133,10 @@ function extractMentionedTime(text: string) {
   return null
 }
 
+function referencesDifferentBooking(text: string) {
+  return /\b(la de mañana|la del jueves|la del viernes|la del lunes|la del martes|la del miercoles|la del miércoles|la de las cinco|la de las 5|la segunda|la otra|esa no|la buena|la de recepción|la de otra persona|la de mi compañera|la de mi recepcionista|other one|not that one)\b/i.test(text)
+}
+
 function extractSlotChoice(text: string, slots: ChatSlot[]) {
   const length = slots.length
   const oneBased = text.match(/\b([1-9])\b/)
@@ -156,9 +167,13 @@ function extractSlotChoice(text: string, slots: ChatSlot[]) {
 }
 
 function isServiceQuestion(text: string) {
-  return /\b(que es|qué es|explica|explicame|explícame|como funciona|cómo funciona|agente|agentes|ia|inteligencia artificial|veterinaria|veterinarias|servicio|solucion|solución|what is|explain|how it works|agent|agents|ai|artificial intelligence|veterinary|service|solution)\b/i.test(
+  return /\b(que es|qué es|que haceis|qué hacéis|que hace clinvetia|qué hace clinvetia|explica|explicame|explícame|como funciona|cómo funciona|agente|agentes|ia|inteligencia artificial|veterinaria|veterinarias|servicio|solucion|solución|what is|explain|how it works|agent|agents|ai|artificial intelligence|veterinary|service|solution)\b/i.test(
     text,
   )
+}
+
+function isPricingQuestion(text: string) {
+  return /\b(cuanto cuesta|cuánto cuesta|precio|precios|tarifa|tarifas|coste|costes|pricing|price|prices|cost)\b/i.test(text)
 }
 
 function isGreeting(text: string) {
@@ -260,11 +275,16 @@ function detectIntents(text: string) {
   const deniesCancel = /\b(no|dont|don't|do not)\b.{0,20}\b(cancelar|cancel)\b/i.test(normalized)
   const deniesReschedule = /\b(no|dont|don't|do not)\b.{0,25}\b(reagendar|reprogramar|reschedule|change appointment)\b/i.test(normalized)
   const deniesBook = /\b(no|dont|don't|do not)\b.{0,20}\b(reservar|book|agendar|appointment)\b/i.test(normalized)
+  const hasMoveToDayPhrase =
+    /\b(pasala al|pasala para|moverla a|moverla para|mover la de|cambiar la de|mueveme la del|muéveme la del)\b.{0,20}\b(lunes|martes|miercoles|jueves|viernes|sabado|domingo|manana|pasado manana)\b/i.test(normalized)
 
-  const wantsCancel = !deniesCancel && /\b(cancelar|cancela|anular|anula|dar de baja|cancel|cancellation)\b/i.test(normalized)
+  const wantsCancel =
+    !deniesCancel &&
+    /\b(cancelar|cancelarla|cancelarlo|canceladme|cancela|anular|anula|anulala|dar de baja|borra mi demo|borra la demo|borra mi cita|borra la de mi companero|borrar la de mi companero|elimina mi cita|quita mi cita|quitamela|quitame la|quítame la|quitamela ya|canceladme eso|cancel|cancellation)\b/i.test(normalized)
   const wantsReschedule =
     !deniesReschedule &&
-    /\b(reagendar|reprogramar|cambiar hora|cambiar cita|otro horario|mover cita|reschedule|change time|change appointment|another slot)\b/i.test(normalized)
+    (/\b(reagendar|reprogramar|cambiar hora|cambiar cita|cambiar una cita|cambiar la de otra persona|cambiamela|cambiamela|otro horario|mover cita|mover mi cita|mover la cita|mover la demo|mover la de|mover la del|muevemela|muevela|mueveme la|muéveme la|move it|cambiar la demo de hora|cambiar la hora de la demo|aplazar|aplazarla|aplazar mi cita|pasarla a otro dia|pasarla a otro día|reschedule|change time|change appointment|another slot)\b/i.test(normalized) ||
+      hasMoveToDayPhrase)
   const wantsBooking =
     !deniesBook && /\b(reservar|reserva|demo|cita|agendar|agenda|book|booking|appointment|schedule|calendario|calendar)\b/i.test(normalized)
 
@@ -687,6 +707,52 @@ async function rescheduleBooking(bookingId: string, slot: ChatSlot) {
   return true
 }
 
+async function findRescheduleTarget(params: {
+  bookingId?: string | null
+  bookingToken?: string | null
+  email?: string | null
+}) {
+  if (params.bookingId) {
+    if (!Types.ObjectId.isValid(params.bookingId)) return null
+    return Booking.findOne({
+      _id: params.bookingId,
+      status: { $in: ["pending", "confirmed"] },
+      demoExpiresAt: { $gt: new Date() },
+    }).lean<{ _id: unknown; accessToken: string; date: Date; time: string; duration: number } | null>()
+  }
+
+  if (params.bookingToken) {
+    return Booking.findOne({
+      accessToken: params.bookingToken,
+      status: { $in: ["pending", "confirmed"] },
+      demoExpiresAt: { $gt: new Date() },
+    }).lean<{ _id: unknown; accessToken: string; date: Date; time: string; duration: number } | null>()
+  }
+
+  if (params.email) {
+    const contacts = await Contact.find({ email: params.email.toLowerCase() })
+      .sort({ createdAt: -1 })
+      .select("bookingId")
+      .lean<Array<{ bookingId?: unknown }>>()
+
+    const bookingIds = contacts
+      .map((contact) => (contact.bookingId ? String(contact.bookingId) : null))
+      .filter(Boolean)
+
+    if (!bookingIds.length) return null
+
+    return Booking.findOne({
+      _id: { $in: bookingIds },
+      status: { $in: ["pending", "confirmed"] },
+      demoExpiresAt: { $gt: new Date() },
+    })
+      .sort({ createdAt: -1 })
+      .lean<{ _id: unknown; accessToken: string; date: Date; time: string; duration: number } | null>()
+  }
+
+  return null
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -803,10 +869,10 @@ export async function POST(req: Request) {
     }
 
     const hasValidRoiSession = hasCompleteRoi(activeSession)
-    const isBookingFlowStep = ["await_timezone", "await_booking_id", "await_slot", "await_email", "await_email_confirm", "await_phone", "await_phone_confirm"].includes(
+    const isBookingFlowStep = ["await_timezone", "await_booking_id", "await_booking_confirm", "await_slot", "await_email", "await_email_confirm", "await_phone", "await_phone_confirm"].includes(
       current.step || "",
     )
-    const hasBookingIntent = current.intent === "book" || current.intent === "reschedule"
+    const hasManagedBookingIntent = current.intent === "book" || current.intent === "reschedule" || current.intent === "cancel"
 
     const respond = async (payload: Record<string, unknown>, init?: ResponseInit) => {
       const replyText = typeof payload.reply === "string" ? payload.reply.replace(/\s+/g, " ").trim() : ""
@@ -823,7 +889,67 @@ export async function POST(req: Request) {
       return NextResponse.json(payload, init)
     }
 
-    if (current.step === "idle" && wantsBooking && !hasValidRoiSession) {
+    const respondWithActiveBooking = () => {
+      const currentDate = new Date(activeBooking.date)
+      const label = formatDateLabel(currentDate, String(activeBooking.time), locale)
+      return respond({
+        reply: t(
+          `Ya tienes una cita activa para ${label}. ID de cita: ${String(activeBooking._id)}. Si quieres la puedo reagendar o cancelar.`,
+          `You already have an active booking for ${label}. Booking ID: ${String(activeBooking._id)}. I can reschedule or cancel it if you want.`,
+        ),
+        state: { intent: "none", step: "idle", objectionAttempts: 0 },
+      })
+    }
+
+    if (current.step === "idle" && /\b(clinvetia|clinvetia\.com|que es clinvetia|quien sois|quienes sois|what is clinvetia|who are you)\b/i.test(lower)) {
+      return respond({
+        reply: t(
+          "Clinvetia desarrolla agentes para clínicas veterinarias que organizan citas y mejoran la atención al cliente. Soy Moka, y si quieres te propongo ahora mismo tres horarios para una demo.",
+          "Clinvetia builds agents for veterinary clinics that organize appointments and improve client support. I'm Moka, and if you want I can suggest three slots for a demo right now.",
+        ),
+        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1, leadContext: "__demo_offer__" },
+      })
+    }
+
+    if (current.step === "idle" && isPricingQuestion(lower) && (isServiceQuestion(lower) || /\b(clinvetia|que haceis|qué hacéis|que hace clinvetia|qué hace clinvetia)\b/i.test(lower))) {
+      return respond({
+        reply: t(
+          "Clinvetia desarrolla agentes para clínicas veterinarias que ayudan con atención al cliente, seguimiento y organización de citas. El precio depende del volumen y de lo que necesite tu clínica, así que no te voy a inventar una tarifa aquí. Si quieres, te explico cómo funciona y te ayudo a pedir una demo.",
+          "Clinvetia builds agents for veterinary clinics that help with client support, follow-up, and appointment organization. Pricing depends on your clinic's volume and needs, so I won't invent a fee here. If you want, I can explain how it works and help you request a demo.",
+        ),
+        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1, leadContext: "__demo_offer__" },
+      })
+    }
+
+    if (current.step === "idle" && isServiceQuestion(lower) && wantsBooking && !wantsReschedule && !wantsCancel) {
+      return respond({
+        reply: t(
+          "Clinvetia desarrolla agentes para clínicas veterinarias que ayudan con atención al cliente, seguimiento y organización de citas. Si quieres, después de explicártelo te ayudo también a reservar una demo.",
+          "Clinvetia builds agents for veterinary clinics that help with client support, follow-up, and appointment organization. If you want, after I explain it I can also help you book a demo.",
+        ),
+        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1, leadContext: "__demo_offer__" },
+      })
+    }
+
+    if (current.step === "idle" && /\b(tengo dos citas|tengo 2 citas|reserv[eé] dos citas|tengo varias citas)\b/i.test(lower)) {
+      return respond({
+        reply: t(
+          "Puedo ayudarte con eso. Pásame el correo con el que reservaste o el ID de una de las citas y vemos cuál quieres gestionar.",
+          "I can help with that. Send me the email used for the booking or the ID of one of the bookings and we'll see which one you want to manage.",
+        ),
+        state: { intent: "reschedule", step: "await_booking_id", objectionAttempts: 0 },
+      })
+    }
+
+    if (activeBooking && current.intent === "book" && current.step !== "idle") {
+      return respondWithActiveBooking()
+    }
+
+    if (activeBooking && current.step === "idle" && wantsBooking && !wantsReschedule && !wantsCancel) {
+      return respondWithActiveBooking()
+    }
+
+    if (current.step === "idle" && wantsBooking && !wantsReschedule && !wantsCancel && !hasValidRoiSession) {
       return respond({
         reply: t(
           "Antes de reservar, hagamos primero tu cálculo ROI para entender mejor tu clínica. Te abro la calculadora.",
@@ -855,7 +981,7 @@ export async function POST(req: Request) {
       })
     }
 
-    if (isBookingFlowStep && !hasValidRoiSession) {
+    if (isBookingFlowStep && current.intent === "book" && !hasValidRoiSession) {
       return respond({
         reply: t(
           "Nos falta el ROI para continuar con la reserva. Te abro la calculadora ahora.",
@@ -866,23 +992,13 @@ export async function POST(req: Request) {
       })
     }
 
-    if (isBookingFlowStep && !hasBookingIntent) {
+    if (isBookingFlowStep && !hasManagedBookingIntent) {
       return respond({
         reply: t(
           "He perdido el contexto de la reserva. Si quieres, empezamos de nuevo y te propongo horarios.",
           "I lost the booking context. If you want, we can restart and I'll suggest available slots.",
         ),
         state: { intent: "none", step: "idle" },
-      })
-    }
-
-    if (current.step === "idle" && /\b(clinvetia|clinvetia\.com|que es clinvetia|quien sois|quienes sois|what is clinvetia|who are you)\b/i.test(lower)) {
-      return respond({
-        reply: t(
-          "Clinvetia desarrolla agentes para clínicas veterinarias que organizan citas y mejoran la atención al cliente. Soy Moka, y si quieres te propongo ahora mismo tres horarios para una demo.",
-          "Clinvetia builds agents for veterinary clinics that organize appointments and improve client support. I'm Moka, and if you want I can suggest three slots for a demo right now.",
-        ),
-        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1, leadContext: "__demo_offer__" },
       })
     }
 
@@ -896,7 +1012,7 @@ export async function POST(req: Request) {
       })
     }
 
-    if (current.step === "idle" && current.leadContext === "__demo_offer__" && (isAffirmative(lower) || wantsBooking)) {
+    if (current.step === "idle" && current.leadContext === "__demo_offer__" && (isAffirmative(lower) || wantsNewBooking(lower) || (wantsBooking && !wantsReschedule && !wantsCancel))) {
       return respond({
         reply: t(
           "Perfecto. Antes de enseñarte horarios, hagamos tu cálculo ROI para orientar mejor la demo. Te abro la calculadora.",
@@ -1050,61 +1166,312 @@ export async function POST(req: Request) {
     if (current.step === "await_booking_id") {
       const bookingIdFromText = extractBookingId(message)
       const bookingTokenFromText = extractBookingToken(message)
-      if (!bookingIdFromText && !bookingTokenFromText) {
+      const emailFromText = extractEmail(message)
+      const saysNoId = /\b(no tengo (el )?id|no se (mi |el )?id|no sé (mi |el )?id|no tengo el identificador|no lo tengo|no encuentro el id|no encuentro mi id|no encuentro el identificador)\b/i.test(lower)
+      const wantsAbortLookup = /\b(d[eé]jalo|olvida(lo|la)?|da igual|forget it|never mind|leave it|drop it)\b/i.test(lower)
+      const wantsFallbackNewBooking =
+        /\b(si no|if not|otherwise)\b/i.test(lower) &&
+        /\b(otra|nuevo|nueva|another|new)\b/i.test(lower) &&
+        (/\b(reserva|reservar|demo|cita|book)\b/i.test(lower) || wantsNewBooking(lower))
+      const actionLabel = current.intent === "cancel"
+        ? t("cancelar", "cancel")
+        : t("reagendar", "reschedule")
+      if ((current.intent === "cancel" || current.intent === "reschedule") && wantsAbortLookup) {
         return respond({
           reply: t(
-            "No detecto un identificador de cita válido. Envíame el ID de cita o el token que recibiste por correo.",
-            "I can't detect a valid booking identifier. Send me the booking ID or the token you received by email.",
+            "Sin problema. Lo dejamos aquí. Si luego quieres retomarlo o prefieres reservar una nueva, te ayudo.",
+            "No problem. We'll leave it here. If you want to pick it up later or prefer to book a new one, I'll help.",
+          ),
+          state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
+        })
+      }
+      if ((current.intent === "cancel" || current.intent === "reschedule") && isAffirmative(lower) && wantsNewBooking(lower)) {
+        return respond({
+          reply: t(
+            "Perfecto. Para reservar una nueva, hagamos primero tu cálculo ROI. Te abro la calculadora.",
+            "Perfect. To book a new one, let's do your ROI first. I'll open the calculator.",
+          ),
+          openRoiCalculator: true,
+          state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
+        })
+      }
+      if ((current.intent === "cancel" || current.intent === "reschedule") && /\b(espera|wait)\b/i.test(lower) && isNegative(lower)) {
+        return respond({
+          reply: t(
+            "Sin problema. Dejamos este cambio aquí. Si más adelante quieres retomarlo o reservar una nueva, te ayudo.",
+            "No problem. We'll leave it here. If you want to pick it up later or book a new one, I'll help.",
+          ),
+          state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
+        })
+      }
+      if ((current.intent === "cancel" || current.intent === "reschedule") && /\b(al final no|mejor otra|mejor una nueva|bah|olvida esa)\b/i.test(lower) && wantsNewBooking(lower)) {
+        return respond({
+          reply: t(
+            "Perfecto. Si prefieres una nueva, hagamos primero tu cálculo ROI. Te abro la calculadora.",
+            "Perfect. If you prefer a new one, let's do your ROI calculation first. I'll open the calculator.",
+          ),
+          openRoiCalculator: true,
+          state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
+        })
+      }
+      if ((current.intent === "cancel" || current.intent === "reschedule") && wantsNewBooking(lower) && !bookingIdFromText && !bookingTokenFromText && !emailFromText) {
+        return respond({
+          reply: t(
+            "Perfecto. Si prefieres reservar una nueva, hagamos primero tu cálculo ROI. Te abro la calculadora.",
+            "Perfect. If you'd rather book a new one, let's do your ROI calculation first. I'll open the calculator.",
+          ),
+          openRoiCalculator: true,
+          state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
+        })
+      }
+      if ((current.intent === "cancel" || current.intent === "reschedule") && /\b(mejor otra|otra|book another one|another one)\b/i.test(lower) && !bookingIdFromText && !bookingTokenFromText && !emailFromText) {
+        return respond({
+          reply: t(
+            "Perfecto. Si prefieres reservar una nueva, hagamos primero tu cálculo ROI. Te abro la calculadora.",
+            "Perfect. If you'd rather book a new one, let's do your ROI calculation first. I'll open the calculator.",
+          ),
+          openRoiCalculator: true,
+          state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
+        })
+      }
+      if ((current.intent === "cancel" || current.intent === "reschedule") && wantsFallbackNewBooking && !bookingIdFromText && !bookingTokenFromText && !emailFromText) {
+        return respond({
+          reply: t(
+            "Perfecto. Si prefieres reservar una nueva, hagamos primero tu cálculo ROI. Te abro la calculadora.",
+            "Perfect. If you'd rather book a new one, let's do your ROI calculation first. I'll open the calculator.",
+          ),
+          openRoiCalculator: true,
+          state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
+        })
+      }
+      if ((current.intent === "cancel" || current.intent === "reschedule") && /\b(si no la encuentras|si no aparece|si no sale|si no existe|si no la ves)\b/i.test(lower) && wantsNewBooking(lower)) {
+        return respond({
+          reply: t(
+            "Perfecto. Si no aparece esa cita, te ayudo a reservar una nueva. Empecemos con tu cálculo ROI y te abro la calculadora.",
+            "Perfect. If that booking doesn't show up, I'll help you book a new one. Let's start with your ROI calculation and I'll open the calculator.",
+          ),
+          openRoiCalculator: true,
+          state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
+        })
+      }
+      if (/\b(ese correo ya no lo uso|ya no uso ese correo|no uso ya ese correo|ya no tengo acceso a ese correo)\b/i.test(lower)) {
+        return respond({
+          reply: t(
+            "Perfecto. Entonces pásame el ID de la cita. Si no lo tienes, dime otro correo con el que creas que pudiste reservarla.",
+            "Got it. Then send me the booking ID. If you don't have it, tell me another email you may have used for the booking.",
           ),
           state: current,
         })
       }
-      const bookingByIdRaw = bookingIdFromText
-        ? await Booking.findOne({
-            _id: bookingIdFromText,
-            status: { $in: ["pending", "confirmed"] },
-            demoExpiresAt: { $gt: new Date() },
-          }).lean<{ _id: unknown; accessToken?: unknown } | null>()
-        : await Booking.findOne({
-            accessToken: bookingTokenFromText,
-            status: { $in: ["pending", "confirmed"] },
-            demoExpiresAt: { $gt: new Date() },
-          }).lean<{ _id: unknown; accessToken?: unknown } | null>()
+      if (/\b(igual fue con otro correo|igual esta con el correo del trabajo|igual está con el correo del trabajo|la del curro|la del mail del trabajo|la del correo del trabajo|quiz[aá] fue con otro correo|puede que fuera con otro correo|correo de recepcion|correo de recepción|la de recepción|la de secretaria|la de secretaría|la de otra persona|a nombre de otra persona|lo reservo mi recepcionista|lo reserv[oó] mi recepcionista|la reserv[oó] mi recepcionista|lo reservo mi secretaria|lo reserv[oó] mi secretaria|with my receptionist|with our receptionist|my receptionist booked it|our receptionist booked it|with my secretary|my secretary booked it|with another email|maybe another email|maybe it was another email|with my work email|with our work email|under another person's email)\b/i.test(lower)) {
+        return respond({
+          reply: t(
+            "Perfecto. Entonces pásame ese otro correo o, si te resulta más fácil, el ID de la cita y lo reviso contigo.",
+            "Got it. Then send me that other email or, if it's easier, the booking ID and I'll check it with you.",
+          ),
+          state: current,
+        })
+      }
+      if (/\b(no encuentro el mail|no encuentro el correo|no sé qué correo use|no se que correo use|no recuerdo el correo|no me acuerdo del correo)\b/i.test(lower)) {
+        return respond({
+          reply: t(
+            "No pasa nada. Si no recuerdas el correo, pásame el ID de la cita. Y si tampoco lo tienes, dime otro correo que creas que pudiste usar y lo revisamos.",
+            "No problem. If you don't remember the email, send me the booking ID. And if you don't have it either, tell me another email you may have used and we'll check it.",
+          ),
+          state: current,
+        })
+      }
+      if (saysNoId) {
+        return respond({
+          reply: t(
+            "No pasa nada. Si no tienes el ID, pásame el correo con el que reservaste y lo reviso contigo.",
+            "No problem. If you don't have the booking ID, send me the email used for the booking and I'll check it with you.",
+          ),
+          state: current,
+        })
+      }
+      if (!bookingIdFromText && !bookingTokenFromText && !emailFromText) {
+        if (/\bid\b/i.test(lower)) {
+          return respond({
+            reply: t(
+              "Ese ID no parece válido. Pásame el ID correcto de la cita o, más fácil, el correo con el que reservaste.",
+              "That booking ID doesn't look valid. Send me the correct booking ID or, easier, the email used for the booking.",
+            ),
+            state: current,
+          })
+        }
+        return respond({
+          reply: t(
+            "No detecto una referencia válida. Envíame el ID de la cita o el correo con el que reservaste.",
+            "I can't detect a valid reference. Send me the booking ID or the email used for the booking.",
+          ),
+          state: current,
+        })
+      }
+      const bookingByIdRaw = await findRescheduleTarget({
+        bookingId: bookingIdFromText,
+        bookingToken: bookingTokenFromText,
+        email: emailFromText,
+      })
       const bookingById = Array.isArray(bookingByIdRaw) ? bookingByIdRaw[0] : bookingByIdRaw
       if (!bookingById) {
+        if (bookingIdFromText || bookingTokenFromText) {
+          return respond({
+            reply: t(
+              "No encuentro ninguna cita activa con ese ID. Pásame el correo con el que hiciste la reserva y la busco por ahí.",
+              "I can't find any active booking with that ID. Send me the email used for the booking and I'll look it up that way.",
+            ),
+            state: current,
+          })
+        }
         return respond({
           reply: t(
-            "No encuentro una cita activa con ese identificador. Revísalo y lo intentamos de nuevo.",
-            "I can't find an active booking with that identifier. Check it and we'll try again.",
+            "No encuentro una cita activa con ese correo. Si tienes el ID de la cita, pásamelo y la reviso. Y si no aparece, te ayudo a reservar una nueva ahora mismo.",
+            "I can't find an active booking with that email. If you have the booking ID, send it to me and I'll check it. And if it still doesn't show up, I can help you book a new one right away.",
           ),
           state: current,
         })
       }
-      const slots = await buildSlots(3, locale)
-      if (!slots.length) {
-        return respond({
-          reply: t(
-            "Ahora mismo no tengo huecos disponibles. Prueba en unos minutos.",
-            "I don't have available slots right now. Please try again in a few minutes.",
-          ),
-          state: { intent: "none", step: "idle" },
-        })
-      }
+      const currentDate = new Date(bookingById.date)
+      const label = formatDateLabel(currentDate, bookingById.time, locale)
       return respond({
         reply: t(
-          `Ya tengo tu cita ${String(bookingById._id)}. Te propongo 3 horarios:\n1) ${slots[0].label}\n2) ${slots[1]?.label || "-"}\n3) ${slots[2]?.label || "-"}\nElige 1, 2 o 3.`,
-          `I found your booking ${String(bookingById._id)}. Here are 3 time options:\n1) ${slots[0].label}\n2) ${slots[1]?.label || "-"}\n3) ${slots[2]?.label || "-"}\nChoose 1, 2, or 3.`,
+          `He encontrado tu cita ${String(bookingById._id)} para ${label}. ¿Es esta la cita que quieres ${actionLabel}?`,
+          `I found your booking ${String(bookingById._id)} for ${label}. Is this the booking you want to ${actionLabel}?`,
         ),
         state: {
-          intent: "reschedule",
-          step: "await_slot",
-          proposedSlots: slots,
+          intent: current.intent === "cancel" ? "cancel" : "reschedule",
+          step: "await_booking_confirm",
+          proposedSlots: [],
           selectedSlot: null,
           email: null,
           phone: null,
           targetBookingId: String(bookingById._id),
-          targetBookingToken: String(bookingById.accessToken),
+          targetBookingToken: bookingById.accessToken,
           objectionAttempts: 0,
+        },
+      })
+    }
+
+    if (current.step === "await_booking_confirm") {
+      if (referencesDifferentBooking(lower)) {
+        return respond({
+          reply: t(
+            "Entendido. Entonces pásame el ID de esa otra cita o el correo con el que se reservó y la buscamos.",
+            "Understood. Then send me the ID of that other booking or the email used for it and we'll look it up.",
+          ),
+          state: {
+            intent: current.intent === "cancel" ? "cancel" : "reschedule",
+            step: "await_booking_id",
+            proposedSlots: [],
+            selectedSlot: null,
+            email: null,
+            phone: null,
+            targetBookingId: null,
+            targetBookingToken: null,
+            objectionAttempts: 0,
+          },
+        })
+      }
+
+      if (isNegative(lower)) {
+        return respond({
+          reply: t(
+            "Perfecto. Envíame entonces el ID de la cita o el correo con el que hiciste la reserva.",
+            "Perfect. Then send me the booking ID or the email used for the booking.",
+          ),
+          state: {
+            intent: current.intent === "cancel" ? "cancel" : "reschedule",
+            step: "await_booking_id",
+            proposedSlots: [],
+            selectedSlot: null,
+            email: null,
+            phone: null,
+            targetBookingId: null,
+            targetBookingToken: null,
+            objectionAttempts: 0,
+          },
+        })
+      }
+
+      if (!isAffirmative(lower)) {
+        return respond({
+          reply: t(
+            current.intent === "cancel"
+              ? "Respóndeme si o no y, si es correcta, la cancelo."
+              : "Respóndeme si o no y, si es correcta, te abro el calendario para elegir la nueva fecha.",
+            current.intent === "cancel"
+              ? "Reply yes or no and, if it's correct, I'll cancel it."
+              : "Reply yes or no and, if it's correct, I'll open the calendar so you can choose the new date.",
+          ),
+          state: current,
+        })
+      }
+
+      const targetBooking = await findRescheduleTarget({
+        bookingId: current.targetBookingId,
+        bookingToken: current.targetBookingToken,
+      })
+      if (!targetBooking) {
+        return respond({
+          reply: t(
+            "Esa cita ya no está activa. Si quieres, buscamos otra con tu correo o me pasas otro ID.",
+            "That booking is no longer active. If you want, we can look for another one with your email or you can send me another ID.",
+          ),
+          state: {
+            intent: current.intent === "cancel" ? "cancel" : "reschedule",
+            step: "await_booking_id",
+            proposedSlots: [],
+            selectedSlot: null,
+            email: null,
+            phone: null,
+            targetBookingId: null,
+            targetBookingToken: null,
+            objectionAttempts: 0,
+          },
+        })
+      }
+
+      if (current.intent === "cancel") {
+        await clearRoiForBookingContext({
+          bookingId: String(targetBooking._id),
+          bookingSessionToken: null,
+          contactSessionToken: null,
+        })
+        await Booking.updateOne({ _id: targetBooking._id }, { $set: { status: "cancelled" } })
+        return respond({
+          reply: t(
+            `Listo. He cancelado la cita ${String(targetBooking._id)}. Si quieres, también puedo ayudarte a reservar una nueva.`,
+            `Done. I cancelled booking ${String(targetBooking._id)}. If you want, I can also help you book a new one.`,
+          ),
+          state: { intent: "none", step: "await_more_help", objectionAttempts: 0 },
+          booking: null,
+        })
+      }
+
+      return respond({
+        reply: t(
+          "Perfecto. Te abro el calendario para que elijas la nueva fecha y hora.",
+          "Perfect. I'll open the calendar so you can choose the new date and time.",
+        ),
+        openCalendar: true,
+        state: {
+          intent: "reschedule",
+          step: "idle",
+          proposedSlots: [],
+          selectedSlot: null,
+          email: null,
+          phone: null,
+          targetBookingId: String(targetBooking._id),
+          targetBookingToken: targetBooking.accessToken,
+          objectionAttempts: 0,
+        },
+        booking: {
+          bookingId: String(targetBooking._id),
+          accessToken: targetBooking.accessToken,
+          date: targetBooking.date.toISOString(),
+          time: targetBooking.time,
+          duration: targetBooking.duration,
         },
       })
     }
@@ -1284,8 +1651,8 @@ export async function POST(req: Request) {
         if (!targetBooking) {
           return respond({
             reply: t(
-              `No encuentro una cita activa con ese ID. Si quieres crear una nueva, hazlo desde ${webBookingUrl} y luego te ayudo aquí con cambios.`,
-              `I can't find an active booking with that ID. If you want a new one, create it from ${webBookingUrl} and then I can help you with changes here.`,
+              `No encuentro una cita activa con ese ID. Si quieres, puedo ayudarte a reservar una nueva cita desde aquí o puedes hacerlo directamente en ${webBookingUrl}. Como prefieras, te acompaño.`,
+              `I can't find an active booking with that ID. If you want, I can help you book a new appointment from here, or you can do it directly at ${webBookingUrl}. Either way, I can help.`,
             ),
             state: { intent: "none", step: "idle" },
           })
@@ -1372,38 +1739,247 @@ export async function POST(req: Request) {
 
     if (wantsCancel) {
       if (!activeBooking) {
+        const bookingIdInMessage = extractBookingId(message)
+        const bookingTokenInMessage = extractBookingToken(message)
+        const emailInMessage = extractEmail(message)
+        const mentionsId = /\bid\b/i.test(lower)
+        const saysNoId = /\b(no tengo (el )?id|no se (mi |el )?id|no sé (mi |el )?id|no tengo el identificador|no lo tengo|no encuentro el id|no encuentro mi id|no encuentro el identificador)\b/i.test(lower)
+        const saysNoEmail = /\b(no recuerdo el correo|no encuentro el correo|no encuentro el mail|no recuerdo el mail|no se que correo use|no sé qué correo usé|no me acuerdo del correo)\b/i.test(lower)
+        if (!bookingIdInMessage && !bookingTokenInMessage && !emailInMessage) {
+          if (saysNoEmail) {
+            return respond({
+              reply: t(
+                "No pasa nada. Si no recuerdas el correo, pásame el ID de la cita. Y si tampoco lo tienes, dime otro correo que creas que pudiste usar y lo revisamos.",
+                "No problem. If you don't remember the email, send me the booking ID. And if you don't have it either, tell me another email you may have used and we'll check it.",
+              ),
+              state: {
+                intent: "cancel",
+                step: "await_booking_id",
+                targetBookingId: null,
+                targetBookingToken: null,
+                proposedSlots: [],
+                selectedSlot: null,
+                email: null,
+                phone: null,
+                objectionAttempts: 0,
+              },
+            })
+          }
+          if (saysNoId) {
+            return respond({
+              reply: t(
+                "No pasa nada. Si no tienes el ID, pásame el correo con el que reservaste y lo reviso contigo.",
+                "No problem. If you don't have the booking ID, send me the email used for the booking and I'll check it with you.",
+              ),
+              state: {
+                intent: "cancel",
+                step: "await_booking_id",
+                targetBookingId: null,
+                targetBookingToken: null,
+                proposedSlots: [],
+                selectedSlot: null,
+                email: null,
+                phone: null,
+                objectionAttempts: 0,
+              },
+            })
+          }
+          if (mentionsId) {
+            return respond({
+              reply: t(
+                "Ese ID no parece válido. Pásame el ID correcto de la cita o, si te va mejor, el correo con el que reservaste y lo reviso contigo.",
+                "That booking ID doesn't look valid. Send me the correct booking ID or, if it's easier, the email used for the booking.",
+              ),
+              state: {
+                intent: "cancel",
+                step: "await_booking_id",
+                targetBookingId: null,
+                targetBookingToken: null,
+                proposedSlots: [],
+                selectedSlot: null,
+                email: null,
+                phone: null,
+                objectionAttempts: 0,
+              },
+            })
+          }
+          return respond({
+            reply: t(
+              "Claro, te ayudo con eso. Para cancelar necesito el ID de la cita o el correo con el que reservaste.",
+              "Sure. To cancel, I need the booking ID or the email used for the booking.",
+            ),
+            state: {
+              intent: "cancel",
+              step: "await_booking_id",
+              targetBookingId: null,
+              targetBookingToken: null,
+              proposedSlots: [],
+              selectedSlot: null,
+              email: null,
+              phone: null,
+              objectionAttempts: 0,
+            },
+          })
+        }
+
+        const targetBookingRaw = await findRescheduleTarget({
+          bookingId: bookingIdInMessage,
+          bookingToken: bookingTokenInMessage,
+          email: emailInMessage,
+        })
+        const targetBooking = Array.isArray(targetBookingRaw) ? targetBookingRaw[0] : targetBookingRaw
+        if (targetBooking) {
+          const currentDate = new Date(targetBooking.date)
+          const label = formatDateLabel(currentDate, targetBooking.time, locale)
+          return respond({
+            reply: t(
+              `He encontrado tu cita ${String(targetBooking._id)} para ${label}. ¿Es esta la cita que quieres cancelar?`,
+              `I found your booking ${String(targetBooking._id)} for ${label}. Is this the booking you want to cancel?`,
+            ),
+            state: {
+              intent: "cancel",
+              step: "await_booking_confirm",
+              targetBookingId: String(targetBooking._id),
+              targetBookingToken: targetBooking.accessToken,
+              proposedSlots: [],
+              selectedSlot: null,
+              email: null,
+              phone: null,
+              objectionAttempts: 0,
+            },
+          })
+        }
+
         return respond({
           reply: t(
-            `No veo una cita activa para cancelar. Si quieres crear una nueva, hazlo desde ${webBookingUrl} y luego te ayudo con cambios.`,
-            `I don't see an active booking to cancel. If you want a new one, create it from ${webBookingUrl} and then I can help you with changes.`,
+            `No encuentro una cita activa con esos datos. Si quieres, prueba con otro correo o con el ID de la cita y lo revisamos. Y si no aparece, te ayudo a reservar una nueva en ${webBookingUrl}.`,
+            `I can't find an active booking with those details. If you want, try another email or the booking ID, and if not I can help you book a new one at ${webBookingUrl}.`,
           ),
-          state: { intent: "none", step: "idle" },
+          state: {
+            intent: "cancel",
+            step: "await_booking_id",
+            targetBookingId: null,
+            targetBookingToken: null,
+            proposedSlots: [],
+            selectedSlot: null,
+            email: null,
+            phone: null,
+            objectionAttempts: 0,
+          },
         })
       }
-      await clearRoiForBookingContext({
-        bookingId: String(activeBooking._id),
-        bookingSessionToken: activeBooking.sessionToken ?? null,
-        contactSessionToken: activeBooking.sessionToken ?? null,
-      })
-      await Booking.updateOne({ _id: activeBooking._id }, { $set: { status: "cancelled" } })
+      const currentDate = new Date(activeBooking.date)
+      const label = formatDateLabel(currentDate, String(activeBooking.time), locale)
       return respond({
         reply: t(
-          "He cancelado tu cita activa. Si quieres, te propongo nuevos horarios ahora.",
-          "I canceled your active booking. If you want, I can suggest new slots now.",
+          `Veo una cita activa para ${label}. ¿Es esta la cita que quieres cancelar?`,
+          `I can see an active booking for ${label}. Is this the booking you want to cancel?`,
         ),
-        state: { intent: "none", step: "idle", objectionAttempts: 0 },
-        booking: null,
+        state: {
+          intent: "cancel",
+          step: "await_booking_confirm",
+          targetBookingId: String(activeBooking._id),
+          targetBookingToken: String(activeBooking.accessToken),
+          proposedSlots: [],
+          selectedSlot: null,
+          email: null,
+          phone: null,
+          objectionAttempts: 0,
+        },
       })
     }
 
     if (wantsReschedule) {
       const bookingIdInMessage = extractBookingId(message)
       const bookingTokenInMessage = extractBookingToken(message)
-      if (!bookingIdInMessage && !bookingTokenInMessage) {
+      const emailInMessage = extractEmail(message)
+      const mentionsId = /\bid\b/i.test(lower)
+      const saysNoId = /\b(no tengo (el )?id|no se (mi |el )?id|no sé (mi |el )?id|no tengo el identificador|no lo tengo|no encuentro el id|no encuentro mi id|no encuentro el identificador)\b/i.test(lower)
+      const saysNoEmail = /\b(no recuerdo el correo|no encuentro el correo|no encuentro el mail|no recuerdo el mail|no se que correo use|no sé qué correo usé|no me acuerdo del correo)\b/i.test(lower)
+      if (activeBooking) {
+        const currentDate = new Date(activeBooking.date)
+        const label = formatDateLabel(currentDate, String(activeBooking.time), locale)
         return respond({
           reply: t(
-            "Claro. Para reagendar necesito el ID de cita o el token de reserva que te llegó por correo.",
-            "Sure. To reschedule, I need the booking ID or booking token you received by email.",
+            `Claro. Veo una cita activa para ${label}. ¿Es esta la que quieres reagendar?`,
+            `Sure. I can see an active booking for ${label}. Is this the one you want to reschedule?`,
+          ),
+          state: {
+            intent: "reschedule",
+            step: "await_booking_confirm",
+            targetBookingId: String(activeBooking._id),
+            targetBookingToken: String(activeBooking.accessToken),
+            proposedSlots: [],
+            selectedSlot: null,
+            email: null,
+            phone: null,
+            objectionAttempts: 0,
+          },
+        })
+      }
+
+      if (!bookingIdInMessage && !bookingTokenInMessage && !emailInMessage) {
+        if (saysNoEmail) {
+          return respond({
+            reply: t(
+              "No pasa nada. Si no recuerdas el correo, pásame el ID de la cita. Y si tampoco lo tienes, dime otro correo que creas que pudiste usar y lo revisamos.",
+              "No problem. If you don't remember the email, send me the booking ID. And if you don't have it either, tell me another email you may have used and we'll check it.",
+            ),
+            state: {
+              intent: "reschedule",
+              step: "await_booking_id",
+              targetBookingId: null,
+              targetBookingToken: null,
+              proposedSlots: [],
+              selectedSlot: null,
+              email: null,
+              phone: null,
+              objectionAttempts: 0,
+            },
+          })
+        }
+        if (saysNoId) {
+          return respond({
+            reply: t(
+              "No pasa nada. Si no tienes el ID, pásame el correo con el que reservaste y lo reviso contigo.",
+              "No problem. If you don't have the booking ID, send me the email used for the booking and I'll check it with you.",
+            ),
+            state: {
+              intent: "reschedule",
+              step: "await_booking_id",
+              targetBookingId: null,
+              targetBookingToken: null,
+              proposedSlots: [],
+              selectedSlot: null,
+              email: null,
+              phone: null,
+              objectionAttempts: 0,
+            },
+          })
+        }
+        if (mentionsId) {
+          return respond({
+            reply: t(
+              "Ese ID no parece válido. Pásame el ID correcto de la cita o, si te va mejor, el correo con el que reservaste y lo reviso contigo.",
+              "That booking ID doesn't look valid. Send me the correct booking ID or, if it's easier, the email used for the booking.",
+            ),
+            state: {
+              intent: "reschedule",
+              step: "await_booking_id",
+              targetBookingId: null,
+              targetBookingToken: null,
+              proposedSlots: [],
+              selectedSlot: null,
+              email: null,
+              phone: null,
+              objectionAttempts: 0,
+            },
+          })
+        }
+        return respond({
+            reply: t(
+            "Claro, te ayudo con eso. Para reagendar necesito el ID de la cita o el correo con el que reservaste.",
+            "Sure. To reschedule, I need the booking ID or the email used for the booking.",
           ),
           state: {
             intent: "reschedule",
@@ -1418,23 +1994,17 @@ export async function POST(req: Request) {
           },
         })
       }
-      const targetBookingRaw = bookingIdInMessage
-        ? await Booking.findOne({
-            _id: bookingIdInMessage,
-            status: { $in: ["pending", "confirmed"] },
-            demoExpiresAt: { $gt: new Date() },
-          }).lean<{ _id: unknown; accessToken?: unknown } | null>()
-        : await Booking.findOne({
-            accessToken: bookingTokenInMessage,
-            status: { $in: ["pending", "confirmed"] },
-            demoExpiresAt: { $gt: new Date() },
-          }).lean<{ _id: unknown; accessToken?: unknown } | null>()
+      const targetBookingRaw = await findRescheduleTarget({
+        bookingId: bookingIdInMessage,
+        bookingToken: bookingTokenInMessage,
+        email: emailInMessage,
+      })
       const targetBooking = Array.isArray(targetBookingRaw) ? targetBookingRaw[0] : targetBookingRaw
       if (!targetBooking) {
         return respond({
           reply: t(
-            "No encuentro una cita activa con ese identificador. Revísalo y te ayudo a intentarlo de nuevo.",
-            "I can't find an active booking with that identifier. Check it and I'll help you try again.",
+            `No encuentro una cita activa con esos datos. Si quieres, revisamos otro ID o correo, y si no aparece te ayudo a reservar una nueva en ${webBookingUrl}.`,
+            `I can't find an active booking with those details. If you want, we can try another ID or email, and if not I can help you book a new one at ${webBookingUrl}.`,
           ),
           state: {
             intent: "reschedule",
@@ -1449,30 +2019,22 @@ export async function POST(req: Request) {
           },
         })
       }
-      const slots = await buildSlots(3, locale)
-      if (!slots.length) {
-        return respond({
-          reply: t(
-            "Ahora mismo no tengo huecos disponibles. Prueba en unos minutos.",
-            "I don't have available slots right now. Please try again in a few minutes.",
-          ),
-          state: { intent: "none", step: "idle" },
-        })
-      }
+      const currentDate = new Date(targetBooking.date)
+      const label = formatDateLabel(currentDate, targetBooking.time, locale)
       return respond({
         reply: t(
-          `Ya tengo tu cita ${String(targetBooking._id)}. Te propongo estas opciones:\n1) ${slots[0].label}\n2) ${slots[1]?.label || "-"}\n3) ${slots[2]?.label || "-"}\nEscribe 1, 2 o 3.`,
-          `I found your booking ${String(targetBooking._id)}. Here are your options:\n1) ${slots[0].label}\n2) ${slots[1]?.label || "-"}\n3) ${slots[2]?.label || "-"}\nType 1, 2, or 3.`,
+          `He encontrado tu cita ${String(targetBooking._id)} para ${label}. ¿Es esta la que quieres reagendar?`,
+          `I found your booking ${String(targetBooking._id)} for ${label}. Is this the one you want to reschedule?`,
         ),
         state: {
           intent: "reschedule",
-          step: "await_slot",
-          proposedSlots: slots,
+          step: "await_booking_confirm",
+          proposedSlots: [],
           selectedSlot: null,
           email: null,
           phone: null,
           targetBookingId: String(targetBooking._id),
-          targetBookingToken: String(targetBooking.accessToken),
+          targetBookingToken: targetBooking.accessToken,
           objectionAttempts: 0,
         },
       })

@@ -8,7 +8,7 @@ export const chatSlotSchema = z.object({
 
 export const chatStateSchema = z.object({
   intent: z.enum(["book", "reschedule", "cancel", "none"]).optional(),
-  step: z.enum(["idle", "await_timezone", "await_booking_id", "await_slot", "await_email", "await_email_confirm", "await_phone", "await_phone_confirm", "await_more_help"]).optional(),
+  step: z.enum(["idle", "await_timezone", "await_booking_id", "await_booking_confirm", "await_slot", "await_email", "await_email_confirm", "await_phone", "await_phone_confirm", "await_more_help"]).optional(),
   proposedSlots: z.array(chatSlotSchema).optional(),
   selectedSlot: chatSlotSchema.nullable().optional(),
   email: z.string().email().nullable().optional(),

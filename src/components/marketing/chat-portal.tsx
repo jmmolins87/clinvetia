@@ -39,6 +39,23 @@ type ChatMessage = {
   content: string
 }
 
+type StoredActiveBooking = {
+  bookingId?: string
+  accessToken?: string
+  date?: string
+  time?: string
+  duration?: number
+  demoExpiresAt?: string
+}
+
+type RescheduleTarget = {
+  bookingId: string
+  accessToken: string
+  date?: string
+  time?: string
+  duration?: number
+}
+
 function isAffirmativeReply(text: string) {
   return /\b(si|sí|ok|okey|vale|perfecto|claro|de acuerdo|yes|sure)\b/i.test(text)
 }
@@ -101,6 +118,33 @@ function getInitialMessage(locale: "es" | "en"): ChatMessage {
         ? "Hi, I'm Moka. I'm here to help you."
         : "Hola, soy Moka. Estoy aquí para ayudarte.",
   }
+}
+
+function getStoredActiveBooking(): StoredActiveBooking | null {
+  const booking = storage.get<StoredActiveBooking | null>("local", "booking", null)
+  if (!booking?.demoExpiresAt) return null
+  if (new Date(booking.demoExpiresAt).getTime() <= Date.now()) return null
+  return booking
+}
+
+function buildActiveBookingReply(locale: "es" | "en", booking?: StoredActiveBooking | null) {
+  if (booking?.date && booking?.time) {
+    const date = new Date(booking.date)
+    if (!Number.isNaN(date.getTime())) {
+      const label = date.toLocaleDateString(locale === "en" ? "en-US" : "es-ES", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      })
+      return locale === "en"
+        ? `You already have an active booking for ${label} at ${booking.time}. I can help you reschedule or cancel it if you want.`
+        : `Ya tienes una cita en curso para ${label} a las ${booking.time}. Si quieres, te ayudo a reagendarla o cancelarla.`
+    }
+  }
+
+  return locale === "en"
+    ? "You already have an active booking in progress. I can help you reschedule or cancel it if you want."
+    : "Ya tienes una cita en curso. Si quieres, te ayudo a reagendarla o cancelarla."
 }
 
 function RoiDialog({
@@ -403,6 +447,8 @@ export function ChatPortal() {
   const [roiDialogOpen, setRoiDialogOpen] = useState(false)
   const [isSavingRoi, setIsSavingRoi] = useState(false)
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false)
+  const [calendarMode, setCalendarMode] = useState<"create" | "reschedule">("create")
+  const [rescheduleTarget, setRescheduleTarget] = useState<RescheduleTarget | null>(null)
   const [pendingCalendarOpen, setPendingCalendarOpen] = useState(false)
   const [, setConversationStarted] = useState(false)
   const [, setHasConfirmedBooking] = useState(false)
@@ -547,10 +593,20 @@ export function ChatPortal() {
     if (!content || isSending) return
 
     const lastAssistantMessage = [...messages].reverse().find((message) => message.role === "assistant")?.content || ""
+    const localActiveBooking = getStoredActiveBooking()
     if (isAffirmativeReply(content) && isDemoOfferMessage(lastAssistantMessage)) {
       setInput("")
       if (textareaRef.current) {
         textareaRef.current.style.height = "56px"
+      }
+      if (localActiveBooking) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "user", content },
+          { role: "assistant", content: buildActiveBookingReply(locale, localActiveBooking) },
+        ])
+        setChatState({ intent: "none", step: "idle", objectionAttempts: 0 })
+        return
       }
       setMessages((prev) => [
         ...prev,
@@ -608,8 +664,23 @@ export function ChatPortal() {
         setChatState(data.state)
       }
 
-      const shouldOpenCalendar = Boolean(data.openCalendar && liveSessionToken)
-      const shouldOpenRoiCalculator = Boolean(data.openRoiCalculator || (data.openCalendar && !liveSessionToken))
+      const localActiveBookingAfterResponse = getStoredActiveBooking()
+      const isRescheduleCalendar = Boolean(
+        data.openCalendar &&
+        data.state?.intent === "reschedule" &&
+        data.booking?.bookingId &&
+        data.booking?.accessToken,
+      )
+      const shouldBlockNewBookingFlow = Boolean(
+        !isRescheduleCalendar &&
+        localActiveBookingAfterResponse &&
+        (data.openCalendar || data.openRoiCalculator),
+      )
+      const shouldOpenCalendar = Boolean(!shouldBlockNewBookingFlow && (isRescheduleCalendar || (data.openCalendar && liveSessionToken)))
+      const shouldOpenRoiCalculator = Boolean(!shouldBlockNewBookingFlow && (data.openRoiCalculator || (data.openCalendar && !liveSessionToken)))
+      const replyText = shouldBlockNewBookingFlow
+        ? buildActiveBookingReply(locale, localActiveBookingAfterResponse)
+        : data.reply
 
       if (data.booking === null) {
         storage.remove("local", "booking_access_token")
@@ -633,14 +704,29 @@ export function ChatPortal() {
       const initialDelayMs = 5000 + Math.floor(Math.random() * 5001)
       await new Promise((resolve) => setTimeout(resolve, initialDelayMs))
       setShowTyping(true)
-      const typingDurationMs = Math.min(9000, Math.max(1500, Math.floor(data.reply.length * 24)))
+      const typingDurationMs = Math.min(9000, Math.max(1500, Math.floor(replyText.length * 24)))
       await new Promise((resolve) => setTimeout(resolve, typingDurationMs))
       setShowTyping(false)
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }])
+      setMessages((prev) => [...prev, { role: "assistant", content: replyText }])
       if (shouldOpenRoiCalculator) {
+        setCalendarMode("create")
+        setRescheduleTarget(null)
         openOverlayAfterMobileChatCloses(() => setRoiDialogOpen(true))
       }
       if (shouldOpenCalendar) {
+        if (isRescheduleCalendar && data.booking) {
+          setCalendarMode("reschedule")
+          setRescheduleTarget({
+            bookingId: data.booking.bookingId,
+            accessToken: data.booking.accessToken,
+            date: data.booking.date,
+            time: data.booking.time,
+            duration: data.booking.duration,
+          })
+        } else {
+          setCalendarMode("create")
+          setRescheduleTarget(null)
+        }
         openOverlayAfterMobileChatCloses(() => setCalendarDialogOpen(true))
       }
     } catch (error) {
@@ -863,20 +949,31 @@ export function ChatPortal() {
         open={calendarDialogOpen}
         onOpenChange={(next) => {
           setCalendarDialogOpen(next)
+          if (!next) {
+            setCalendarMode("create")
+            setRescheduleTarget(null)
+          }
         }}
       >
         <DialogContent data-chat-scrollable="true" className="w-[98vw] sm:max-w-5xl max-h-[94vh] overflow-y-auto p-3 md:p-5">
           <DialogHeader>
-            <DialogTitle>Moka te ayuda a seleccionar tu cita</DialogTitle>
+            <DialogTitle>{calendarMode === "reschedule" ? "Moka te ayuda a reagendar tu cita" : "Moka te ayuda a seleccionar tu cita"}</DialogTitle>
             <DialogDescription>
-              Elige uno de los horarios disponibles y confirma tu cita.
+              {calendarMode === "reschedule" ? "Elige una nueva fecha y hora para tu videollamada." : "Elige uno de los horarios disponibles y confirma tu cita."}
             </DialogDescription>
           </DialogHeader>
           <BookingCalendar
             embedded
+            mode={calendarMode}
+            rescheduleTarget={rescheduleTarget}
             onBooked={() => {
               setHasConfirmedBooking(true)
+              setOpen(false)
               setCalendarDialogOpen(false)
+              setRoiDialogOpen(false)
+              setPendingCalendarOpen(false)
+              setCalendarMode("create")
+              setRescheduleTarget(null)
               const savedBooking = storage.get<{ bookingId?: string; accessToken?: string } | null>("local", "booking", null)
               const sessionToken = storage.get<string | null>("local", "roi_access_token", null)
               if (savedBooking?.bookingId) {
@@ -885,6 +982,27 @@ export function ChatPortal() {
                 if (sessionToken) params.set("session_token", sessionToken)
                 router.push(`/contacto?${params.toString()}`)
               }
+            }}
+            onRescheduled={(date, time) => {
+              setCalendarDialogOpen(false)
+              setCalendarMode("create")
+              setRescheduleTarget(null)
+              const label = date.toLocaleDateString(locale === "en" ? "en-US" : "es-ES", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content:
+                    locale === "en"
+                      ? `Done. Your booking has been rescheduled to ${label} at ${time}.`
+                      : `Listo. Tu cita ha quedado reagendada para ${label} a las ${time}.`,
+                },
+              ])
+              setChatState({ intent: "none", step: "await_more_help", objectionAttempts: 0 })
             }}
           />
         </DialogContent>

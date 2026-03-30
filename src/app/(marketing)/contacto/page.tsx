@@ -172,6 +172,30 @@ function ContactFormWithROI() {
     )
   }, [normalizeROI])
 
+  const handleExpiredBookingState = useCallback((showDialog = true) => {
+    setExpirationHandled(true)
+    setFormExpiration(null)
+    if (showDialog) {
+      setExpiredDialogOpen(true)
+    }
+    setStoredBooking((prev) =>
+      prev && prev.status !== "expired"
+        ? { ...prev, status: "expired" }
+        : prev
+    )
+    storage.remove("local", "booking")
+    storage.remove("local", "booking_access_token")
+    storage.remove("local", "roi_access_token")
+    storage.remove("local", "demo_access_token")
+    setBookingAccessToken(null)
+    setBookingId(null)
+    setSessionAccessToken(null)
+    setHasSessionROI(false)
+    setSessionROI(null)
+    setAccessToken(null)
+    resetROI()
+  }, [resetROI, setAccessToken, setFormExpiration])
+
   useEffect(() => {
     setMounted(true)
     const storedBookingToken = storage.get<string | null>("local", "booking_access_token", null)
@@ -390,11 +414,6 @@ function ContactFormWithROI() {
     if (!mounted || expirationHandled) return
     if (!isExpired && !isDemoExpired) return
 
-    setExpirationHandled(true)
-    setFormExpiration(null)
-    setExpiredDialogOpen(true)
-    setStoredBooking((prev) => (prev ? { ...prev, status: "expired" } : prev))
-
     if (bookingId && bookingAccessToken) {
       fetch("/api/booking/expire", {
         method: "POST",
@@ -403,33 +422,16 @@ function ContactFormWithROI() {
       }).catch(() => {})
     }
 
-    storage.remove("local", "booking")
-    storage.remove("local", "booking_access_token")
-    storage.remove("local", "demo_access_token")
-    setBookingAccessToken(null)
-    setBookingId(null)
-  }, [mounted, expirationHandled, isExpired, isDemoExpired, bookingId, bookingAccessToken, setFormExpiration])
+    handleExpiredBookingState()
+  }, [mounted, expirationHandled, isExpired, isDemoExpired, bookingId, bookingAccessToken, handleExpiredBookingState])
 
   useEffect(() => {
     if (!mounted) return
     const onExpired = () => {
-      setFormExpiration(null)
-      setExpiredDialogOpen(true)
+      handleExpiredBookingState()
       try {
         localStorage.setItem("clinvetia:booking-expired-at", String(Date.now()))
       } catch {}
-      setStoredBooking((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: "expired",
-              formExpiresAt: prev.formExpiresAt ?? new Date().toISOString(),
-              demoExpiresAt: prev.demoExpiresAt ?? new Date().toISOString(),
-            }
-          : prev
-      )
-      setBookingAccessToken(null)
-      setBookingId(null)
       if (searchParams.get("booking_id") || searchParams.get("booking_token")) {
         router.replace("/contacto")
       }
@@ -449,7 +451,7 @@ function ContactFormWithROI() {
       window.removeEventListener("clinvetia:booking-expired", onExpired)
       window.removeEventListener("storage", onStorage)
     }
-  }, [mounted, router, searchParams, setFormExpiration, toast])
+  }, [mounted, router, searchParams, handleExpiredBookingState, toast])
 
   useEffect(() => {
     if (!mounted) return
@@ -998,6 +1000,7 @@ function ContactFormWithROI() {
               onClick={() => {
                 storage.remove("local", "booking")
                 storage.remove("local", "booking_access_token")
+                storage.remove("local", "roi_access_token")
                 storage.remove("local", "demo_access_token")
                 setExpiredDialogOpen(false)
                 router.push("/demo")

@@ -75,6 +75,7 @@ export function GlobalBookingTimer() {
         }
         storage.remove("local", "booking")
         storage.remove("local", "booking_access_token")
+        storage.remove("local", "roi_access_token")
         storage.remove("local", "demo_access_token")
         try {
           const stamp = String(Date.now())
@@ -110,6 +111,7 @@ export function GlobalBookingTimer() {
         }
         storage.remove("local", "booking")
         storage.remove("local", "booking_access_token")
+        storage.remove("local", "roi_access_token")
         storage.remove("local", "demo_access_token")
         try {
           const stamp = String(Date.now())

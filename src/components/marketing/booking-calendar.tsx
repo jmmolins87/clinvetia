@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog"
 import { useROIStore } from "@/store/roi-store"
 import { storage } from "@/lib/storage"
-import { ApiError, createBooking, getActiveBookingBySession, getAvailability, getBooking } from "@/lib/api"
+import { ApiError, createBooking, getActiveBookingBySession, getAvailability, getBooking, rescheduleBooking } from "@/lib/api"
 import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
 import { getRecaptchaToken } from "@/lib/recaptcha-client"
 
@@ -365,9 +365,25 @@ export interface BookingCalendarProps {
   className?: string
   onBooked?: (date: Date, time: string, duration: number) => void
   embedded?: boolean
+  mode?: "create" | "reschedule"
+  rescheduleTarget?: {
+    bookingId: string
+    accessToken: string
+    date?: string
+    time?: string
+    duration?: number
+  } | null
+  onRescheduled?: (date: Date, time: string, duration: number) => void
 }
 
-export function BookingCalendar({ className, onBooked, embedded = false }: BookingCalendarProps) {
+export function BookingCalendar({
+  className,
+  onBooked,
+  embedded = false,
+  mode = "create",
+  rescheduleTarget = null,
+  onRescheduled,
+}: BookingCalendarProps) {
   const router = useRouter()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -395,9 +411,11 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
     demoExpiresAt: string
     contactSubmitted: boolean
   } | null>(null)
+  const isRescheduleMode = mode === "reschedule" && Boolean(rescheduleTarget?.bookingId && rescheduleTarget?.accessToken)
   const isDurationDisabled = (value: number) => !isRegisteredClient && value > 30
 
   useEffect(() => {
+    if (isRescheduleMode) return
     const storedBookingToken = storage.get<string | null>("local", "booking_access_token", null)
     const validBookingToken = isValidAccessToken(storedBookingToken) ? storedBookingToken : null
 
@@ -438,9 +456,10 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
     }
 
     loadActiveBooking()
-  }, [])
+  }, [isRescheduleMode])
 
   useEffect(() => {
+    if (isRescheduleMode) return
     if (activeBookingBlock) return
 
     const sessionToken = storage.get<string | null>("local", "roi_access_token", null)
@@ -478,7 +497,7 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
     }
 
     recoverActiveBooking()
-  }, [activeBookingBlock])
+  }, [activeBookingBlock, isRescheduleMode])
 
   useEffect(() => {
     const savedBooking = storage.get<{
@@ -494,6 +513,19 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
 
   // Restaurar estado desde localStorage al montar
   useEffect(() => {
+    if (isRescheduleMode && rescheduleTarget?.date && rescheduleTarget?.time) {
+      const date = new Date(rescheduleTarget.date)
+      if (!Number.isNaN(date.getTime())) {
+        setSelectedDate(date)
+        setSelectedTime(null)
+        setDuration(rescheduleTarget.duration ?? 30)
+        setYear(date.getFullYear())
+        setMonth(date.getMonth())
+        setShowSuccess(false)
+        setDesktopStep("calendar")
+      }
+      return
+    }
     if (activeBookingBlock) return
     const saved = storage.get<{
       date: string
@@ -517,7 +549,7 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
       setShowSuccess(false)
       setDesktopStep("confirm")
     }
-  }, [activeBookingBlock])
+  }, [activeBookingBlock, isRescheduleMode, rescheduleTarget])
 
   useEffect(() => {
     if (!selectedDate) {
@@ -631,6 +663,29 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
     setSubmitError(null)
     const finalDuration = isRegisteredClient ? payload.duration : 30
     try {
+      if (isRescheduleMode && rescheduleTarget) {
+        const response = await rescheduleBooking({
+          bookingId: rescheduleTarget.bookingId,
+          accessToken: rescheduleTarget.accessToken,
+          date: formatLocalDateKey(payload.date),
+          time: payload.time,
+        })
+
+        setSelectedDate(payload.date)
+        setSelectedTime(payload.time)
+        setDuration(response.duration)
+        storage.set("local", "booking_access_token", response.accessToken)
+        storage.set("local", "booking", response)
+        try {
+          localStorage.setItem("clinvetia:booking-updated", String(Date.now()))
+        } catch {}
+        window.dispatchEvent(new Event("clinvetia:booking-updated"))
+        onRescheduled?.(payload.date, payload.time, response.duration)
+        setShowSuccess(true)
+        setDesktopStep("success")
+        return
+      }
+
       const store = useROIStore.getState()
       const recaptchaToken = await getRecaptchaToken("booking_create")
       const response = await createBooking({
@@ -645,8 +700,6 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
       setSelectedTime(payload.time)
       setDuration(finalDuration)
 
-      onBooked?.(payload.date, payload.time, finalDuration)
-
       store.setExpiration(response.expiresAt)
       store.setFormExpiration(response.formExpiresAt)
 
@@ -656,6 +709,8 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
         localStorage.setItem("clinvetia:booking-updated", String(Date.now()))
       } catch {}
       window.dispatchEvent(new Event("clinvetia:booking-updated"))
+
+      onBooked?.(payload.date, payload.time, finalDuration)
 
       setShowSuccess(true)
       setDesktopStep("success")
@@ -766,18 +821,18 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
                   exit={{ opacity: 0, y: -8 }}
                 >
                   <BookingWizard
-                    title="Reserva tu cita"
-                    subtitle="Selecciona un día, elige hora y confirma tu videollamada"
-                    confirmCtaLabel="Confirmar cita"
-                    confirmingLabel="Confirmando..."
+                    title={isRescheduleMode ? "Reagenda tu cita" : "Reserva tu cita"}
+                    subtitle={isRescheduleMode ? "Selecciona un nuevo día y hora para tu videollamada" : "Selecciona un día, elige hora y confirma tu videollamada"}
+                    confirmCtaLabel={isRescheduleMode ? "Confirmar cambio" : "Confirmar cita"}
+                    confirmingLabel={isRescheduleMode ? "Reagendando..." : "Confirmando..."}
                     initialDate={selectedDate}
                     initialTime={selectedTime}
                     initialDuration={duration}
-                    durationOptions={DURATION_OPTIONS.map((option) => ({
+                    durationOptions={(isRescheduleMode ? [{ label: `${duration}m`, value: duration }] : DURATION_OPTIONS).map((option) => ({
                       ...option,
-                      disabled: isDurationDisabled(option.value),
+                      disabled: isRescheduleMode ? true : isDurationDisabled(option.value),
                     }))}
-                    initialStep={selectedDate && selectedTime ? "confirm" : selectedDate ? "time" : "date"}
+                    initialStep={isRescheduleMode ? (selectedDate ? "time" : "date") : selectedDate && selectedTime ? "confirm" : selectedDate ? "time" : "date"}
                   loadAvailability={async (date) => getAvailability(formatLocalDateKey(date))}
                     onSubmit={handleConfirm}
                   />
@@ -812,29 +867,31 @@ export function BookingCalendar({ className, onBooked, embedded = false }: Booki
                 </AvatarGroup>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-base font-medium text-muted-foreground">Duración de la sesión</p>
-                <div className="flex gap-2">
-                  {DURATION_OPTIONS.map((opt) => (
-                    <Button
-                      key={opt.value}
-                      type="button"
-                      disabled={isDurationDisabled(opt.value)}
-                      variant={duration === opt.value ? "default" : "ghost"}
-                      onClick={() => setDuration(opt.value)}
-                      className={cn(
-                        "flex-1 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all duration-150",
-                        isDurationDisabled(opt.value) && "cursor-not-allowed opacity-40 hover:border-white/10 hover:text-muted-foreground",
-                        duration === opt.value
-                          ? "border-primary/50 bg-primary/10 text-primary"
-                          : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground"
-                      )}
-                    >
-                      <p className="text-sm font-bold">{opt.label}</p>
-                    </Button>
-                  ))}
+              {!isRescheduleMode && (
+                <div className="space-y-2">
+                  <p className="text-base font-medium text-muted-foreground">Duración de la sesión</p>
+                  <div className="flex gap-2">
+                    {DURATION_OPTIONS.map((opt) => (
+                      <Button
+                        key={opt.value}
+                        type="button"
+                        disabled={isDurationDisabled(opt.value)}
+                        variant={duration === opt.value ? "default" : "ghost"}
+                        onClick={() => setDuration(opt.value)}
+                        className={cn(
+                          "flex-1 cursor-pointer rounded-xl border px-3 py-2 text-left transition-all duration-150",
+                          isDurationDisabled(opt.value) && "cursor-not-allowed opacity-40 hover:border-white/10 hover:text-muted-foreground",
+                          duration === opt.value
+                            ? "border-primary/50 bg-primary/10 text-primary"
+                            : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-foreground"
+                        )}
+                      >
+                        <p className="text-sm font-bold">{opt.label}</p>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="pt-2 space-y-3">
                 <CalendarGrid

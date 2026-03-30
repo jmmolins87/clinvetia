@@ -91,6 +91,18 @@ export async function createBooking(payload: {
   })
 }
 
+export async function rescheduleBooking(payload: {
+  bookingId: string
+  accessToken: string
+  date: string
+  time: string
+}): Promise<BookingResponse> {
+  return apiFetch<BookingResponse>("/api/booking", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function getBooking(bookingId: string, accessToken: string): Promise<BookingResponse> {
   return apiFetch<BookingResponse>(`/api/booking?bookingId=${encodeURIComponent(bookingId)}`, {
     headers: { "x-booking-token": accessToken },
