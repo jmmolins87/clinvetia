@@ -882,7 +882,7 @@ export async function POST(req: Request) {
           "Clinvetia desarrolla agentes para clínicas veterinarias que organizan citas y mejoran la atención al cliente. Soy Moka, y si quieres te propongo ahora mismo tres horarios para una demo.",
           "Clinvetia builds agents for veterinary clinics that organize appointments and improve client support. I'm Moka, and if you want I can suggest three slots for a demo right now.",
         ),
-        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1 },
+        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1, leadContext: "__demo_offer__" },
       })
     }
 
@@ -893,6 +893,17 @@ export async function POST(req: Request) {
           "Hi 😊 I'm Moka. I'm here to help you. Can you tell me a bit about your clinic and how you currently attract new clients?",
         ),
         state: { ...current, step: "idle", qualificationStage: 1, objectionAttempts: 0 },
+      })
+    }
+
+    if (current.step === "idle" && current.leadContext === "__demo_offer__" && (isAffirmative(lower) || wantsBooking)) {
+      return respond({
+        reply: t(
+          "Perfecto. Antes de enseñarte horarios, hagamos tu cálculo ROI para orientar mejor la demo. Te abro la calculadora.",
+          "Perfect. Before I show you the time slots, let's do your ROI calculation so we can tailor the demo better. I'll open the calculator.",
+        ),
+        openRoiCalculator: true,
+        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0, leadContext: null },
       })
     }
 

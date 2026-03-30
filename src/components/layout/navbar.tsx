@@ -38,6 +38,7 @@ function Logo() {
         alt="Clinvetia"
         width={32}
         height={32}
+        loading="eager"
         className="h-8 w-auto transition-transform duration-300 group-hover:scale-105"
       />
       <BrandName className="text-xl font-bold tracking-tight" />

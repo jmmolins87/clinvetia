@@ -23,7 +23,7 @@ interface SessionLeanView {
 }
 
 const sessionSchema = z.object({
-  recaptchaToken: z.string().min(10),
+  recaptchaToken: z.string().min(10).optional(),
   roi: z
     .object({
       monthlyPatients: z.number().optional(),
@@ -38,15 +38,17 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}))
     const parsed = sessionSchema.parse(body)
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
-    const recaptcha = await verifyRecaptchaToken({
-      token: parsed.recaptchaToken,
-      action: "session_create",
-      minScore: 0.45,
-      ip,
-    })
-    if (!recaptcha.ok) {
-      return NextResponse.json({ error: recaptcha.reason || "reCAPTCHA validation failed" }, { status: 400 })
+    if (parsed.recaptchaToken) {
+      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null
+      const recaptcha = await verifyRecaptchaToken({
+        token: parsed.recaptchaToken,
+        action: "session_create",
+        minScore: 0.45,
+        ip,
+      })
+      if (!recaptcha.ok) {
+        return NextResponse.json({ error: recaptcha.reason || "reCAPTCHA validation failed" }, { status: 400 })
+      }
     }
 
     await dbConnect()

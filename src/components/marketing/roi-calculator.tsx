@@ -176,7 +176,16 @@ export function ROICalculator({ trigger, className }: ROICalculatorProps) {
                   </div>
 
                   <GlassCard className={cn("p-4 bg-gradient-to-br border-success/30", isPositive ? "from-success/10 via-background to-primary/5" : "from-background/60")}>
-                    <p className="text-base text-center">Por <span className="font-bold">1€</span> invertido, recuperas {isCalculating ? <Spinner size="sm" variant="default" className="inline-flex align-middle" /> : <span className={cn("font-bold", isPositive ? "text-success" : "")}>{(roi / 100 + 1).toFixed(1)}€</span>}</p>
+                    <div className="text-base text-center">
+                      Por <span className="font-bold">1€</span> invertido, recuperas{" "}
+                      {isCalculating ? (
+                        <span className="inline-flex align-middle">
+                          <Spinner size="sm" variant="default" />
+                        </span>
+                      ) : (
+                        <span className={cn("font-bold", isPositive ? "text-success" : "")}>{(roi / 100 + 1).toFixed(1)}€</span>
+                      )}
+                    </div>
                   </GlassCard>
                 </>
               )}

@@ -18,6 +18,7 @@ export function GlobalBookingTimer() {
   const { formExpiresAt, setFormExpiration } = useROIStore()
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   const hasSubmittedContact = () => {
     const booking = storage.get<{ contactSubmitted?: boolean; contact?: unknown } | null>("local", "booking", null)
@@ -26,6 +27,15 @@ export function GlobalBookingTimer() {
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const media = window.matchMedia("(max-width: 639px)")
+    const update = () => setIsMobile(media.matches)
+    update()
+    media.addEventListener("change", update)
+    return () => media.removeEventListener("change", update)
   }, [])
 
   useEffect(() => {
@@ -148,7 +158,7 @@ export function GlobalBookingTimer() {
           initial={{ opacity: 0, x: -50, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -50, scale: 0.9 }}
-          className="fixed bottom-6 left-6 z-[200]"
+          className="fixed bottom-[10px] left-4 z-[200] sm:bottom-6 sm:left-6"
         >
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
@@ -194,14 +204,16 @@ export function GlobalBookingTimer() {
             </TooltipTrigger>
             <TooltipContent 
               variant="warning" 
-              side="right" 
-              sideOffset={15}
-              className="flex items-center gap-3 px-4 py-2 border-warning/40 shadow-[0_0_30px_rgba(var(--warning-rgb),0.3)]"
+              side={isMobile ? "top" : "right"}
+              align={isMobile ? "start" : "center"}
+              sideOffset={isMobile ? 10 : 15}
+              collisionPadding={16}
+              className="max-w-[calc(100vw-2rem)] sm:max-w-xs whitespace-normal break-words flex items-center gap-3 px-4 py-2 border-warning/40 shadow-[0_0_30px_rgba(var(--warning-rgb),0.3)]"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/20">
                 <Icon icon={Clock} size="sm" variant="warning" className="animate-pulse" />
               </div>
-              <div className="flex flex-col">
+              <div className="flex min-w-0 flex-col">
                 <span className="font-bold text-sm">Completa tus datos</span>
                 <span className="text-[10px] opacity-80">Este contador solo aplica al formulario de contacto.</span>
               </div>

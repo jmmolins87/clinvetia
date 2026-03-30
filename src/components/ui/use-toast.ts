@@ -69,11 +69,16 @@ function reducer(state: State, action: Action): State {
       } else {
         state.toasts.forEach((t) => addToRemoveQueue(t.id))
       }
+      const nextToasts = state.toasts.map((t) =>
+        t.id === toastId || !toastId ? { ...t, open: false } : t
+      )
+      const hasChanged = nextToasts.some((toast, index) => toast.open !== state.toasts[index]?.open)
+      if (!hasChanged) {
+        return state
+      }
       return {
         ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === toastId || !toastId ? { ...t, open: false } : t
-        ),
+        toasts: nextToasts,
       }
     }
     case "REMOVE_TOAST":

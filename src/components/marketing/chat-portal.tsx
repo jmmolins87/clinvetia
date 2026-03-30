@@ -39,6 +39,60 @@ type ChatMessage = {
   content: string
 }
 
+function isAffirmativeReply(text: string) {
+  return /\b(si|sí|ok|okey|vale|perfecto|claro|de acuerdo|yes|sure)\b/i.test(text)
+}
+
+function isDemoOfferMessage(text: string) {
+  return /\b(demo|horarios|slots)\b/i.test(text) && /\b(te propongo|i can suggest|suggest three)\b/i.test(text)
+}
+
+async function getOptionalSessionRecaptchaToken() {
+  try {
+    return await Promise.race<string | undefined>([
+      getRecaptchaToken("session_create"),
+      new Promise<undefined>((resolve) => {
+        window.setTimeout(() => resolve(undefined), 4000)
+      }),
+    ])
+  } catch {
+    return undefined
+  }
+}
+
+async function createChatRoiSessionInBackground(params: {
+  monthlyPatients: number
+  averageTicket: number
+  conversionLoss: number
+  roi: number
+}) {
+  try {
+    const recaptchaToken = await getOptionalSessionRecaptchaToken()
+    const session = await Promise.race([
+      createSession({
+        roi: {
+          monthlyPatients: params.monthlyPatients,
+          averageTicket: params.averageTicket,
+          conversionLoss: params.conversionLoss,
+          roi: params.roi,
+        },
+        recaptchaToken,
+      }),
+      new Promise<null>((resolve) => {
+        window.setTimeout(() => resolve(null), 8000)
+      }),
+    ])
+
+    if (!session?.accessToken) return null
+
+    storage.set("local", "roi_access_token", session.accessToken)
+    useROIStore.setState({ accessToken: session.accessToken, token: session.accessToken, expiresAt: session.expiresAt })
+    return session
+  } catch {
+    return null
+  }
+}
+
 function getInitialMessage(locale: "es" | "en"): ChatMessage {
   return {
     role: "assistant",
@@ -72,14 +126,31 @@ function RoiDialog({
   onContinue: () => void
   isSubmitting: boolean
 }) {
+  const lastContinueTriggerRef = useRef(0)
   const perdidaMensual = Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket)
   const recuperacionEstimada = Math.round(perdidaMensual * 0.7)
   const roi = Math.round(((recuperacionEstimada - 297) / 297) * 100)
 
+  const triggerContinue = () => {
+    if (isSubmitting) return
+    const now = Date.now()
+    if (now - lastContinueTriggerRef.current < 500) return
+    lastContinueTriggerRef.current = now
+    onContinue()
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-chat-scrollable="true" className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent data-chat-scrollable="true" className="sm:max-w-md [&>button]:hidden">
+        <button
+          type="button"
+          aria-label="Cerrar calculadora ROI"
+          onClick={() => onOpenChange(false)}
+          className="absolute right-4 top-4 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--black-rgb),0.20)] text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <DialogHeader className="pr-10">
           <DialogTitle>Moka necesita tu ROI antes de reservar</DialogTitle>
           <DialogDescription>
             Usaremos estos datos para personalizar el resumen que recibirás por correo.
@@ -111,13 +182,27 @@ function RoiDialog({
             ROI estimado: <span className="font-bold text-success">{roi}%</span>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+        <DialogFooter className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+            className="inline-flex h-12 w-full touch-manipulation items-center justify-center rounded-md border border-[rgba(var(--white-rgb),0.10)] bg-transparent px-4 text-sm font-semibold text-foreground transition-opacity disabled:pointer-events-none disabled:opacity-40"
+          >
             Cancelar
-          </Button>
-          <Button onClick={onContinue} disabled={isSubmitting}>
+          </button>
+          <button
+            type="button"
+            onClick={triggerContinue}
+            onTouchEnd={(event) => {
+              event.preventDefault()
+              triggerContinue()
+            }}
+            disabled={isSubmitting}
+            className="inline-flex h-12 w-full touch-manipulation items-center justify-center rounded-md border-2 border-primary/70 bg-primary/15 px-4 text-sm font-semibold text-primary shadow-[0_0_20px_rgba(var(--primary-rgb),0.50),0_0_60px_rgba(var(--primary-rgb),0.20),inset_0_1px_0_rgba(var(--white-rgb),0.20)] transition-opacity disabled:pointer-events-none disabled:opacity-40"
+          >
             {isSubmitting ? "Moka está guardando..." : "Continuar con Moka"}
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -318,10 +403,25 @@ export function ChatPortal() {
   const [roiDialogOpen, setRoiDialogOpen] = useState(false)
   const [isSavingRoi, setIsSavingRoi] = useState(false)
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false)
+  const [pendingCalendarOpen, setPendingCalendarOpen] = useState(false)
   const [, setConversationStarted] = useState(false)
   const [, setHasConfirmedBooking] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const scrollLockY = useRef(0)
+
+  function openOverlayAfterMobileChatCloses(action: () => void) {
+    if (isDesktop) {
+      action()
+      return
+    }
+
+    setOpen(false)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        action()
+      })
+    })
+  }
 
   const {
     monthlyPatients,
@@ -367,6 +467,18 @@ export function ChatPortal() {
       window.removeEventListener("offline", updateOnline)
     }
   }, [])
+
+  useEffect(() => {
+    if (!pendingCalendarOpen) return
+    if (roiDialogOpen || open || calendarDialogOpen) return
+
+    const timer = window.setTimeout(() => {
+      setCalendarDialogOpen(true)
+      setPendingCalendarOpen(false)
+    }, 120)
+
+    return () => window.clearTimeout(timer)
+  }, [pendingCalendarOpen, roiDialogOpen, open, calendarDialogOpen])
 
   const hasOverlayOpen = open || roiDialogOpen || calendarDialogOpen
 
@@ -433,6 +545,28 @@ export function ChatPortal() {
     e.preventDefault()
     const content = input.trim()
     if (!content || isSending) return
+
+    const lastAssistantMessage = [...messages].reverse().find((message) => message.role === "assistant")?.content || ""
+    if (isAffirmativeReply(content) && isDemoOfferMessage(lastAssistantMessage)) {
+      setInput("")
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "56px"
+      }
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content },
+        {
+          role: "assistant",
+          content:
+            locale === "en"
+              ? "Perfect. Before I show you the available slots, let's do your ROI calculation so we can tailor the demo better."
+              : "Perfecto. Antes de enseñarte horarios, hagamos tu cálculo ROI para orientar mejor la demo.",
+        },
+      ])
+      openOverlayAfterMobileChatCloses(() => setRoiDialogOpen(true))
+      return
+    }
+
     setInput("")
     if (textareaRef.current) {
       textareaRef.current.style.height = "56px"
@@ -504,10 +638,10 @@ export function ChatPortal() {
       setShowTyping(false)
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }])
       if (shouldOpenRoiCalculator) {
-        setRoiDialogOpen(true)
+        openOverlayAfterMobileChatCloses(() => setRoiDialogOpen(true))
       }
       if (shouldOpenCalendar) {
-        setCalendarDialogOpen(true)
+        openOverlayAfterMobileChatCloses(() => setCalendarDialogOpen(true))
       }
     } catch (error) {
       const initialDelayMs = 5000 + Math.floor(Math.random() * 5001)
@@ -543,21 +677,9 @@ export function ChatPortal() {
 
   async function handleRoiContinue() {
     setIsSavingRoi(true)
+    const roi = Math.round((((Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket * 0.7)) - 297) / 297) * 100)
     try {
-      const recaptchaToken = await getRecaptchaToken("session_create")
-      const session = await createSession({
-        roi: {
-          monthlyPatients,
-          averageTicket,
-          conversionLoss,
-          roi: Math.round((((Math.round(monthlyPatients * (conversionLoss / 100) * averageTicket * 0.7)) - 297) / 297) * 100),
-        },
-        recaptchaToken,
-      })
-
-      storage.set("local", "roi_access_token", session.accessToken)
       setHasAcceptedDialog(true)
-      setAccessToken(session.accessToken)
       setRoiDialogOpen(false)
 
       setMessages((prev) => [
@@ -571,7 +693,20 @@ export function ChatPortal() {
         },
       ])
       setChatState({ intent: "book", step: "await_slot" })
-      setCalendarDialogOpen(true)
+      if (isDesktop) {
+        setCalendarDialogOpen(true)
+      } else {
+        setPendingCalendarOpen(true)
+      }
+      void createChatRoiSessionInBackground({
+        monthlyPatients,
+        averageTicket,
+        conversionLoss,
+        roi,
+      }).then((session) => {
+        if (!session?.accessToken) return
+        setAccessToken(session.accessToken)
+      })
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -670,7 +805,7 @@ export function ChatPortal() {
         </Sheet>
       )}
 
-      <div className="fixed bottom-5 right-5 z-[40] lg:hidden">
+      <div className="fixed bottom-[10px] right-4 z-[40] lg:hidden">
         <Button
           size="icon"
           className="h-14 w-14 rounded-full shadow-[0_0_25px_rgba(var(--primary-rgb),0.45)]"

@@ -236,6 +236,7 @@ export default function MarketingPage() {
                         alt="Clinvetia Logo"
                         width={128}
                         height={128}
+                        loading="eager"
                         className="relative h-24 w-24 md:h-32 md:w-32 drop-shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]"
                       />
                     </div>

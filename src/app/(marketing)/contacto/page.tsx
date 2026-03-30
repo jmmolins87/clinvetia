@@ -1186,9 +1186,9 @@ function ContactFormWithROI() {
                     <label htmlFor={field.id} className="text-sm font-medium">{field.label}</label>
                     <AnimatePresence>
                       {errors[field.id] && (
-                        <motion.span initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1">
-                          <AlertCircle className="h-4 w-4" />
-                          <span className="hidden md:inline">{errors[field.id]}</span>
+                        <motion.span initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-destructive md:text-[0.8rem]">
+                          <Icon icon={AlertCircle} size="sm" variant="destructive" />
+                          <span className="hidden md:inline leading-[1] align-middle">{errors[field.id]}</span>
                         </motion.span>
                       )}
                     </AnimatePresence>
@@ -1199,7 +1199,12 @@ function ContactFormWithROI() {
               <div className="space-y-3">
                 <div className="mt-4 flex justify-between items-center">
                   <label htmlFor="mensaje" className="text-sm font-medium">Mensaje *</label>
-                  {errors.mensaje && <span className="text-[10px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1"><AlertCircle className="h-4 w-4" />{errors.mensaje}</span>}
+                  {errors.mensaje && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-destructive md:text-[0.8rem]">
+                      <Icon icon={AlertCircle} size="sm" variant="destructive" />
+                      <span className="hidden md:inline leading-[1] align-middle">{errors.mensaje}</span>
+                    </span>
+                  )}
                 </div>
                 <Textarea id="mensaje" name="mensaje" placeholder="Cuéntanos sobre tu clínica..." value={formData.mensaje} onChange={handleChange} onBlur={handleBlur} required rows={5} className={cn("glass resize-none transition-all duration-200", errors.mensaje ? "border-destructive/50 ring-destructive/20 focus-visible:ring-destructive" : "")} />
               </div>
