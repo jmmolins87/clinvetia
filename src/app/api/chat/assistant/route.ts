@@ -172,12 +172,39 @@ function isServiceQuestion(text: string) {
   )
 }
 
+function isChannelQuestion(text: string) {
+  return /\b(whatsapp|correo|correos|email|emails|mail|mails|responder whatsapp|responder correos|contestar whatsapp|contestar correos|reply to whatsapp|reply to emails|parezca un bot|parecer un bot|sonar humano|human sounding|sound like a bot)\b/i.test(
+    text,
+  )
+}
+
 function isPricingQuestion(text: string) {
   return /\b(cuanto cuesta|cuánto cuesta|precio|precios|tarifa|tarifas|coste|costes|pricing|price|prices|cost)\b/i.test(text)
 }
 
+function isDemoInfoRequest(text: string) {
+  const normalized = normalizeText(text)
+  return (
+    /\b(demo|demostracion|demostración)\b/i.test(normalized) &&
+    /\b(ver|ver una|ver como|como funciona|como funciona el producto|como funciona clinvetia|mostrar|ensenar|enseñar|explicar|info|informacion|información|understand|see|show|walk me through|how it works|learn more)\b/i.test(normalized) &&
+    !/\b(reservar|reserva|agendar|agenda|calendario|calendar|horario|horarios|slot|slots|book|booking|schedule|appointment)\b/i.test(normalized)
+  )
+}
+
 function isGreeting(text: string) {
   return /\b(hola|buenas|hey|hello|hi|good morning|good afternoon|good evening|buenos dias|buenas tardes|buenas noches)\b/i.test(text)
+}
+
+function isSimpleGreeting(text: string) {
+  const normalized = normalizeText(text).replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim()
+  if (!normalized || normalized.length > 30) return false
+  return /^(hola|buenas|hey|hello|hi|buenos dias|buenas tardes|buenas noches)( moka)?$/.test(normalized)
+}
+
+function looksLikeBusinessContext(text: string) {
+  return /\b(clinica|clínica|veterinaria|veterinario|recepcion|recepción|equipo|clientes|pacientes|whatsapp|correo|instagram|leads|seguimiento|citas|demo|negocio|clinic|team|clients|patients|follow-up|appointments|business)\b/i.test(
+    text,
+  )
 }
 
 function shortContext(text: string) {
@@ -200,6 +227,23 @@ function sanitizeHistory(
       return !Number.isNaN(Date.parse(String(msg.timestamp)))
     })
     .slice(-24)
+}
+
+function sanitizeState(state?: ChatState | null): ChatState {
+  return {
+    intent: state?.intent || "none",
+    step: state?.step || "idle",
+    proposedSlots: state?.proposedSlots || [],
+    selectedSlot: state?.selectedSlot || null,
+    email: state?.email || null,
+    phone: state?.phone || null,
+    targetBookingId: state?.targetBookingId || null,
+    targetBookingToken: state?.targetBookingToken || null,
+    city: state?.city || null,
+    objectionAttempts: state?.objectionAttempts || 0,
+    qualificationStage: state?.qualificationStage || 0,
+    leadContext: state?.leadContext || null,
+  }
 }
 
 function withCurrentUserMessage(history: ChatHistoryMessage[], message: string): ChatHistoryMessage[] {
@@ -286,21 +330,25 @@ function detectIntents(text: string) {
     (/\b(reagendar|reprogramar|cambiar hora|cambiar cita|cambiar una cita|cambiar la de otra persona|cambiamela|cambiamela|otro horario|mover cita|mover mi cita|mover la cita|mover la demo|mover la de|mover la del|muevemela|muevela|mueveme la|muéveme la|move it|cambiar la demo de hora|cambiar la hora de la demo|aplazar|aplazarla|aplazar mi cita|pasarla a otro dia|pasarla a otro día|reschedule|change time|change appointment|another slot)\b/i.test(normalized) ||
       hasMoveToDayPhrase)
   const wantsBooking =
-    !deniesBook && /\b(reservar|reserva|demo|cita|agendar|agenda|book|booking|appointment|schedule|calendario|calendar)\b/i.test(normalized)
+    !deniesBook && /\b(reservar|reserva|cita|agendar|agenda|book|booking|appointment|schedule|calendario|calendar|horario|horarios|slot|slots)\b/i.test(normalized)
 
   return { wantsBooking, wantsReschedule, wantsCancel }
 }
 
 const CHAT_SYSTEM_PROMPT = [
-  "Eres Moka, el asistente conversacional de Clinvetia.",
-  "Objetivo comercial: mover la conversacion hacia cita consultiva con datos completos.",
-  "Regla critica de objeciones: ante rechazo, reintenta 4 veces con estrategias diferentes (curiosidad, identificacion, comparacion social, vision futura).",
-  "No menciones IA, herramientas, APIs ni procesos internos.",
-  "Habla de forma cercana, clara y tranquila.",
-  "Escribe mensajes cortos y naturales, tono humano, una pregunta por mensaje.",
-  "Valida emocion antes de redirigir y referencia lo que dijo el lead.",
-  "Si hay objecion, responde con enfoque consultivo y orientado a cita.",
-  "Evita frases roboticas: 'Excelente pregunta', 'No entendi tu mensaje', 'Te explico'.",
+  "Eres Moka, la asistente comercial de Clinvetia para clínicas veterinarias.",
+  "Tu objetivo es responder bien, sonar humana y mover la conversación hacia una demo o consultoría cuando encaje.",
+  "Si detectas interés claro, dolor operativo o una pregunta sobre capacidades, ofrece una demo de forma natural en el mismo mensaje o en el siguiente.",
+  "No esperes demasiado para proponer ver el caso aplicado a la clínica si ya hay contexto suficiente.",
+  "No eres un chatbot genérico ni hablas como una consultora corporativa.",
+  "No menciones IA, herramientas, APIs, prompts ni procesos internos.",
+  "Habla de forma cercana, comercial, breve y segura.",
+  "Normalmente usa 1 a 3 frases y una sola pregunta por mensaje.",
+  "Responde primero a la duda real del usuario antes de empujar el siguiente paso.",
+  "Si el usuario solo saluda, saluda de forma natural y haz una pregunta suave.",
+  "Valida la fricción del usuario antes de redirigir y usa lo que dijo como contexto.",
+  "Si hay objeción, responde con empatía y vuelve a abrir con curiosidad o un ejemplo práctico.",
+  "Evita frases robóticas: 'Excelente pregunta', 'No entendí tu mensaje', 'Te explico', 'Interesante. Me dices...'.",
   "No inventes precios ni promesas no confirmadas.",
 ].join(" ")
 
@@ -319,6 +367,10 @@ function buildConversationContext(params: {
     params.state.objectionAttempts ? `objection_attempts=${params.state.objectionAttempts}` : null,
     params.hasActiveBooking ? "has_active_booking=true" : "has_active_booking=false",
     params.hasValidRoiSession ? "roi_ready=true" : "roi_ready=false",
+    isSimpleGreeting(params.userMessage) ? "simple_greeting=true" : null,
+    isChannelQuestion(params.userMessage) ? "channel_question=true" : null,
+    isPricingQuestion(params.userMessage) ? "pricing_question=true" : null,
+    isServiceQuestion(params.userMessage) ? "service_question=true" : null,
   ]
     .filter(Boolean)
     .join(" | ")
@@ -818,20 +870,6 @@ export async function POST(req: Request) {
     const webBookingUrl = `${(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "").replace(/\/+$/, "")}/demo`
     const rawSessionToken = typeof parsed.sessionToken === "string" ? parsed.sessionToken.trim() : ""
     const sessionToken = rawSessionToken.length > 0 ? rawSessionToken : null
-    const current: ChatState = {
-      intent: parsed.state?.intent || "none",
-      step: parsed.state?.step || "idle",
-      proposedSlots: parsed.state?.proposedSlots || [],
-      selectedSlot: parsed.state?.selectedSlot || null,
-      email: parsed.state?.email || null,
-      phone: parsed.state?.phone || null,
-      targetBookingId: parsed.state?.targetBookingId || null,
-      targetBookingToken: parsed.state?.targetBookingToken || null,
-      city: parsed.state?.city || null,
-      objectionAttempts: parsed.state?.objectionAttempts || 0,
-      qualificationStage: parsed.state?.qualificationStage || 0,
-      leadContext: parsed.state?.leadContext || null,
-    }
 
     const activeBooking = await findActiveBooking({
       sessionToken,
@@ -840,11 +878,12 @@ export async function POST(req: Request) {
 
     const activeSession = sessionToken
       ? await Session.findOne({ token: sessionToken, expiresAt: { $gt: new Date() } })
-          .select("token expiresAt roi chatSummary chatHistory")
+          .select("token expiresAt roi chatSummary chatHistory chatState")
           .lean<{
             token: string
             expiresAt: Date
             chatSummary?: string | null
+            chatState?: ChatState | null
             chatHistory?: ChatHistoryMessage[]
             roi?: {
               monthlyPatients?: number | null
@@ -854,6 +893,7 @@ export async function POST(req: Request) {
             } | null
           } | null>()
       : null
+    const current = sanitizeState(parsed.state ?? activeSession?.chatState)
     const incomingHistory = sanitizeHistory(parsed.history)
     const persistedHistory = sanitizeHistory(activeSession?.chatHistory)
     const effectiveHistory = incomingHistory.length > 0 ? incomingHistory : persistedHistory
@@ -864,7 +904,7 @@ export async function POST(req: Request) {
     if (activeSession?.token) {
       await Session.updateOne(
         { token: activeSession.token, expiresAt: { $gt: new Date() } },
-        { $set: { chatHistory: historyForCurrentTurn, chatSummary: chatSummaryForCurrentTurn } },
+        { $set: { chatHistory: historyForCurrentTurn, chatSummary: chatSummaryForCurrentTurn, chatState: current } },
       )
     }
 
@@ -877,13 +917,14 @@ export async function POST(req: Request) {
     const respond = async (payload: Record<string, unknown>, init?: ResponseInit) => {
       const replyText = typeof payload.reply === "string" ? payload.reply.replace(/\s+/g, " ").trim() : ""
       if (activeSession?.token && replyText) {
+        const nextState = sanitizeState((payload.state as ChatState | undefined) ?? current)
         const compactedAfterReply = compactHistoryAndSummary(
           [...historyForCurrentTurn, { role: "assistant" as const, content: replyText, timestamp: new Date().toISOString() }],
           chatSummaryForCurrentTurn,
         )
         await Session.updateOne(
           { token: activeSession.token, expiresAt: { $gt: new Date() } },
-          { $set: { chatHistory: compactedAfterReply.history, chatSummary: compactedAfterReply.summary } },
+          { $set: { chatHistory: compactedAfterReply.history, chatSummary: compactedAfterReply.summary, chatState: nextState } },
         )
       }
       return NextResponse.json(payload, init)
@@ -914,8 +955,28 @@ export async function POST(req: Request) {
     if (current.step === "idle" && isPricingQuestion(lower) && (isServiceQuestion(lower) || /\b(clinvetia|que haceis|qué hacéis|que hace clinvetia|qué hace clinvetia)\b/i.test(lower))) {
       return respond({
         reply: t(
-          "Clinvetia desarrolla agentes para clínicas veterinarias que ayudan con atención al cliente, seguimiento y organización de citas. El precio depende del volumen y de lo que necesite tu clínica, así que no te voy a inventar una tarifa aquí. Si quieres, te explico cómo funciona y te ayudo a pedir una demo.",
-          "Clinvetia builds agents for veterinary clinics that help with client support, follow-up, and appointment organization. Pricing depends on your clinic's volume and needs, so I won't invent a fee here. If you want, I can explain how it works and help you request a demo.",
+          "Clinvetia desarrolla agentes para clínicas veterinarias que ayudan con atención al cliente, seguimiento y organización de citas. El precio depende del volumen y de lo que necesite tu clínica, así que no te voy a inventar una tarifa aquí. Si quieres, lo vemos en una demo breve y te enseño qué encajaría en vuestro caso.",
+          "Clinvetia builds agents for veterinary clinics that help with client support, follow-up, and appointment organization. Pricing depends on your clinic's volume and needs, so I won't invent a fee here. If you want, we can review it in a short demo and I can show you what would fit your clinic.",
+        ),
+        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1, leadContext: "__demo_offer__" },
+      })
+    }
+
+    if (current.step === "idle" && isChannelQuestion(lower)) {
+      return respond({
+        reply: t(
+          "Sí. Clinvetia puede responder WhatsApp y correo con tono natural, seguir conversaciones y dejar claro cuándo conviene pasar a una persona del equipo. Si quieres, lo vemos con un ejemplo de vuestra clínica en una demo breve.",
+          "Yes. Clinvetia can reply on WhatsApp and email with a natural tone, keep conversations moving, and make it clear when a human from your team should step in. If you want, we can look at it with an example from your clinic in a short demo.",
+        ),
+        state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1, leadContext: "__demo_offer__" },
+      })
+    }
+
+    if (current.step === "idle" && isDemoInfoRequest(message) && !wantsReschedule && !wantsCancel) {
+      return respond({
+        reply: t(
+          "Sí. En una demo te enseño cómo entra una consulta, cómo Clinvetia responde, cuándo pasa a tu equipo y cómo queda todo registrado. Si quieres, te cuento primero un caso práctico de clínica o, si ya te encaja, te ayudo luego a agendarla.",
+          "Yes. In a demo I can show you how an inquiry comes in, how Clinvetia responds, when it hands off to your team, and how everything gets recorded. If you want, I can first walk you through a practical clinic example or, if it already fits, help you schedule it afterward.",
         ),
         state: { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 1, leadContext: "__demo_offer__" },
       })
@@ -1005,8 +1066,12 @@ export async function POST(req: Request) {
     if (current.step === "idle" && isGreeting(lower) && !wantsBooking && !wantsReschedule && !wantsCancel) {
       return respond({
         reply: t(
-          "Hola 😊 Soy Moka. Estoy aquí para ayudarte. ¿Me cuentas un poco de tu clínica y cómo captáis nuevos clientes?",
-          "Hi 😊 I'm Moka. I'm here to help you. Can you tell me a bit about your clinic and how you currently attract new clients?",
+          isSimpleGreeting(message)
+            ? "Hola 😊 Soy Moka. Encantada. ¿Qué te gustaría ver o resolver hoy?"
+            : "Hola 😊 Soy Moka. Encantada. Cuéntame, ¿qué te gustaría ver o resolver en vuestra clínica?",
+          isSimpleGreeting(message)
+            ? "Hi 😊 I'm Moka. Nice to meet you. What would you like to explore or solve today?"
+            : "Hi 😊 I'm Moka. Nice to meet you. Tell me, what would you like to explore or solve for your clinic?",
         ),
         state: { ...current, step: "idle", qualificationStage: 1, objectionAttempts: 0 },
       })
@@ -1025,6 +1090,7 @@ export async function POST(req: Request) {
 
     if (
       current.step === "idle" &&
+      !isSimpleGreeting(message) &&
       !isServiceQuestion(lower) &&
       !wantsBooking &&
       !wantsReschedule &&
@@ -1032,10 +1098,19 @@ export async function POST(req: Request) {
       !isObjection(lower)
     ) {
       if ((current.qualificationStage || 0) <= 1) {
+        if (!looksLikeBusinessContext(message) && message.trim().length < 24) {
+          return respond({
+            reply: t(
+              "Claro. Cuéntame un poco más y te digo si encaja con lo que hace Clinvetia.",
+              "Sure. Tell me a bit more and I'll tell you whether it fits what Clinvetia does.",
+            ),
+            state: { ...current, step: "idle", qualificationStage: 1, objectionAttempts: 0 },
+          })
+        }
         return respond({
           reply: t(
-            `Ah, interesante lo que me cuentas de "${shortContext(message)}". Cómo estáis gestionando ahora la captación y seguimiento?`,
-            `Interesting what you shared about "${shortContext(message)}". How are you handling lead capture and follow-up now?`,
+            `Tiene sentido. Por lo que me cuentas de "${shortContext(message)}", ¿cómo estáis gestionando ahora la captación y el seguimiento?`,
+            `That makes sense. Based on what you shared about "${shortContext(message)}", how are you handling lead capture and follow-up right now?`,
           ),
           state: { ...current, step: "idle", qualificationStage: 2, leadContext: shortContext(message), objectionAttempts: 0 },
         })

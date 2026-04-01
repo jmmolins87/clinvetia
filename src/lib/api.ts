@@ -150,6 +150,44 @@ export async function getSession(accessToken: string): Promise<{
     conversionLoss?: number | null
     roi?: number | null
   }
+  chatSummary?: string
+  chatState?: {
+    intent?: "book" | "reschedule" | "cancel" | "none"
+    step?:
+      | "idle"
+      | "await_timezone"
+      | "await_booking_id"
+      | "await_booking_confirm"
+      | "await_slot"
+      | "await_email"
+      | "await_email_confirm"
+      | "await_phone"
+      | "await_phone_confirm"
+      | "await_more_help"
+    proposedSlots?: Array<{
+      date: string
+      time: string
+      label: string
+    }>
+    selectedSlot?: {
+      date: string
+      time: string
+      label: string
+    } | null
+    email?: string | null
+    phone?: string | null
+    targetBookingId?: string | null
+    targetBookingToken?: string | null
+    city?: string | null
+    objectionAttempts?: number
+    qualificationStage?: number
+    leadContext?: string | null
+  }
+  chatHistory?: Array<{
+    role: "assistant" | "user"
+    content: string
+    timestamp?: string
+  }>
 }> {
   return apiFetch(`/api/session?token=${encodeURIComponent(accessToken)}`, {
     headers: { "x-session-token": accessToken },

@@ -24,11 +24,13 @@ En Render, o en cualquier instancia de `n8n`, añade estas variables:
 
 ```env
 CLINVETIA_BASE_URL=https://clinvetia.com
-OPENAI_API_KEY=sk-...
 N8N_CHAT_WEBHOOK_SECRET=change-me-moka-secret
+LLM_API_BASE_URL=https://openrouter.ai/api/v1/chat/completions
+LLM_API_KEY=tu-api-key
+LLM_MODEL=qwen/qwen-2.5-72b-instruct:free
 ```
 
-Luego importa el workflow desde un export externo de `n8n`; no se guarda dentro de este proyecto.
+Importa el workflow desde [clinvetia-moka-chat.workflow.json](/Users/juanmamolinscortes/Documentos/clinvetia-glass/docs/integrations/clinvetia-moka-chat.workflow.json).
 
 Ese workflow ya viene preparado para:
 
@@ -36,9 +38,10 @@ Ese workflow ya viene preparado para:
 - path: `moka-chat`
 - method: `POST`
 - validacion del header `x-clinvetia-n8n-secret` con `N8N_CHAT_WEBHOOK_SECRET`
-- uso de `OPENAI_API_KEY` desde variables de entorno
+- uso de un proveedor LLM configurable desde variables de entorno
 - reenvio a `CLINVETIA_BASE_URL/api/chat/assistant`
 - bypass controlado para que la app no vuelva a entrar en `n8n`
+- capa visible en `n8n` para objeciones, calificacion y respuestas comerciales antes de delegar en backend
 
 Para desarrollo local, `CLINVETIA_BASE_URL` debe apuntar a tu Next.js local:
 

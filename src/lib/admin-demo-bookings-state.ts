@@ -11,6 +11,12 @@ type DemoBooking = {
   clinica?: string
   email?: string
   googleMeetLink?: string | null
+  conversationSummary?: string
+  conversationMessages?: Array<{
+    role: "assistant" | "user"
+    content: string
+    timestamp: string
+  }>
   createdAt?: string
   emailEvents?: Array<{
     category: string

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, Check, Trash2, X } from "lucide-react"
+import { AlertTriangle, CalendarDays, Check, MessageCircle, Trash2, X } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -37,6 +37,12 @@ type BookingRow = {
   clinica?: string
   email?: string
   mensaje?: string
+  conversationSummary?: string
+  conversationMessages?: Array<{
+    role: "assistant" | "user"
+    content: string
+    timestamp: string
+  }>
   googleMeetLink?: string | null
   emailEvents?: Array<{
     category: string
@@ -72,6 +78,7 @@ export default function AdminBookingsPage() {
   const [cancelEmailMailbox, setCancelEmailMailbox] = useState<"shared" | "self">("shared")
   const [isCancellingWithEmail, setIsCancellingWithEmail] = useState(false)
   const [deleteBookingTarget, setDeleteBookingTarget] = useState<BookingRow | null>(null)
+  const [conversationBooking, setConversationBooking] = useState<BookingRow | null>(null)
   const [page, setPage] = useState(1)
   const [pageNavLoading, setPageNavLoading] = useState<"prev" | "next" | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
@@ -604,6 +611,53 @@ export default function AdminBookingsPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={Boolean(conversationBooking)} onOpenChange={(open) => !open && setConversationBooking(null)}>
+        <DialogContent className="h-[85vh] max-h-[85vh] overflow-hidden sm:max-w-2xl [&>button]:z-30">
+          <DialogHeader>
+            <DialogTitle>Conversación con Moka</DialogTitle>
+            <DialogDescription>
+              {conversationBooking
+                ? `${new Date(conversationBooking.date).toLocaleDateString("es-ES")} · ${conversationBooking.time} · ${conversationBooking.nombre || conversationBooking.email || conversationBooking.id}`
+                : "Detalle de la conversación asociada a la reserva."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {conversationBooking ? (
+              <div className="space-y-3">
+                {conversationBooking.conversationSummary ? (
+                  <div className="whitespace-pre-wrap rounded-xl border border-white/10 bg-background/45 px-3 py-3 text-sm text-muted-foreground">
+                    {conversationBooking.conversationSummary}
+                  </div>
+                ) : null}
+                {conversationBooking.conversationMessages && conversationBooking.conversationMessages.length > 0 ? (
+                  conversationBooking.conversationMessages.map((message, messageIndex) => (
+                    <div
+                      key={`${conversationBooking.id}-conversation-modal-${messageIndex}`}
+                      className="rounded-xl border border-white/10 bg-background/45 px-3 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+                        <span>{message.role === "assistant" ? "Moka" : "Usuario"}</span>
+                        <span>{new Date(message.timestamp).toLocaleString("es-ES")}</span>
+                      </div>
+                      <div className="mt-2 whitespace-pre-wrap text-sm text-foreground/85">{message.content}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-dashed border-white/10 bg-background/45 px-3 py-3 text-sm text-muted-foreground">
+                    No ha habido conversación con Moka en esta reserva.
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setConversationBooking(null)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog
         open={rescheduleOpen}
         onOpenChange={(open) => {
@@ -936,6 +990,7 @@ export default function AdminBookingsPage() {
                 booking.status !== "cancelled" && booking.status !== "expired" && booking.status !== "rescheduled"
                   ? booking.googleMeetLink || `https://meet.google.com/new#booking-${booking.id}`
                   : null
+              const hasConversation = Boolean(booking.conversationMessages && booking.conversationMessages.length > 0)
               return (
               <div
                 key={booking.id}
@@ -989,6 +1044,19 @@ export default function AdminBookingsPage() {
                         {booking.mensaje}
                       </div>
                     )}
+                    <div className="rounded-lg border border-white/10 bg-background/50 px-3 py-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-center gap-2"
+                        disabled={!hasConversation}
+                        onClick={() => setConversationBooking(booking)}
+                      >
+                        <Icon icon={MessageCircle} size="xs" variant="primary" />
+                        {hasConversation ? "Chat con Moka" : "Sin chat con Moka"}
+                      </Button>
+                    </div>
                   </div>
 
                   <div className={cn("h-full rounded-xl border px-4 py-3 backdrop-blur-md", statusPanelClass(booking.status))}>
@@ -1040,7 +1108,7 @@ export default function AdminBookingsPage() {
                       <div className="border-t border-white/10 sm:hidden" />
 
                       {canOperate && (
-                        <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:max-w-[380px] lg:grid-cols-3">
+                        <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                           {booking.status !== "expired" && booking.status !== "rescheduled" && (
                             <Button
                               type="button"
@@ -1048,9 +1116,18 @@ export default function AdminBookingsPage() {
                               size="sm"
                               disabled={booking.status === "confirmed" || booking.status === "cancelled" || updatingId === booking.id}
                               onClick={() => updateBookingStatus(booking.id, "confirmed")}
-                              className="w-full min-w-0 cursor-pointer px-3"
+                              className="h-auto w-full min-w-0 cursor-pointer px-2 py-2 text-center"
+                              aria-label={updatingId === booking.id ? "Actualizando cita" : "Aceptar cita"}
+                              title={updatingId === booking.id ? "Actualizando cita" : "Aceptar cita"}
                             >
-                              {updatingId === booking.id ? "Actualizando..." : "Aceptar"}
+                              <span className="flex items-center justify-center">
+                                <Icon
+                                  icon={Check}
+                                  size="xs"
+                                  variant="default"
+                                  className="text-primary drop-shadow-[0_0_8px_rgba(var(--primary-rgb),0.45)]"
+                                />
+                              </span>
                             </Button>
                           )}
                           <Button
@@ -1058,9 +1135,18 @@ export default function AdminBookingsPage() {
                             variant="accent"
                             size="sm"
                             onClick={() => openRescheduleDialog(booking)}
-                            className="w-full min-w-0 cursor-pointer px-3 shadow-[0_0_14px_rgba(var(--accent-rgb),0.22)] disabled:opacity-100"
+                            className="h-auto w-full min-w-0 cursor-pointer px-2 py-2 text-center shadow-[0_0_14px_rgba(var(--accent-rgb),0.22)] disabled:opacity-100"
+                            aria-label="Reagendar cita"
+                            title="Reagendar cita"
                           >
-                            Reagendar
+                            <span className="flex items-center justify-center">
+                              <Icon
+                                icon={CalendarDays}
+                                size="xs"
+                                variant="default"
+                                className="text-[rgb(var(--white-rgb))] drop-shadow-[0_0_10px_rgba(var(--accent-rgb),0.72)]"
+                              />
+                            </span>
                           </Button>
                           {booking.status !== "expired" && booking.status !== "rescheduled" ? (
                             <Button
@@ -1069,20 +1155,29 @@ export default function AdminBookingsPage() {
                               size="sm"
                               disabled={booking.status === "cancelled" || updatingId === booking.id}
                               onClick={() => openCancelDialog(booking)}
-                              className="w-full min-w-0 cursor-pointer px-3"
+                              className="h-auto w-full min-w-0 cursor-pointer px-2 py-2 text-center"
+                              aria-label={updatingId === booking.id ? "Actualizando cancelación" : "Cancelar cita"}
+                              title={updatingId === booking.id ? "Actualizando cancelación" : "Cancelar cita"}
                             >
-                              {updatingId === booking.id ? "Actualizando..." : "Cancelar"}
+                              <span className="flex items-center justify-center">
+                                <Icon
+                                  icon={X}
+                                  size="xs"
+                                  variant="default"
+                                  className="text-destructive drop-shadow-[0_0_8px_rgba(var(--destructive-rgb),0.45)]"
+                                />
+                              </span>
                             </Button>
                           ) : (
-                            <span className="hidden lg:block" aria-hidden="true" />
+                            <span className="hidden xl:block" aria-hidden="true" />
                           )}
                         </div>
                       )}
 
                       {!canOperate && <div />}
-                    </div>
                   </div>
                 </div>
+              </div>
                 {booking.emailEvents && booking.emailEvents.length > 0 && (
                   <div className="mt-4 rounded-xl border border-white/10 bg-background/50 p-3 space-y-2">
                     {booking.emailEvents && booking.emailEvents.length > 0 && (

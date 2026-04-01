@@ -482,45 +482,48 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
         <div className="min-w-0 w-full flex-1 pr-1 xl:max-w-[calc(100%-274px)] 2xl:max-w-[calc(100%-304px)]">
           <GlassCard className="mb-5 hidden p-4 lg:p-5 2xl:p-6 xl:block">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-4 xl:flex-nowrap">
+              <div className="min-w-0 flex-1">
                 <div className="text-sm text-muted-foreground">Administración</div>
                 <div className="text-lg font-semibold tracking-tight 2xl:text-xl">Centro de operaciones Clinvetia</div>
               </div>
-              <div className="ml-auto flex w-full flex-col gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 lg:px-4 xl:items-stretch 2xl:w-auto 2xl:min-w-[520px] 2xl:flex-row 2xl:items-center 2xl:justify-end 2xl:gap-2">
-                <div className="flex min-w-0 items-center gap-2 pl-1">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full border border-primary/40 bg-primary/15">
-                    <Icon icon={Settings} size="sm" variant="primary" />
-                  </div>
-                  <div className="min-w-0 text-right">
-                    <div className="truncate text-sm md:text-md font-semibold leading-none">{adminDisplayName(admin)}</div>
-                    <div className="pt-0.5">
-                      <span className="inline-flex w-fit items-center rounded-full border border-secondary/40 bg-secondary/10 px-2 py-0.5 text-[10px] font-semibold text-secondary">
-                        {roleLabel(admin?.role)}
-                      </span>
+              <div className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 lg:px-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/15">
+                      <Icon icon={Settings} size="sm" variant="primary" />
+                    </div>
+                    <div className="min-w-0 text-right">
+                      <div className="truncate text-sm font-semibold leading-none">{adminDisplayName(admin)}</div>
+                      <div className="flex justify-end pt-1">
+                        <span className="inline-flex w-fit items-center rounded-full border border-secondary/40 bg-secondary/10 px-2 py-0.5 text-[10px] font-semibold text-secondary">
+                          {roleLabel(admin?.role)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex w-full flex-wrap items-center justify-end gap-2 2xl:w-auto 2xl:flex-nowrap">
-                  <ThemeSwitcher />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="!w-auto shrink-0 border border-white/10"
-                    onClick={() => (isDashboard ? setEditOpen(true) : router.push("/admin/users"))}
-                  >
-                    Gestionar usuarios
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="!w-auto shrink-0"
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                  >
-                    <Icon icon={LogOut} size="xs" variant="destructive" />
-                    {loggingOut ? "Cerrando..." : "Logout"}
-                  </Button>
+                  <div className="h-8 w-px shrink-0 bg-white/10" />
+                  <div className="flex items-center gap-2">
+                    <ThemeSwitcher />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="!w-auto shrink-0 border border-white/10"
+                      onClick={() => (isDashboard ? setEditOpen(true) : router.push("/admin/users"))}
+                    >
+                      Gestionar usuarios
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="!w-auto shrink-0"
+                      onClick={handleLogout}
+                      disabled={loggingOut}
+                    >
+                      <Icon icon={LogOut} size="xs" variant="destructive" />
+                      {loggingOut ? "Cerrando..." : "Logout"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

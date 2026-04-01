@@ -27,7 +27,7 @@ import { Slider } from "@/components/ui/slider"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { storage } from "@/lib/storage"
-import { createSession } from "@/lib/api"
+import { createSession, getSession } from "@/lib/api"
 import { getRecaptchaToken } from "@/lib/recaptcha-client"
 import { useROIStore } from "@/store/roi-store"
 import { BookingCalendar } from "@/components/marketing/booking-calendar"
@@ -55,6 +55,8 @@ type RescheduleTarget = {
   time?: string
   duration?: number
 }
+
+const CHAT_TEXTAREA_MIN_HEIGHT = 44
 
 function isAffirmativeReply(text: string) {
   return /\b(si|sí|ok|okey|vale|perfecto|claro|de acuerdo|yes|sure)\b/i.test(text)
@@ -253,6 +255,41 @@ function RoiDialog({
   )
 }
 
+function AssistantAvatar({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "flex h-[56px] w-[56px] items-center justify-center overflow-hidden rounded-full border border-primary/40 bg-[radial-gradient(circle_at_30%_20%,rgba(var(--primary-rgb),0.28),transparent_45%),radial-gradient(circle_at_70%_80%,rgba(var(--accent-rgb),0.20),transparent_55%)] shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.18),inset_0_-1px_0_rgba(var(--black-rgb),0.20)]",
+        className,
+      )}
+    >
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(var(--white-rgb),0.14)] bg-[rgba(var(--white-rgb),0.05)]">
+        <Icon icon={Sparkles} size="sm" variant="primary" />
+      </div>
+    </div>
+  )
+}
+
+function ChatPanelSkeleton() {
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="border-b border-[rgba(var(--white-rgb),0.10)] bg-background/60 px-6 pb-4 pt-6 backdrop-blur-xl">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-6 w-20 rounded-full bg-[rgba(var(--white-rgb),0.08)]" />
+            <div className="h-4 w-48 rounded-full bg-[rgba(var(--white-rgb),0.06)]" />
+          </div>
+          <div className="h-9 w-9 rounded-full bg-[rgba(var(--white-rgb),0.06)]" />
+        </div>
+      </div>
+      <div className="flex-1 bg-[rgba(var(--white-rgb),0.02)]" />
+      <div className="border-t border-[rgba(var(--white-rgb),0.10)] px-4 py-4">
+        <div className="h-11 rounded-xl bg-[rgba(var(--white-rgb),0.06)]" />
+      </div>
+    </div>
+  )
+}
+
 function ChatPanel({
   messages,
   input,
@@ -364,18 +401,7 @@ function ChatPanel({
               )}
             >
               {message.role === "assistant" && (
-                <div className="h-[56px] w-[56px] overflow-hidden rounded-full border border-primary/40 bg-primary/15">
-                  <video
-                    className="h-full w-full object-cover object-[50%_28%]"
-                    muted
-                    playsInline
-                    preload="metadata"
-                  >
-                    <source src="/videos/avatar/avatar-dog.webm" type="video/webm" />
-                    <source src="/videos/avatar/avatar-dog.mp4" type="video/mp4" />
-                    <source src="/videos/avatar/avatar-dog.ogv" type="video/ogg" />
-                  </video>
-                </div>
+                <AssistantAvatar />
               )}
               <div
                 className={cn(
@@ -391,18 +417,7 @@ function ChatPanel({
           ))}
           {showTyping && (
             <div className="flex items-start gap-3">
-              <div className="h-[56px] w-[56px] overflow-hidden rounded-full border border-primary/40 bg-primary/15">
-                <video
-                  className="h-full w-full object-cover object-[50%_28%]"
-                  muted
-                  playsInline
-                  preload="metadata"
-                >
-                  <source src="/videos/avatar/avatar-dog.webm" type="video/webm" />
-                  <source src="/videos/avatar/avatar-dog.mp4" type="video/mp4" />
-                  <source src="/videos/avatar/avatar-dog.ogv" type="video/ogg" />
-                </video>
-              </div>
+              <AssistantAvatar />
               <div className="rounded-2xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 py-3 text-sm text-muted-foreground">
                 {locale === "en" ? "Moka is typing..." : "Moka está escribiendo..."}
               </div>
@@ -419,7 +434,7 @@ function ChatPanel({
             onChange={(e) => onInputChange(e.target.value)}
             onKeyDown={onInputKeyDown}
             rows={1}
-            className="min-h-14 max-h-none flex-1 resize-none overflow-hidden rounded-xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-primary/40"
+            className="min-h-[44px] max-h-none flex-1 resize-none overflow-hidden rounded-xl border border-[rgba(var(--white-rgb),0.10)] bg-[rgba(var(--white-rgb),0.05)] px-4 py-[11px] text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-primary/40"
             placeholder={locale === "en" ? "Write to Moka..." : "Escribe a Moka..."}
             disabled={isSending}
           />
@@ -450,8 +465,7 @@ export function ChatPortal() {
   const [calendarMode, setCalendarMode] = useState<"create" | "reschedule">("create")
   const [rescheduleTarget, setRescheduleTarget] = useState<RescheduleTarget | null>(null)
   const [pendingCalendarOpen, setPendingCalendarOpen] = useState(false)
-  const [, setConversationStarted] = useState(false)
-  const [, setHasConfirmedBooking] = useState(false)
+  const [chatPanelReady, setChatPanelReady] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const scrollLockY = useRef(0)
 
@@ -495,6 +509,37 @@ export function ChatPortal() {
   }, [])
 
   useEffect(() => {
+    if (!open) return
+
+    const focusTextarea = () => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+      textarea.focus()
+      const valueLength = textarea.value.length
+      textarea.setSelectionRange(valueLength, valueLength)
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(focusTextarea)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [open])
+
+  useEffect(() => {
+    if (!open) {
+      setChatPanelReady(false)
+      return
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      setChatPanelReady(true)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [open])
+
+  useEffect(() => {
     const localizedInitial = getInitialMessage(locale).content
     setMessages((prev) => {
       if (prev.length !== 1) return prev
@@ -502,6 +547,52 @@ export function ChatPortal() {
       return [{ role: "assistant", content: localizedInitial }]
     })
   }, [locale])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function hydrateChatSession() {
+      const sessionToken = storage.get<string | null>("local", "roi_access_token", null)
+      if (!sessionToken) return
+
+      try {
+        const session = await getSession(sessionToken)
+        if (cancelled) return
+
+        if (Array.isArray(session.chatHistory) && session.chatHistory.length > 0) {
+          setMessages(
+            session.chatHistory.map((message) => ({
+              role: message.role,
+              content: message.content,
+            })),
+          )
+        }
+
+        if (session.chatState) {
+          setChatState({
+            intent: session.chatState.intent || "none",
+            step: session.chatState.step || "idle",
+            proposedSlots: session.chatState.proposedSlots || [],
+            selectedSlot: session.chatState.selectedSlot || null,
+            email: session.chatState.email || null,
+            phone: session.chatState.phone || null,
+            targetBookingId: session.chatState.targetBookingId || null,
+            targetBookingToken: session.chatState.targetBookingToken || null,
+            city: session.chatState.city || null,
+            objectionAttempts: session.chatState.objectionAttempts || 0,
+            qualificationStage: session.chatState.qualificationStage || 0,
+            leadContext: session.chatState.leadContext || null,
+          })
+        }
+      } catch {}
+    }
+
+    void hydrateChatSession()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     const updateOnline = () => setIsOnline(window.navigator.onLine)
@@ -597,7 +688,7 @@ export function ChatPortal() {
     if (isAffirmativeReply(content) && isDemoOfferMessage(lastAssistantMessage)) {
       setInput("")
       if (textareaRef.current) {
-        textareaRef.current.style.height = "56px"
+        textareaRef.current.style.height = `${CHAT_TEXTAREA_MIN_HEIGHT}px`
       }
       if (localActiveBooking) {
         setMessages((prev) => [
@@ -625,10 +716,9 @@ export function ChatPortal() {
 
     setInput("")
     if (textareaRef.current) {
-      textareaRef.current.style.height = "56px"
+      textareaRef.current.style.height = `${CHAT_TEXTAREA_MIN_HEIGHT}px`
     }
     setMessages((prev) => [...prev, { role: "user", content }])
-    setConversationStarted(true)
     setIsSending(true)
     setShowTyping(false)
 
@@ -676,8 +766,18 @@ export function ChatPortal() {
         localActiveBookingAfterResponse &&
         (data.openCalendar || data.openRoiCalculator),
       )
-      const shouldOpenCalendar = Boolean(!shouldBlockNewBookingFlow && (isRescheduleCalendar || (data.openCalendar && liveSessionToken)))
-      const shouldOpenRoiCalculator = Boolean(!shouldBlockNewBookingFlow && (data.openRoiCalculator || (data.openCalendar && !liveSessionToken)))
+      const shouldAdvanceToBookingFlow = Boolean(
+        data.state?.intent === "book" &&
+        data.state?.step === "await_slot",
+      )
+      const shouldOpenCalendar = Boolean(
+        !shouldBlockNewBookingFlow &&
+        (isRescheduleCalendar || ((data.openCalendar || shouldAdvanceToBookingFlow) && liveSessionToken)),
+      )
+      const shouldOpenRoiCalculator = Boolean(
+        !shouldBlockNewBookingFlow &&
+        (data.openRoiCalculator || ((data.openCalendar || shouldAdvanceToBookingFlow) && !liveSessionToken)),
+      )
       const replyText = shouldBlockNewBookingFlow
         ? buildActiveBookingReply(locale, localActiveBookingAfterResponse)
         : data.reply
@@ -688,7 +788,6 @@ export function ChatPortal() {
       } else if (data.booking?.accessToken) {
         storage.set("local", "booking_access_token", data.booking.accessToken)
         storage.set("local", "booking", data.booking)
-        setHasConfirmedBooking(true)
         setShowTyping(false)
         setOpen(false)
         setCalendarDialogOpen(false)
@@ -758,7 +857,7 @@ export function ChatPortal() {
     setInput(value)
     if (!textareaRef.current) return
     textareaRef.current.style.height = "auto"
-    textareaRef.current.style.height = `${Math.max(textareaRef.current.scrollHeight, 56)}px`
+    textareaRef.current.style.height = `${Math.max(textareaRef.current.scrollHeight, CHAT_TEXTAREA_MIN_HEIGHT)}px`
   }
 
   async function handleRoiContinue() {
@@ -850,7 +949,7 @@ export function ChatPortal() {
                 <span className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(var(--white-rgb),0.10),transparent_55%)]" />
                 <div className="absolute inset-3 rounded-[18px] overflow-hidden">
                   <video
-                    className="h-full w-full object-cover object-[50%_28%]"
+                    className="pointer-events-none h-full w-full object-cover object-[50%_28%]"
                     autoPlay
                     muted
                     loop
@@ -870,22 +969,25 @@ export function ChatPortal() {
               </button>
             </SheetTrigger>
           </div>
-
           <SheetContent data-chat-scrollable="true" side="right" className="sm:max-w-md p-0 overflow-hidden liquid-glass z-[300]">
             <div className="flex h-full min-h-0 flex-col">
-              <ChatPanel
-                messages={messages}
-                input={input}
-                isSending={isSending}
-                onInputChange={handleInputChange}
-                onInputKeyDown={handleInputKeyDown}
-                onSubmit={handleSend}
-                textareaRef={textareaRef}
-                isOnline={isOnline}
-                showTyping={showTyping}
-                canClose
-                locale={locale}
-              />
+              {chatPanelReady ? (
+                <ChatPanel
+                  messages={messages}
+                  input={input}
+                  isSending={isSending}
+                  onInputChange={handleInputChange}
+                  onInputKeyDown={handleInputKeyDown}
+                  onSubmit={handleSend}
+                  textareaRef={textareaRef}
+                  isOnline={isOnline}
+                  showTyping={showTyping}
+                  canClose
+                  locale={locale}
+                />
+              ) : (
+                <ChatPanelSkeleton />
+              )}
             </div>
           </SheetContent>
         </Sheet>
@@ -911,20 +1013,24 @@ export function ChatPortal() {
         >
           <DialogContent data-chat-scrollable="true" className="w-[95vw] max-w-md h-[85dvh] max-h-[85dvh] p-0 overflow-hidden liquid-glass z-[300] [&>button]:hidden">
             <div className="flex h-full min-h-0 flex-col">
-              <ChatPanel
-                messages={messages}
-                input={input}
-                isSending={isSending}
-                onInputChange={handleInputChange}
-                onInputKeyDown={handleInputKeyDown}
-                onSubmit={handleSend}
-                onClose={() => setOpen(false)}
-                textareaRef={textareaRef}
-                isOnline={isOnline}
-                showTyping={showTyping}
-                canClose
-                locale={locale}
-              />
+              {chatPanelReady ? (
+                <ChatPanel
+                  messages={messages}
+                  input={input}
+                  isSending={isSending}
+                  onInputChange={handleInputChange}
+                  onInputKeyDown={handleInputKeyDown}
+                  onSubmit={handleSend}
+                  onClose={() => setOpen(false)}
+                  textareaRef={textareaRef}
+                  isOnline={isOnline}
+                  showTyping={showTyping}
+                  canClose
+                  locale={locale}
+                />
+              ) : (
+                <ChatPanelSkeleton />
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -967,7 +1073,6 @@ export function ChatPortal() {
             mode={calendarMode}
             rescheduleTarget={rescheduleTarget}
             onBooked={() => {
-              setHasConfirmedBooking(true)
               setOpen(false)
               setCalendarDialogOpen(false)
               setRoiDialogOpen(false)

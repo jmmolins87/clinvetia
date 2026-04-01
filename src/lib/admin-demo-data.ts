@@ -13,6 +13,49 @@ function currentMonthDate(dayOfMonth: number, hour: number, minute: number) {
   return date.toISOString()
 }
 
+function buildDemoConversation(baseDayOffset: number, messages: Array<{ role: "assistant" | "user"; content: string; minuteOffset: number }>) {
+  return messages.map((message) => ({
+    role: message.role,
+    content: message.content,
+    timestamp: relativeDate(baseDayOffset, 9, message.minuteOffset),
+  }))
+}
+
+function createDemoConversationFixtures() {
+  return {
+    "DEMO-001": {
+      conversationSummary:
+        "Moka detectó interés en agenda y recordatorios, cualificó el caso y abrió el siguiente paso con la calculadora ROI para orientar mejor la demo.",
+      conversationMessages: buildDemoConversation(-2, [
+        { role: "user", content: "Hola, quiero ver cómo automatizáis recordatorios y reservas para una clínica veterinaria.", minuteOffset: 5 },
+        { role: "assistant", content: "Soy Moka. Si te parece, revisamos tu caso y te propongo una demo breve con ejemplos reales para tu agenda.", minuteOffset: 7 },
+        { role: "user", content: "Perfecto. Me interesa sobre todo reducir llamadas de confirmación y huecos perdidos.", minuteOffset: 11 },
+        { role: "assistant", content: "Tiene sentido. Ya tengo contexto suficiente para proponerte una demo consultiva. Te abro la calculadora ROI para orientar el siguiente paso y que elijas hueco en el calendario.", minuteOffset: 17 },
+      ]),
+    },
+    "DEMO-007": {
+      conversationSummary:
+        "La clínica pidió ayuda con recordatorios de vacunas y revisiones. Moka confirmó el caso, validó el interés y abrió el paso del ROI para preparar la demo.",
+      conversationMessages: buildDemoConversation(-1, [
+        { role: "user", content: "Tenemos mucho volumen de vacunas y se nos escapan revisiones. Quiero ver si esto nos encaja.", minuteOffset: 2 },
+        { role: "assistant", content: "Sí, Clinvetia puede automatizar ese seguimiento y priorizar respuestas. Si quieres, vemos tu caso y te abro el flujo de ROI para preparar una demo.", minuteOffset: 4 },
+        { role: "user", content: "Sí, enséñamelo con un caso de primeras visitas y recordatorios.", minuteOffset: 8 },
+        { role: "assistant", content: "Perfecto. El siguiente paso es abrir la calculadora ROI y luego podrás elegir en calendario una demo el viernes a las 19:00 si te encaja.", minuteOffset: 12 },
+      ]),
+    },
+    "DEMO-010": {
+      conversationSummary:
+        "El lead quería validar un piloto comercial. Moka llevó la conversación desde la necesidad de activación hasta abrir el ROI y dejar preparado el camino hacia la demo con enfoque multi-canal.",
+      conversationMessages: buildDemoConversation(0, [
+        { role: "user", content: "Queremos captar más primeras consultas y no perder leads por WhatsApp fuera de horario.", minuteOffset: 10 },
+        { role: "assistant", content: "Podemos ayudarte con captación, seguimiento y automatización comercial. Lo mejor es ver tu caso en una demo breve.", minuteOffset: 13 },
+        { role: "user", content: "Vale, si en la demo vemos también seguimiento comercial y reporting, me interesa.", minuteOffset: 17 },
+        { role: "assistant", content: "Perfecto. Te abro la calculadora ROI para enfocar bien el caso y después eliges en calendario la demo de la próxima semana a las 16:00 si os encaja.", minuteOffset: 22 },
+      ]),
+    },
+  } as const
+}
+
 function createDemoBookingFixtures() {
   return [
   {
@@ -488,10 +531,14 @@ function createDemoBookingFixtures() {
 }
 
 export function createDemoBookings() {
+  const conversationFixtures = createDemoConversationFixtures()
   const demoBookingFixtures = createDemoBookingFixtures()
   return demoBookingFixtures.map(({ contactId, ...booking }) => {
     void contactId
-    return booking
+    return {
+      ...booking,
+      ...(conversationFixtures[booking.id as keyof typeof conversationFixtures] || {}),
+    }
   })
 }
 

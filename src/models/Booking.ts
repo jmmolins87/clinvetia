@@ -12,6 +12,20 @@ const BookingSchema = new Schema(
     formExpiresAt: { type: Date, required: true },
     demoExpiresAt: { type: Date, required: true },
     googleMeetLink: { type: String, default: null },
+    conversationSummary: { type: String, default: "" },
+    conversationMessages: {
+      type: [
+        new Schema(
+          {
+            role: { type: String, enum: ["user", "assistant"], required: true },
+            content: { type: String, required: true, maxlength: 400 },
+            timestamp: { type: Date, default: Date.now },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
     emailEvents: {
       type: [
         new Schema(

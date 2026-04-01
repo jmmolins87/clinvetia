@@ -14,6 +14,7 @@ import {
   Clock3,
   Inbox,
   Mail,
+  MessageCircle,
   FolderOpen,
   Search,
   Send,
@@ -71,6 +72,12 @@ type OverviewResponse = {
     telefono?: string
     clinica?: string
     mensaje?: string
+    conversationSummary?: string
+    conversationMessages?: Array<{
+      role: "assistant" | "user"
+      content: string
+      timestamp: string
+    }>
     roi?: {
       monthlyPatients?: number
       averageTicket?: number
@@ -275,8 +282,15 @@ function TableOverflowHint({ children }: { children: ReactNode }) {
   )
 }
 
-function RecentBookingCard({ booking }: { booking: RecentBooking }) {
+function RecentBookingCard({
+  booking,
+  onOpenConversation,
+}: {
+  booking: RecentBooking
+  onOpenConversation: (booking: RecentBooking) => void
+}) {
   const meetLink = booking.googleMeetLink || `https://meet.google.com/new#booking-${booking.id}`
+  const hasConversation = Boolean(booking.conversationMessages && booking.conversationMessages.length > 0)
 
   return (
     <div
@@ -345,6 +359,20 @@ function RecentBookingCard({ booking }: { booking: RecentBooking }) {
           </div>
         )}
 
+        <div className="min-w-0 rounded-lg border border-white/10 bg-background/40 px-2 py-2 sm:px-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full justify-center gap-2"
+            disabled={!hasConversation}
+            onClick={() => onOpenConversation(booking)}
+          >
+            <Icon icon={MessageCircle} size="xs" variant="primary" />
+            {hasConversation ? "Conversación con Moka" : "No hay conversación con Moka"}
+          </Button>
+        </div>
+
         {booking.emailEvents && booking.emailEvents.length > 0 && (
           <div className="min-w-0 rounded-lg border border-white/10 bg-background/40 px-2 py-2 sm:px-3">
             <div className="text-[11px] uppercase tracking-wider">Correos enviados</div>
@@ -386,6 +414,7 @@ export default function AdminDashboardPage() {
   const [bookingSearchPending, setBookingSearchPending] = useState(false)
   const [desktopBookingIndex, setDesktopBookingIndex] = useState(0)
   const [desktopBookingTransitioning, setDesktopBookingTransitioning] = useState(false)
+  const [conversationBooking, setConversationBooking] = useState<RecentBooking | null>(null)
   const desktopSwitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bookingSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -684,6 +713,53 @@ export default function AdminDashboardPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={Boolean(conversationBooking)} onOpenChange={(open) => !open && setConversationBooking(null)}>
+        <DialogContent className="h-[85vh] max-h-[85vh] overflow-hidden sm:max-w-2xl [&>button]:z-30">
+          <DialogHeader>
+            <DialogTitle>Conversación con Moka</DialogTitle>
+            <DialogDescription>
+              {conversationBooking
+                ? `${new Date(conversationBooking.date).toLocaleDateString("es-ES")} · ${conversationBooking.time} · ${conversationBooking.nombre || conversationBooking.email || conversationBooking.id}`
+                : "Detalle de la conversación asociada a la reserva."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {conversationBooking ? (
+              <div className="space-y-3">
+                {conversationBooking.conversationSummary ? (
+                  <div className="whitespace-pre-wrap rounded-xl border border-white/10 bg-background/45 px-3 py-3 text-sm text-muted-foreground">
+                    {conversationBooking.conversationSummary}
+                  </div>
+                ) : null}
+                {conversationBooking.conversationMessages && conversationBooking.conversationMessages.length > 0 ? (
+                  conversationBooking.conversationMessages.map((message, index) => (
+                    <div
+                      key={`${conversationBooking.id}-conversation-modal-${index}`}
+                      className="rounded-xl border border-white/10 bg-background/45 px-3 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span>{message.role === "assistant" ? "Moka" : "Usuario"}</span>
+                        <span>{new Date(message.timestamp).toLocaleString("es-ES")}</span>
+                      </div>
+                      <div className="mt-2 whitespace-pre-wrap break-words text-sm text-foreground/85">{message.content}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-dashed border-white/10 bg-background/45 px-3 py-3 text-sm text-muted-foreground">
+                    No ha habido conversación con Moka en esta reserva.
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setConversationBooking(null)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid w-full min-w-0 gap-6 lg:grid-cols-[1.25fr_0.75fr] lg:items-stretch">
         <GlassCard className="relative w-full min-w-0 p-5 md:p-6">
           <div className="relative flex flex-col gap-6">
@@ -853,7 +929,10 @@ export default function AdminDashboardPage() {
               <>
                 <div className="relative min-w-0">
                   <div className={desktopBookingTransitioning ? "transition-all duration-200 blur-[2px] opacity-70" : "transition-all duration-200"}>
-                    <RecentBookingCard booking={filteredRecentBookings[desktopBookingIndex]} />
+                    <RecentBookingCard
+                      booking={filteredRecentBookings[desktopBookingIndex]}
+                      onOpenConversation={setConversationBooking}
+                    />
                   </div>
                   {desktopBookingTransitioning && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-white/10 bg-background/60">

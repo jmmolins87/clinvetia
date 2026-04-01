@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { DayButtonProps } from "react-day-picker"
-import { ArrowLeft, CalendarCheck2, CalendarDays, Check, Trash2, Video, X } from "lucide-react"
+import { ArrowLeft, CalendarCheck2, CalendarDays, Check, MessageCircle, Trash2, Video, X } from "lucide-react"
 
 import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
 import { GlassCard } from "@/components/ui/GlassCard"
@@ -38,6 +38,12 @@ type CalendarBooking = {
   clinica?: string
   email?: string
   googleMeetLink?: string | null
+  conversationSummary?: string
+  conversationMessages?: Array<{
+    role: "assistant" | "user"
+    content: string
+    timestamp: string
+  }>
 }
 
 type CalendarActionType = "confirm" | "cancel" | "reschedule" | "meet" | "delete"
@@ -873,12 +879,13 @@ export default function AdminCalendarPage() {
           }
         }}
       >
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden border-[rgba(var(--black-rgb),0.08)] bg-[linear-gradient(180deg,rgba(var(--white-rgb),0.82)_0%,rgba(var(--white-rgb),0.72)_100%)] p-0 shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.92),0_22px_60px_rgba(var(--black-rgb),0.14)] dark:border-white/10 dark:bg-background/80 dark:shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.10),0_25px_60px_rgba(var(--black-rgb),0.70)] sm:max-h-[85vh] sm:max-w-2xl [&>button]:hidden">
-          <div className={cn("min-h-0 flex-1 overflow-y-auto", summaryDetailBooking && "overflow-clip")}>
-          <div className={cn(
-            "sticky top-0 z-20 border-b border-[rgba(var(--black-rgb),0.06)] bg-[linear-gradient(180deg,rgba(var(--white-rgb),0.94)_0%,rgba(var(--white-rgb),0.84)_100%)] px-4 pb-4 pt-5 backdrop-blur-xl dark:border-white/10 dark:bg-background/95 md:px-6 md:pt-6",
-            summaryDetailBooking ? "space-y-3" : "space-y-4"
-          )}>
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-2xl [&>button]:hidden">
+          <div
+            className={cn(
+              "shrink-0 border-b border-white/8 px-4 pb-4 pt-5 md:px-6 md:pt-6",
+              summaryDetailBooking ? "space-y-3" : "space-y-4",
+            )}
+          >
             <div className="flex items-start justify-between gap-4">
               <DialogHeader className="pr-2">
                 <DialogTitle>{summaryDetailBooking ? "Resumen de la cita" : summaryFilterLabel(summaryFilter)}</DialogTitle>
@@ -894,7 +901,7 @@ export default function AdminCalendarPage() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="shrink-0 rounded-full border border-[rgba(var(--black-rgb),0.08)] bg-[rgba(var(--white-rgb),0.72)] backdrop-blur-xl dark:border-white/10 dark:bg-background/95"
+                    className="shrink-0 rounded-full"
                     onClick={() => {
                       setSummaryDetailBooking(null)
                       setActiveBooking(null)
@@ -904,7 +911,7 @@ export default function AdminCalendarPage() {
                   </Button>
                 ) : null}
                 <DialogClose asChild>
-                  <Button type="button" variant="ghost" size="icon" className="shrink-0 rounded-full border border-[rgba(var(--black-rgb),0.08)] bg-[rgba(var(--white-rgb),0.72)] backdrop-blur-xl dark:border-white/10 dark:bg-background/95">
+                  <Button type="button" variant="ghost" size="icon" className="shrink-0 rounded-full">
                     <Icon icon={X} size="sm" />
                   </Button>
                 </DialogClose>
@@ -933,66 +940,67 @@ export default function AdminCalendarPage() {
             </div>
           </div>
 
-          <div className={cn("relative overflow-clip bg-[linear-gradient(180deg,rgba(var(--white-rgb),0.28)_0%,rgba(var(--secondary-rgb),0.05)_100%)] px-4 dark:bg-transparent md:px-6", summaryDetailBooking ? "py-3" : "py-4")}>
-            <div
-              className={cn(
-                "space-y-3 transition-all duration-300 ease-out",
-                summaryDetailBooking
-                  ? "pointer-events-none absolute inset-0 -translate-x-10 opacity-0"
-                  : "relative translate-x-0 opacity-100"
-              )}
-            >
-              {pagedSummaryBookings.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-white/10 bg-background/40 px-4 py-6 text-sm text-muted-foreground">
-                  {summarySearch.trim()
-                    ? "No hay citas que coincidan con esta búsqueda."
-                    : "No hay citas en esta categoría para este mes."}
-                </div>
-              ) : (
-                pagedSummaryBookings.map((booking) => (
-                  <button
-                    key={booking.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDate(new Date(booking.date))
-                      setCalendarMonth(new Date(booking.date))
-                      setSummaryDetailBooking(booking)
-                      setActiveBooking(booking)
-                    }}
-                    className={bookingCardClass(booking.status)}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold">
-                          {new Date(booking.date).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} · {booking.time} · {booking.duration} min
-                        </div>
-                        <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          {booking.nombre || booking.clinica || booking.email || "Cita sin contacto asignado"}
-                        </div>
-                        {(booking.clinica || booking.email) && (
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {[booking.clinica, booking.email].filter(Boolean).join(" · ")}
+          <div className={cn("min-h-0 flex-1 overflow-y-auto", summaryDetailBooking && "overflow-clip")}>
+            <div className={cn("relative overflow-clip px-4 md:px-6", summaryDetailBooking ? "py-3" : "py-4")}>
+              <div
+                className={cn(
+                  "space-y-3 transition-all duration-300 ease-out",
+                  summaryDetailBooking
+                    ? "pointer-events-none absolute inset-0 -translate-x-10 opacity-0"
+                    : "relative translate-x-0 opacity-100"
+                )}
+              >
+                {pagedSummaryBookings.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-white/10 bg-background/40 px-4 py-6 text-sm text-muted-foreground">
+                    {summarySearch.trim()
+                      ? "No hay citas que coincidan con esta búsqueda."
+                      : "No hay citas en esta categoría para este mes."}
+                  </div>
+                ) : (
+                  pagedSummaryBookings.map((booking) => (
+                    <button
+                      key={booking.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDate(new Date(booking.date))
+                        setCalendarMonth(new Date(booking.date))
+                        setSummaryDetailBooking(booking)
+                        setActiveBooking(booking)
+                      }}
+                      className={bookingCardClass(booking.status)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold">
+                            {new Date(booking.date).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} · {booking.time} · {booking.duration} min
                           </div>
-                        )}
+                          <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
+                          <div className="mt-1 text-sm text-muted-foreground">
+                            {booking.nombre || booking.clinica || booking.email || "Cita sin contacto asignado"}
+                          </div>
+                          {(booking.clinica || booking.email) && (
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {[booking.clinica, booking.email].filter(Boolean).join(" · ")}
+                            </div>
+                          )}
+                        </div>
+                        <Badge variant={statusBadgeVariant(booking.status)}>{statusLabel(booking.status)}</Badge>
                       </div>
-                      <Badge variant={statusBadgeVariant(booking.status)}>{statusLabel(booking.status)}</Badge>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
+                    </button>
+                  ))
+                )}
+              </div>
 
-            <div
-              className={cn(
-                "transition-all duration-300 ease-out",
-                summaryDetailBooking
-                  ? "relative translate-x-0 opacity-100"
-                  : "pointer-events-none absolute inset-0 translate-x-10 opacity-0"
-              )}
-            >
-              {summaryDetailBooking ? (
-                <div className="space-y-3">
+              <div
+                className={cn(
+                  "transition-all duration-300 ease-out",
+                  summaryDetailBooking
+                    ? "relative translate-x-0 opacity-100"
+                    : "pointer-events-none absolute inset-0 translate-x-10 opacity-0"
+                )}
+              >
+                {summaryDetailBooking ? (
+                  <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
                     <div>
                       <div className="text-sm font-semibold">
@@ -1044,6 +1052,38 @@ export default function AdminCalendarPage() {
                     ) : null}
                   </div>
 
+                  <div className="rounded-xl border border-white/10 bg-background/45 p-4">
+                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <Icon icon={MessageCircle} size="xs" variant="primary" />
+                      <span>Conversación con Moka</span>
+                    </div>
+                    {summaryDetailBooking.conversationMessages && summaryDetailBooking.conversationMessages.length > 0 ? (
+                      <div className="mt-3 space-y-3">
+                        {summaryDetailBooking.conversationSummary ? (
+                          <div className="rounded-xl border border-white/10 bg-background/50 px-3 py-3 text-sm text-muted-foreground whitespace-pre-wrap">
+                            {summaryDetailBooking.conversationSummary}
+                          </div>
+                        ) : null}
+                        {summaryDetailBooking.conversationMessages.map((message, index) => (
+                          <div
+                            key={`${summaryDetailBooking.id}-message-${index}`}
+                            className="rounded-xl border border-white/10 bg-background/50 px-3 py-3"
+                          >
+                            <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+                              <span>{message.role === "assistant" ? "Moka" : "Usuario"}</span>
+                              <span>{new Date(message.timestamp).toLocaleString("es-ES")}</span>
+                            </div>
+                            <div className="mt-2 whitespace-pre-wrap text-sm text-foreground/85">{message.content}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-3 rounded-xl border border-dashed border-white/10 bg-background/50 px-3 py-3 text-sm text-muted-foreground">
+                        No ha habido conversación con Moka en esta reserva.
+                      </div>
+                    )}
+                  </div>
+
                   {summaryDetailActions.length > 0 && (
                     <DialogFooter
                       className="grid gap-2 overflow-visible border-t-0 px-1 pb-1 pt-0"
@@ -1075,23 +1115,22 @@ export default function AdminCalendarPage() {
                       ))}
                     </DialogFooter>
                   )}
-                </div>
-              ) : null}
-            </div>
-            {summaryModalLoading && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl border border-white/10 bg-background/60 backdrop-blur-sm">
-                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                  <Spinner size="sm" variant="accent" />
-                  Cargando citas...
-                </div>
+                  </div>
+                ) : null}
               </div>
-            )}
-          </div>
-
+              {summaryModalLoading && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl border border-white/10 bg-background/60 backdrop-blur-sm">
+                  <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <Spinner size="sm" variant="accent" />
+                    Cargando citas...
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter className={cn(
-            "shrink-0 items-center justify-between gap-3 border-t border-[rgba(var(--black-rgb),0.06)] bg-[linear-gradient(180deg,rgba(var(--white-rgb),0.88)_0%,rgba(var(--white-rgb),0.96)_100%)] px-4 pb-4 pt-4 shadow-[0_-14px_32px_rgba(var(--black-rgb),0.08)] dark:border-white/10 dark:bg-background dark:shadow-[0_-18px_40px_rgba(var(--black-rgb),0.45)] md:px-6 md:pb-6 sm:justify-between sm:[&>*]:flex-none",
+            "shrink-0 items-center justify-between gap-3 border-t border-white/8 px-4 pb-4 pt-4 md:px-6 md:pb-6 sm:justify-between sm:[&>*]:flex-none",
             summaryDetailBooking ? "m-0 h-0 overflow-hidden border-t-0 p-0 opacity-0" : "opacity-100"
           )}>
             <div className="text-xs text-muted-foreground">
@@ -1101,8 +1140,8 @@ export default function AdminCalendarPage() {
               <Button
                 type="button"
                 size="sm"
-                variant="ghost"
-                className="w-auto"
+                variant="outline"
+                className="w-auto border-white/15 bg-background/75 text-foreground shadow-[0_0_16px_rgba(var(--black-rgb),0.16)] hover:bg-primary/10 hover:text-foreground dark:border-white/15 dark:bg-background/80 dark:text-foreground"
                 disabled={safeSummaryPage <= 1 || summaryModalLoading !== null}
                 onClick={() => changeSummaryPageWithLoader("prev")}
               >
@@ -1116,8 +1155,8 @@ export default function AdminCalendarPage() {
               <Button
                 type="button"
                 size="sm"
-                variant="ghost"
-                className="w-auto"
+                variant="outline"
+                className="w-auto border-white/15 bg-background/75 text-foreground shadow-[0_0_16px_rgba(var(--black-rgb),0.16)] hover:bg-primary/10 hover:text-foreground dark:border-white/15 dark:bg-background/80 dark:text-foreground"
                 disabled={safeSummaryPage >= totalSummaryPages || summaryModalLoading !== null}
                 onClick={() => changeSummaryPageWithLoader("next")}
               >
@@ -1269,7 +1308,7 @@ export default function AdminCalendarPage() {
       </Dialog>
 
       <Dialog open={Boolean(activeBooking) && !summaryModalOpen} onOpenChange={(open) => !open && setActiveBooking(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Resumen de la cita</DialogTitle>
             <DialogDescription>
@@ -1327,6 +1366,38 @@ export default function AdminCalendarPage() {
                   </div>
                 ) : null}
               </div>
+
+              <div className="rounded-xl border border-white/10 bg-background/45 p-4">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <Icon icon={MessageCircle} size="xs" variant="primary" />
+                  <span>Conversación con Moka</span>
+                </div>
+                {activeBooking.conversationMessages && activeBooking.conversationMessages.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    {activeBooking.conversationSummary ? (
+                      <div className="rounded-xl border border-white/10 bg-background/55 px-3 py-3 text-sm text-muted-foreground whitespace-pre-wrap">
+                        {activeBooking.conversationSummary}
+                      </div>
+                    ) : null}
+                    {activeBooking.conversationMessages.map((message, index) => (
+                      <div
+                        key={`${activeBooking.id}-message-${index}`}
+                        className="rounded-xl border border-white/10 bg-background/55 px-3 py-3"
+                      >
+                        <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+                          <span>{message.role === "assistant" ? "Moka" : "Usuario"}</span>
+                          <span>{new Date(message.timestamp).toLocaleString("es-ES")}</span>
+                        </div>
+                        <div className="mt-2 whitespace-pre-wrap text-sm text-foreground/85">{message.content}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-xl border border-dashed border-white/10 bg-background/55 px-3 py-3 text-sm text-muted-foreground">
+                    No ha habido conversación con Moka en esta reserva.
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -1340,7 +1411,13 @@ export default function AdminCalendarPage() {
                   <PopoverTrigger asChild>
                     <Button
                       variant={action.variant}
-                      className={`w-full px-3 text-xs sm:text-sm ${compactModalActions ? "gap-0" : "gap-2"}`}
+                      className={cn(
+                        "w-full px-3 text-xs sm:text-sm",
+                        compactModalActions ? "gap-0" : "gap-2",
+                        action.variant === "default" && "bg-primary/18 text-primary border-primary/80 shadow-[0_0_22px_rgba(var(--primary-rgb),0.32)] dark:bg-primary/16 dark:text-primary dark:border-primary/85",
+                        action.variant === "accent" && "bg-accent/18 text-accent border-accent/85 shadow-[0_0_22px_rgba(var(--accent-rgb),0.32)] dark:bg-accent/16 dark:text-accent dark:border-accent/90",
+                        action.variant === "destructive" && "bg-destructive/16 text-destructive border-destructive/80 shadow-[0_0_22px_rgba(var(--destructive-rgb),0.26)] dark:bg-destructive/14 dark:text-destructive dark:border-destructive/85",
+                      )}
                       disabled={Boolean(action.disabled)}
                       onClick={() => setConfirmAction(action.key)}
                       title={action.label}
@@ -1349,7 +1426,16 @@ export default function AdminCalendarPage() {
                       {action.disabled ? (
                         <Spinner size="sm" variant={action.spinnerVariant} />
                       ) : (
-                        <Icon icon={action.icon} size="sm" />
+                        <Icon
+                          icon={action.icon}
+                          size="sm"
+                          variant="default"
+                          className={cn(
+                            action.variant === "default" && "text-primary drop-shadow-[0_0_8px_rgba(var(--primary-rgb),0.45)]",
+                            action.variant === "accent" && "text-[rgb(var(--white-rgb))] drop-shadow-[0_0_10px_rgba(var(--accent-rgb),0.6)]",
+                            action.variant === "destructive" && "text-destructive drop-shadow-[0_0_8px_rgba(var(--destructive-rgb),0.45)]",
+                          )}
+                        />
                       )}
                       {!compactModalActions && <span className="truncate">{action.label}</span>}
                     </Button>
@@ -1472,8 +1558,8 @@ export default function AdminCalendarPage() {
                 <Button
                   type="button"
                   size="sm"
-                  variant="ghost"
-                  className="w-auto"
+                  variant="outline"
+                  className="w-auto border-white/15 bg-background/75 text-foreground shadow-[0_0_16px_rgba(var(--black-rgb),0.16)] hover:bg-primary/10 hover:text-foreground dark:border-white/15 dark:bg-background/80 dark:text-foreground"
                   disabled={safeDayPage <= 1 || dayPageLoading !== null}
                   onClick={() => changeDayPageWithLoader("prev")}
                 >
@@ -1487,8 +1573,8 @@ export default function AdminCalendarPage() {
                 <Button
                   type="button"
                   size="sm"
-                  variant="ghost"
-                  className="w-auto"
+                  variant="outline"
+                  className="w-auto border-white/15 bg-background/75 text-foreground shadow-[0_0_16px_rgba(var(--black-rgb),0.16)] hover:bg-primary/10 hover:text-foreground dark:border-white/15 dark:bg-background/80 dark:text-foreground"
                   disabled={safeDayPage >= totalDayPages || dayPageLoading !== null}
                   onClick={() => changeDayPageWithLoader("next")}
                 >
@@ -1742,8 +1828,8 @@ export default function AdminCalendarPage() {
                 <Button
                   type="button"
                   size="sm"
-                  variant="ghost"
-                  className="w-auto"
+                  variant="outline"
+                  className="w-auto border-white/15 bg-background/75 text-foreground shadow-[0_0_16px_rgba(var(--black-rgb),0.16)] hover:bg-primary/10 hover:text-foreground dark:border-white/15 dark:bg-background/80 dark:text-foreground"
                   disabled={safeDayPage <= 1 || dayPageLoading !== null}
                   onClick={() => changeDayPageWithLoader("prev")}
                 >
@@ -1757,8 +1843,8 @@ export default function AdminCalendarPage() {
                 <Button
                   type="button"
                   size="sm"
-                  variant="ghost"
-                  className="w-auto"
+                  variant="outline"
+                  className="w-auto border-white/15 bg-background/75 text-foreground shadow-[0_0_16px_rgba(var(--black-rgb),0.16)] hover:bg-primary/10 hover:text-foreground dark:border-white/15 dark:bg-background/80 dark:text-foreground"
                   disabled={safeDayPage >= totalDayPages || dayPageLoading !== null}
                   onClick={() => changeDayPageWithLoader("next")}
                 >
@@ -1864,8 +1950,8 @@ export default function AdminCalendarPage() {
                 <Button
                   type="button"
                   size="sm"
-                  variant="ghost"
-                  className="w-auto"
+                  variant="outline"
+                  className="w-auto border-white/15 bg-background/75 text-foreground shadow-[0_0_16px_rgba(var(--black-rgb),0.16)] hover:bg-primary/10 hover:text-foreground dark:border-white/15 dark:bg-background/80 dark:text-foreground"
                   disabled={safeUpcomingPage <= 1 || upcomingPageLoading !== null}
                   onClick={() => changeUpcomingPageWithLoader("prev")}
                 >
@@ -1879,8 +1965,8 @@ export default function AdminCalendarPage() {
                 <Button
                   type="button"
                   size="sm"
-                  variant="ghost"
-                  className="w-auto"
+                  variant="outline"
+                  className="w-auto border-white/15 bg-background/75 text-foreground shadow-[0_0_16px_rgba(var(--black-rgb),0.16)] hover:bg-primary/10 hover:text-foreground dark:border-white/15 dark:bg-background/80 dark:text-foreground"
                   disabled={safeUpcomingPage >= totalUpcomingPages || upcomingPageLoading !== null}
                   onClick={() => changeUpcomingPageWithLoader("next")}
                 >

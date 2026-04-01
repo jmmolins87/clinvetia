@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { dbConnect } from "@/lib/db"
+import type { ChatState } from "@/lib/chat-contract"
 import { Session } from "@/models/Session"
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 
@@ -9,6 +10,7 @@ interface SessionLeanView {
   token: string
   expiresAt: Date | string
   chatSummary?: string | null
+  chatState?: ChatState | null
   chatHistory?: Array<{
     role: "assistant" | "user"
     content: string
@@ -101,6 +103,7 @@ export async function GET(req: Request) {
       expiresAt: new Date(session.expiresAt).toISOString(),
       roi: session.roi ?? {},
       chatSummary: session.chatSummary ?? "",
+      chatState: session.chatState ?? { intent: "none", step: "idle", objectionAttempts: 0, qualificationStage: 0 },
       chatHistory: session.chatHistory ?? [],
     })
   } catch {

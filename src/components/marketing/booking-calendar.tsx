@@ -23,6 +23,8 @@ import { BrandName } from "@/components/ui/brand-name"
 import { Icon } from "@/components/ui/icon"
 import {
   Dialog,
+  DialogCancel,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -750,9 +752,9 @@ export function BookingCalendar({
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-warning/30 bg-warning/10 sm:mx-0">
+        <DialogContent className="z-[300] max-w-sm">
+          <DialogHeader>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-warning/35 bg-[rgba(var(--warning-rgb),0.12)] shadow-[0_0_24px_rgba(var(--warning-rgb),0.18),inset_0_1px_0_rgba(var(--white-rgb),0.16)] sm:mx-0">
               <Icon icon={AlertCircle} size="xl" variant="warning" />
             </div>
             <DialogTitle>Ya tienes una cita activa reservada</DialogTitle>
@@ -762,7 +764,7 @@ export function BookingCalendar({
             </DialogDescription>
           </DialogHeader>
           {activeBookingBlock && (
-            <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+            <div className="space-y-3 rounded-2xl border border-primary/25 bg-[rgba(var(--primary-rgb),0.08)] p-4 shadow-[inset_0_1px_0_rgba(var(--white-rgb),0.12)]">
               <div className="flex items-start gap-3">
                 <Icon icon={CalendarDays} size="default" variant="primary" className="mt-0.5" />
                 <div className="space-y-1">
@@ -782,11 +784,13 @@ export function BookingCalendar({
               </div>
             </div>
           )}
-          <DialogFooter className="gap-2 sm:[&>*]:flex-1">
-            <Button variant="ghost" onClick={() => router.push("/")}>
+          <DialogFooter>
+            <DialogCancel size="sm" onClick={() => router.push("/")}>
               Volver al inicio
-            </Button>
-            <Button
+            </DialogCancel>
+            <DialogClose asChild>
+              <Button
+                size="sm"
               onClick={() => {
                 const bookingId = duplicateBookingDialogBookingId || activeBookingBlock?.bookingId
                 if (bookingId) {
@@ -795,10 +799,11 @@ export function BookingCalendar({
                 }
                 router.push("/contacto")
               }}
-            >
-              Ir a contacto
-              <Icon icon={ArrowRight} size="sm" className="ml-2" />
-            </Button>
+              >
+                Ir a contacto
+                <Icon icon={ArrowRight} size="sm" className="ml-2" />
+              </Button>
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>

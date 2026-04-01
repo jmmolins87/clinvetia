@@ -3,6 +3,7 @@ import { z } from "zod"
 import { dbConnect } from "@/lib/db"
 import { Booking } from "@/models/Booking"
 import { Contact } from "@/models/Contact"
+import { Session } from "@/models/Session"
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 import { isBookableDemoTimeSlot, isValidDemoTimeSlot } from "@/lib/demo-schedule"
 import { buildGoogleMeetLink } from "@/lib/booking-communication"
@@ -19,6 +20,12 @@ interface BookingLeanView {
   formExpiresAt: Date
   demoExpiresAt: Date
   googleMeetLink?: string | null
+  conversationSummary?: string | null
+  conversationMessages?: Array<{
+    role: "assistant" | "user"
+    content: string
+    timestamp?: Date | string
+  }>
 }
 
 interface ContactLeanView {
@@ -30,6 +37,15 @@ interface ContactLeanView {
   mensaje?: string
   roi?: unknown
   createdAt?: Date | string
+}
+
+interface SessionConversationLeanView {
+  chatSummary?: string | null
+  chatHistory?: Array<{
+    role: "assistant" | "user"
+    content: string
+    timestamp?: Date | string
+  }>
 }
 
 const bookingSchema = z.object({
@@ -46,6 +62,43 @@ const bookingRescheduleSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
 })
+
+async function buildBookingConversationSnapshot(sessionToken?: string | null) {
+  if (!sessionToken) {
+    return {
+      conversationSummary: "",
+      conversationMessages: [],
+    }
+  }
+
+  const rawSession = await Session.findOne({ token: sessionToken })
+    .select("chatSummary chatHistory")
+    .lean<SessionConversationLeanView | null>()
+  const session = Array.isArray(rawSession) ? rawSession[0] : rawSession
+  const conversationMessages = Array.isArray(session?.chatHistory)
+    ? session.chatHistory
+        .map((message) => ({
+          role: message.role === "assistant" ? ("assistant" as const) : ("user" as const),
+          content: String(message.content || "").replace(/\s+/g, " ").trim().slice(0, 400),
+          timestamp: message.timestamp ? new Date(message.timestamp) : new Date(),
+        }))
+        .filter((message) => message.content.length > 0)
+        .slice(-24)
+    : []
+  const conversationSummary = String(session?.chatSummary || "").replace(/\s+/g, " ").trim().slice(0, 1800)
+
+  if (!conversationSummary && conversationMessages.length === 0) {
+    return {
+      conversationSummary: "",
+      conversationMessages: [],
+    }
+  }
+
+  return {
+    conversationSummary,
+    conversationMessages,
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -139,6 +192,8 @@ export async function POST(req: Request) {
 
     const accessToken = crypto.randomUUID()
 
+    const conversationSnapshot = await buildBookingConversationSnapshot(parsed.sessionToken ?? null)
+
     const booking = new Booking({
       date,
       time: parsed.time,
@@ -149,6 +204,7 @@ export async function POST(req: Request) {
       formExpiresAt,
       demoExpiresAt,
       status: "confirmed",
+      ...conversationSnapshot,
     })
     booking.googleMeetLink = buildGoogleMeetLink(booking._id.toString())
     await booking.save()

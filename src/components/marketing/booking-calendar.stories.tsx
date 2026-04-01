@@ -62,7 +62,6 @@ export const WithCallback: Story = {
 
 <BookingCalendar
   onBooked={(date, time, duration) => {
-    console.log("Demo reservada:", { date, time, duration })
     // Redirigir o mostrar confirmación
   }}
 />`,
@@ -71,11 +70,7 @@ export const WithCallback: Story = {
   },
   render: () => (
     <div className="min-h-screen bg-background p-8">
-      <BookingCalendar
-        onBooked={(date, time, duration) => {
-          console.log("Demo reservada:", { date, time, duration })
-        }}
-      />
+      <BookingCalendar onBooked={() => {}} />
     </div>
   ),
 }

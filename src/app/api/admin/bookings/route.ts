@@ -159,6 +159,19 @@ export async function GET(req: Request) {
       duration: b.duration,
       status: b.status,
       googleMeetLink: b.googleMeetLink ?? null,
+      conversationSummary: typeof b.conversationSummary === "string" ? b.conversationSummary : "",
+      conversationMessages: Array.isArray(b.conversationMessages)
+        ? b.conversationMessages.map((message) => ({
+            role: message.role,
+            content: message.content,
+            timestamp:
+              message.timestamp instanceof Date
+                ? message.timestamp.toISOString()
+                : message.timestamp
+                  ? new Date(message.timestamp).toISOString()
+                  : new Date(b.createdAt).toISOString(),
+          }))
+        : [],
       emailEvents: Array.isArray(b.emailEvents) ? b.emailEvents : [],
     })),
   })
