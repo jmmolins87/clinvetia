@@ -160,12 +160,12 @@ function DetailBox({ label, text, icon: IconComponent, className, fullWidth }: {
 }) {
   return (
     <div className={cn(
-      "rounded-xl border p-3",
-      fullWidth ? "col-span-2" : "",
+      "rounded-xl border p-3 sm:p-3.5",
+      fullWidth ? "md:col-span-2" : "",
       className
     )}>
       {label && (
-        <div className="flex items-center gap-2 mb-1">
+        <div className="mb-1 flex items-center gap-2">
           {IconComponent && <Icon icon={IconComponent} size="xs" />}
           <p className="text-xs font-bold uppercase tracking-wider">{label}</p>
         </div>
@@ -181,23 +181,23 @@ export default function EscenariosPage() {
   return (
     <div className="relative">
       <Dialog open={!!selectedCaso} onOpenChange={(open) => !open && setSelectedCaso(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-6">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-xl overflow-hidden p-0 sm:w-full">
           {selectedCaso && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/15 border border-primary/30 text-primary">
+            <div className="max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-4 pr-12 sm:max-h-[88vh] sm:p-5 sm:pr-14">
+              <div className="mb-4 flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/30 bg-primary/15 text-primary sm:h-12 sm:w-12">
                   <Icon icon={selectedCaso.icono} size="lg" variant="primary" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">{selectedCaso.titulo}</h3>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-bold leading-tight text-foreground sm:text-xl">{selectedCaso.titulo}</h3>
                   <p className="text-sm text-muted-foreground">{selectedCaso.subtitulo}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <DetailBox label="Problema" text={selectedCaso.descripcion} className="col-span-2 border-destructive/30 bg-destructive/10 text-destructive" />
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <DetailBox label="Problema" text={selectedCaso.descripcion} className="md:col-span-2 border-destructive/30 bg-destructive/10 text-destructive" />
                 <DetailBox label="Mensaje" text={selectedCaso.mensaje} icon={MessageSquare} className="border-white/10 bg-white/5 text-primary" />
                 <DetailBox label="Sistema" text={selectedCaso.sistema} icon={Cog} className="border-white/10 bg-white/5 text-secondary" />
-                <DetailBox label="Resultado" text={selectedCaso.resultado} icon={CheckCircle2} className="col-span-2 border-success/30 bg-success/10 text-success" />
+                <DetailBox label="Resultado" text={selectedCaso.resultado} icon={CheckCircle2} className="md:col-span-2 border-success/30 bg-success/10 text-success" />
               </div>
             </div>
           )}

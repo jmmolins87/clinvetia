@@ -100,12 +100,12 @@ export default function FaqsPage() {
           </p>
         </div>
 
-        <GlassCard className="p-2">
+        <GlassCard className="mx-auto w-full max-w-[50rem] p-1.5 sm:max-w-2xl lg:max-w-3xl">
           <Accordion type="single" collapsible className="w-full">
             {FAQS.map((item, idx) => (
               <AccordionItem key={item.question} value={`faq-${idx}`} last={idx === FAQS.length - 1}>
-                <AccordionTrigger className="px-4 text-base font-medium">{item.question}</AccordionTrigger>
-                <AccordionContent className="px-4 text-sm md:text-base">{item.answer}</AccordionContent>
+                <AccordionTrigger className="px-3 text-base font-medium sm:px-4">{item.question}</AccordionTrigger>
+                <AccordionContent className="px-3 text-sm sm:px-4 md:text-base">{item.answer}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>

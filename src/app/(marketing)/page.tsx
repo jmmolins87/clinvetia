@@ -380,10 +380,14 @@ export default function MarketingPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {FLUJO_PASOS.map((step, idx) => (
               <motion.div key={step.n} {...fadeUp} transition={{ delay: idx * 0.1 }} className="relative">
-                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-lg p-6 hover:border-white/20 transition-colors h-full">
-                  <span className={cn("mb-4 block text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br", idx % 2 === 0 ? "from-primary to-neon-cyan" : "from-secondary to-destructive")}>{step.n}</span>
-                  <h3 className="mb-1 text-lg font-semibold"><TranslatableText text={step.title} /></h3>
-                  <p className="text-sm text-muted-foreground"><TranslatableText text={step.description} lines={2} /></p>
+                <div className="flex h-full items-center justify-start rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-colors hover:border-white/20 sm:block">
+                  <div className="flex items-center justify-start gap-4 text-left sm:block sm:text-left">
+                    <span className={cn("block text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br sm:mb-4", idx % 2 === 0 ? "from-primary to-neon-cyan" : "from-secondary to-destructive")}>{step.n}</span>
+                    <div className="text-center sm:text-left">
+                      <h3 className="text-lg font-semibold"><TranslatableText text={step.title} /></h3>
+                      <p className="text-sm text-muted-foreground"><TranslatableText text={step.description} lines={2} /></p>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             ))}

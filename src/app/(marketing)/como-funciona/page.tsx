@@ -248,12 +248,12 @@ export default function ComoFuncionaPage() {
               <Icon icon={HelpCircle} size="lg" variant="primary" />
               <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Preguntas frecuentes</h2>
             </div>
-            <GlassCard className="p-2">
+            <GlassCard className="mx-auto w-full max-w-[20rem] p-1.5 sm:max-w-2xl lg:max-w-3xl">
               <Accordion type="single" collapsible className="w-full">
                 {faqs.map((faq, idx) => (
                   <AccordionItem key={idx} value={`faq-${idx}`} last={idx === faqs.length - 1}>
-                    <AccordionTrigger className="text-base font-medium px-4">{faq.q}</AccordionTrigger>
-                    <AccordionContent className="text-base px-4">{faq.a}</AccordionContent>
+                    <AccordionTrigger className="px-3 text-base font-medium sm:px-4">{faq.q}</AccordionTrigger>
+                    <AccordionContent className="px-3 text-base sm:px-4">{faq.a}</AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>

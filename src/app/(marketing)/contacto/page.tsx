@@ -112,6 +112,7 @@ function ContactFormWithROI() {
     status?: string;
     formExpiresAt?: string | null;
     demoExpiresAt?: string | null;
+    googleMeetLink?: string | null;
     contactSubmitted?: boolean;
     contact?: {
       nombre: string;
@@ -260,6 +261,7 @@ function ContactFormWithROI() {
           roi?: number | null
         } | null
       } | null
+      googleMeetLink?: string | null
     } | null>("local", "booking", null)
     const id = bookingIdFromQuery || stored?.bookingId || null
     setBookingId(id)
@@ -272,6 +274,7 @@ function ContactFormWithROI() {
         status: stored.status,
         formExpiresAt: stored.formExpiresAt,
         demoExpiresAt: stored.demoExpiresAt,
+        googleMeetLink: typeof stored.googleMeetLink === "string" ? stored.googleMeetLink : null,
         contactSubmitted: stored.contactSubmitted ?? false,
         contact: stored.contact ?? null,
       })
@@ -295,6 +298,7 @@ function ContactFormWithROI() {
           duration: String(booking.duration),
           formExpiresAt: booking.formExpiresAt,
           demoExpiresAt: booking.demoExpiresAt,
+          googleMeetLink: booking.googleMeetLink ?? null,
           status: booking.status,
           contactSubmitted: booking.contactSubmitted ?? false,
           contact: booking.contact ?? null,
@@ -377,6 +381,7 @@ function ContactFormWithROI() {
           duration: String(booking.duration),
           formExpiresAt: booking.formExpiresAt,
           demoExpiresAt: booking.demoExpiresAt,
+          googleMeetLink: booking.googleMeetLink ?? null,
           contactSubmitted: booking.contactSubmitted ?? false,
           contact: booking.contact ?? null,
         })
@@ -920,6 +925,7 @@ function ContactFormWithROI() {
                 duration: String(response.duration),
                 formExpiresAt: response.formExpiresAt,
                 demoExpiresAt: response.demoExpiresAt,
+                googleMeetLink: response.googleMeetLink ?? null,
                 status: "confirmed" as const,
                 contactSubmitted: storedBooking?.contactSubmitted ?? false,
                 contact: storedBooking?.contact ?? null,

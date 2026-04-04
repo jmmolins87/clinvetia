@@ -187,7 +187,7 @@ function RoiDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-chat-scrollable="true" className="sm:max-w-md [&>button]:hidden">
+      <DialogContent data-chat-scrollable="true" className="sm:max-w-md lg:left-[calc(50%-14rem)] [&>button]:hidden">
         <button
           type="button"
           aria-label="Cerrar calculadora ROI"
@@ -331,12 +331,12 @@ function ChatPanel({
 
   return (
     <>
-      <SheetHeader className="px-6 pt-6 pb-4 border-b border-[rgba(var(--white-rgb),0.10)] bg-background/60 backdrop-blur-xl">
+      <SheetHeader className="border-b border-[rgba(var(--white-rgb),0.10)] bg-background/60 px-6 pt-6 pb-4 text-left backdrop-blur-xl">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <SheetTitle className="text-xl">Moka</SheetTitle>
-            <SheetDescription className="text-sm">
-              {locale === "en" ? "Your Clinvetia assistant for appointments and questions." : "Tu asistente de Clinvetia para citas y dudas."}
+          <div className="text-left">
+            <SheetTitle className="text-lg sm:text-xl">Moka</SheetTitle>
+            <SheetDescription className="text-xs sm:text-sm">
+              {locale === "en" ? "Your Clinvetia assistant for appointments and questions." : "Tu asistente de Clinvetia."}
             </SheetDescription>
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
               <span
