@@ -6,20 +6,30 @@ import { Contact } from "@/models/Contact"
 import { Session } from "@/models/Session"
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 import { isBookableDemoTimeSlot, isValidDemoTimeSlot } from "@/lib/demo-schedule"
+import { sendBrevoEmail } from "@/lib/brevo"
 import { buildGoogleMeetLink } from "@/lib/booking-communication"
+import { appendBookingEmailEvent } from "@/lib/booking-communication"
+import { leadSummaryEmail } from "@/lib/emails"
+import { buildICS } from "@/lib/ics"
+import { rescheduleExistingBooking } from "@/lib/booking-reschedule"
 
 interface BookingLeanView {
   _id: { toString(): string }
   date: Date
   time: string
   duration: number
-  status: "pending" | "confirmed" | "expired" | "cancelled"
+  status: "pending" | "confirmed" | "expired" | "cancelled" | "rescheduled"
   sessionToken?: string | null
+  operatorEmail?: string | null
+  rescheduledFromBookingId?: { toString(): string } | string | null
+  rescheduledToBookingId?: { toString(): string } | string | null
   accessToken: string
   expiresAt: Date
   formExpiresAt: Date
   demoExpiresAt: Date
   googleMeetLink?: string | null
+  googleCalendarEventId?: string | null
+  googleCalendarHtmlLink?: string | null
   conversationSummary?: string | null
   conversationMessages?: Array<{
     role: "assistant" | "user"
@@ -377,57 +387,103 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 })
     }
 
-    const [hour, min] = parsed.time.split(":").map(Number)
-    const demoDateTime = new Date(date)
-    demoDateTime.setHours(hour, min, 0, 0)
-
-    const demoExpiresAt = new Date(demoDateTime)
-    demoExpiresAt.setMinutes(demoExpiresAt.getMinutes() + booking.duration)
-
-    const expiresAt = new Date(date)
-    expiresAt.setHours(23, 59, 59, 999)
-
-    const start = new Date(date)
-    start.setHours(0, 0, 0, 0)
-
-    const end = new Date(date)
-    end.setHours(23, 59, 59, 999)
-
-    const rawConflict = await Booking.findOne({
-      _id: { $ne: booking._id },
-      date: { $gte: start, $lte: end },
-      time: parsed.time,
-      status: "confirmed",
-    }).lean<BookingLeanView>()
-    const conflict = Array.isArray(rawConflict) ? rawConflict[0] : rawConflict
-
-    if (conflict) {
-      return NextResponse.json({ error: "Slot unavailable" }, { status: 409 })
-    }
-
-    await Booking.updateOne(
-      { _id: booking._id },
-      {
-        $set: {
-          date,
-          time: parsed.time,
-          status: "confirmed",
-          expiresAt,
-          demoExpiresAt,
-        },
-      },
-    )
-
-    return NextResponse.json({
-      bookingId: booking._id.toString(),
-      accessToken: booking.accessToken,
-      date: date.toISOString(),
+    const rescheduled = await rescheduleExistingBooking({
+      bookingId: parsed.bookingId,
+      date,
       time: parsed.time,
       duration: booking.duration,
-      expiresAt: expiresAt.toISOString(),
-      formExpiresAt: booking.formExpiresAt.toISOString(),
-      demoExpiresAt: demoExpiresAt.toISOString(),
-      googleMeetLink: booking.googleMeetLink || buildGoogleMeetLink(booking._id.toString()),
+    })
+
+    if (!rescheduled.ok) {
+      return NextResponse.json(
+        { error: rescheduled.reason === "booking_not_found" ? "Booking not found" : "Slot unavailable" },
+        { status: rescheduled.reason === "booking_not_found" ? 404 : 409 },
+      )
+    }
+
+    const nextBooking = rescheduled.booking
+    const [hour, min] = parsed.time.split(":").map(Number)
+    const start = new Date(nextBooking.date)
+    start.setHours(hour, min, 0, 0)
+    const end = new Date(start)
+    end.setMinutes(end.getMinutes() + nextBooking.duration)
+
+    const contact =
+      rescheduled.contact ||
+      (await Contact.findOne({ bookingId: { $in: [nextBooking.id, String(nextBooking.id)] } })
+        .sort({ createdAt: -1 })
+        .lean<ContactLeanView | null>())
+
+    if (contact?.email) {
+      const supportEmail = process.env.BREVO_REPLY_TO || "info@clinvetia.com"
+      const dateLabel = start.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+      const subject = "Tu demo ha sido reagendada"
+      const htmlContent = leadSummaryEmail({
+        brandName: "Clinvetia",
+        nombre: contact.nombre || "Cliente",
+        email: contact.email || "",
+        telefono: contact.telefono || "",
+        clinica: contact.clinica || "",
+        mensaje: contact.mensaje || "Cita reagendada desde el área de reservas.",
+        supportEmail,
+        booking: {
+          dateLabel,
+          timeLabel: nextBooking.time,
+          duration: nextBooking.duration,
+          meetingLink: nextBooking.googleMeetLink,
+        },
+        roi: contact.roi ?? null,
+      })
+      const ics = buildICS({
+        uid: nextBooking.id,
+        start,
+        end,
+        summary: "Demo Clinvetia (reagendada)",
+        description: `Demo personalizada con Clinvetia - cita reagendada desde ${rescheduled.previousBookingId}. Enlace Google Meet: ${nextBooking.googleMeetLink}`,
+        location: nextBooking.googleMeetLink,
+        url: nextBooking.googleMeetLink,
+        organizerEmail: supportEmail,
+        attendeeEmail: contact.email,
+      })
+      const deliveryTargets = Array.from(new Set([contact.email, supportEmail, nextBooking.operatorEmail].filter(Boolean)))
+
+      for (const target of deliveryTargets) {
+        const result = await sendBrevoEmail({
+          to: [{ email: target, name: target === contact.email ? contact.nombre || "Cliente" : "Clinvetia" }],
+          subject,
+          htmlContent,
+          attachments: [{
+            name: "clinvetia-demo-reagendada.ics",
+            content: Buffer.from(ics).toString("base64"),
+            contentType: "text/calendar",
+          }],
+          replyTo: { email: supportEmail },
+        })
+
+        await appendBookingEmailEvent({
+          bookingId: nextBooking.id,
+          category: "booking_rescheduled",
+          subject,
+          intendedRecipient: contact.email,
+          deliveredTo: target,
+          status: result.ok ? "sent" : "failed",
+          error: result.error ?? null,
+          message: contact.mensaje || "Cita reagendada desde el área de reservas.",
+          googleMeetLink: nextBooking.googleMeetLink,
+        })
+      }
+    }
+
+    return NextResponse.json({
+      bookingId: nextBooking.id,
+      accessToken: nextBooking.accessToken,
+      date: nextBooking.date.toISOString(),
+      time: nextBooking.time,
+      duration: nextBooking.duration,
+      expiresAt: nextBooking.expiresAt.toISOString(),
+      formExpiresAt: nextBooking.formExpiresAt.toISOString(),
+      demoExpiresAt: nextBooking.demoExpiresAt.toISOString(),
+      googleMeetLink: nextBooking.googleMeetLink,
       status: "confirmed",
     })
   } catch (error) {

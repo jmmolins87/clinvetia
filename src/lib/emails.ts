@@ -373,7 +373,6 @@ export function adminUserInviteEmail(params: {
               </a>
             </p>
           </div>
-
           <div style="border:1px solid #2a3445;background:#0a111c;border-radius:14px;padding:14px;">
             <p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#f59e0b;">Seguridad</p>
             <p style="margin:0;color:#b6c2cf;font-size:13px;line-height:1.5;">
@@ -524,17 +523,6 @@ export function customerReplyEmail(params: {
             <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Mensaje</p>
             <p style="margin:0;color:#d4dee8;font-size:14px;line-height:1.6;">${safeMessage}</p>
           </div>
-
-          ${
-            params.meetingLink
-              ? `<div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:16px;">
-            <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#9fb0c0;">Google Meet</p>
-            <p style="margin:0;color:#d4dee8;font-size:14px;line-height:1.6;">
-              Enlace de videollamada: <a href="${escapeHtml(params.meetingLink)}" style="color:#43e97b;text-decoration:none;">${escapeHtml(params.meetingLink)}</a>
-            </p>
-          </div>`
-              : ""
-          }
 
           <div style="border:1px solid #2a3445;background:#0a111c;border-radius:14px;padding:14px;">
             <p style="margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#43e97b;">Contacto</p>

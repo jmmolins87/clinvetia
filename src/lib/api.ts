@@ -7,6 +7,7 @@ export type BookingResponse = {
   expiresAt: string
   formExpiresAt: string
   demoExpiresAt: string
+  googleMeetLink?: string
   status?: string
   contactSubmitted?: boolean
   contact?: {

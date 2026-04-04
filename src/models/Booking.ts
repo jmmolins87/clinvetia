@@ -7,11 +7,16 @@ const BookingSchema = new Schema(
     duration: { type: Number, required: true },
     status: { type: String, enum: ["pending", "confirmed", "expired", "cancelled", "rescheduled"], default: "confirmed" },
     sessionToken: { type: String, default: null },
+    operatorEmail: { type: String, default: null },
+    rescheduledFromBookingId: { type: Schema.Types.ObjectId, ref: "Booking", default: null },
+    rescheduledToBookingId: { type: Schema.Types.ObjectId, ref: "Booking", default: null },
     accessToken: { type: String, required: true },
     expiresAt: { type: Date, required: true },
     formExpiresAt: { type: Date, required: true },
     demoExpiresAt: { type: Date, required: true },
     googleMeetLink: { type: String, default: null },
+    googleCalendarEventId: { type: String, default: null },
+    googleCalendarHtmlLink: { type: String, default: null },
     conversationSummary: { type: String, default: "" },
     conversationMessages: {
       type: [
