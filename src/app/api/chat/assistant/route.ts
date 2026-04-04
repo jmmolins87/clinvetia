@@ -9,8 +9,10 @@ import { sendBrevoEmail } from "@/lib/brevo"
 import { leadSummaryEmail } from "@/lib/emails"
 import { buildICS } from "@/lib/ics"
 import { appendBookingEmailEvent, buildGoogleMeetLink } from "@/lib/booking-communication"
+import { rescheduleExistingBooking } from "@/lib/booking-reschedule"
 import { clearRoiForBookingContext } from "@/lib/roi-cleanup"
-import { DEMO_BOOKABLE_TIME_SLOTS, isBookableDemoTimeSlot, isValidDemoTimeSlot } from "@/lib/demo-schedule"
+import { DEMO_BOOKABLE_TIME_SLOTS } from "@/lib/demo-schedule"
+import { detectChatIntents, wantsRoiCalculator } from "@/lib/chat-intents"
 import {
   chatAssistantRequestSchema,
   chatAssistantResponseSchema,
@@ -314,32 +316,12 @@ function compactHistoryAndSummary(
   return { history: recent, summary: nextSummary }
 }
 
-function detectIntents(text: string) {
-  const normalized = normalizeText(text)
-  const deniesCancel = /\b(no|dont|don't|do not)\b.{0,20}\b(cancelar|cancel)\b/i.test(normalized)
-  const deniesReschedule = /\b(no|dont|don't|do not)\b.{0,25}\b(reagendar|reprogramar|reschedule|change appointment)\b/i.test(normalized)
-  const deniesBook = /\b(no|dont|don't|do not)\b.{0,20}\b(reservar|book|agendar|appointment)\b/i.test(normalized)
-  const hasMoveToDayPhrase =
-    /\b(pasala al|pasala para|moverla a|moverla para|mover la de|cambiar la de|mueveme la del|muéveme la del)\b.{0,20}\b(lunes|martes|miercoles|jueves|viernes|sabado|domingo|manana|pasado manana)\b/i.test(normalized)
-
-  const wantsCancel =
-    !deniesCancel &&
-    /\b(cancelar|cancelarla|cancelarlo|canceladme|cancela|anular|anula|anulala|dar de baja|borra mi demo|borra la demo|borra mi cita|borra la de mi companero|borrar la de mi companero|elimina mi cita|quita mi cita|quitamela|quitame la|quítame la|quitamela ya|canceladme eso|cancel|cancellation)\b/i.test(normalized)
-  const wantsReschedule =
-    !deniesReschedule &&
-    (/\b(reagendar|reprogramar|cambiar hora|cambiar cita|cambiar una cita|cambiar la de otra persona|cambiamela|cambiamela|otro horario|mover cita|mover mi cita|mover la cita|mover la demo|mover la de|mover la del|muevemela|muevela|mueveme la|muéveme la|move it|cambiar la demo de hora|cambiar la hora de la demo|aplazar|aplazarla|aplazar mi cita|pasarla a otro dia|pasarla a otro día|reschedule|change time|change appointment|another slot)\b/i.test(normalized) ||
-      hasMoveToDayPhrase)
-  const wantsBooking =
-    !deniesBook && /\b(reservar|reserva|cita|agendar|agenda|book|booking|appointment|schedule|calendario|calendar|horario|horarios|slot|slots)\b/i.test(normalized)
-
-  return { wantsBooking, wantsReschedule, wantsCancel }
-}
-
 const CHAT_SYSTEM_PROMPT = [
   "Eres Moka, la asistente comercial de Clinvetia para clínicas veterinarias.",
   "Tu objetivo es responder bien, sonar humana y mover la conversación hacia una demo o consultoría cuando encaje.",
   "Si detectas interés claro, dolor operativo o una pregunta sobre capacidades, ofrece una demo de forma natural en el mismo mensaje o en el siguiente.",
   "No esperes demasiado para proponer ver el caso aplicado a la clínica si ya hay contexto suficiente.",
+  "Si el usuario pregunta por la calculadora ROI, explícale de forma simple qué datos usa, qué estima y para qué sirve antes o después de abrirla según encaje.",
   "No eres un chatbot genérico ni hablas como una consultora corporativa.",
   "No menciones IA, herramientas, APIs, prompts ni procesos internos.",
   "Habla de forma cercana, comercial, breve y segura.",
@@ -623,6 +605,10 @@ async function sendBookingSummaryEmailFromChat(params: {
   duration: number
   email: string
   phone: string
+  operatorEmail?: string | null
+  subject?: string
+  emailEventCategory?: string
+  emailMessage?: string
   sessionToken?: string | null
   roi?: {
     monthlyPatients?: number | null
@@ -661,7 +647,7 @@ async function sendBookingSummaryEmailFromChat(params: {
     roi: params.roi ?? null,
   })
 
-  const subject = "Tu cita está confirmada"
+  const subject = params.subject || "Tu cita está confirmada"
   const roiForEmail = params.roi
     ? {
         monthlyPatients: params.roi.monthlyPatients ?? undefined,
@@ -670,13 +656,14 @@ async function sendBookingSummaryEmailFromChat(params: {
         roi: params.roi.roi ?? undefined,
       }
     : null
+  const message = params.emailMessage || "Reserva creada desde chat asistido"
   const htmlContent = leadSummaryEmail({
     brandName,
     nombre: name,
     email: params.email,
     telefono: params.phone,
     clinica: "Pendiente de completar",
-    mensaje: "Reserva creada desde chat asistido",
+    mensaje: message,
     supportEmail,
     booking: {
       dateLabel,
@@ -687,76 +674,37 @@ async function sendBookingSummaryEmailFromChat(params: {
     roi: roiForEmail,
   })
 
-  const emailResult = await sendBrevoEmail({
-    to: [{ email: params.email, name }],
-    subject,
-    htmlContent,
-    attachments: [{
-      name: "clinvetia-cita.ics",
-      content: Buffer.from(ics).toString("base64"),
-      contentType: "text/calendar",
-    }],
-    replyTo: { email: supportEmail },
-  })
+  const deliveryTargets = Array.from(new Set([params.email, supportEmail, params.operatorEmail].filter(Boolean)))
+  let allDelivered = true
+  for (const target of deliveryTargets) {
+    const emailResult = await sendBrevoEmail({
+      to: [{ email: target, name: target === params.email ? name : brandName }],
+      subject,
+      htmlContent,
+      attachments: [{
+        name: "clinvetia-cita.ics",
+        content: Buffer.from(ics).toString("base64"),
+        contentType: "text/calendar",
+      }],
+      replyTo: { email: supportEmail },
+    })
 
-  await appendBookingEmailEvent({
-    bookingId: params.bookingId,
-    category: "customer_summary",
-    subject,
-    intendedRecipient: params.email,
-    deliveredTo: params.email,
-    status: emailResult.ok ? "sent" : "failed",
-    error: emailResult.ok ? null : emailResult.error ?? "Email delivery failed",
-    message: "Reserva creada desde chat asistido",
-    googleMeetLink: meetingLink,
-  })
+    allDelivered &&= emailResult.ok
 
-  return emailResult.ok
-}
-
-async function rescheduleBooking(bookingId: string, slot: ChatSlot) {
-  if (!isValidDemoTimeSlot(slot.time) || !isBookableDemoTimeSlot(slot.time)) {
-    return false
+    await appendBookingEmailEvent({
+      bookingId: params.bookingId,
+      category: params.emailEventCategory || "customer_summary",
+      subject,
+      intendedRecipient: params.email,
+      deliveredTo: target,
+      status: emailResult.ok ? "sent" : "failed",
+      error: emailResult.ok ? null : emailResult.error ?? "Email delivery failed",
+      message,
+      googleMeetLink: meetingLink,
+    })
   }
 
-  const date = new Date(`${slot.date}T00:00:00.000Z`)
-  const [hour, min] = slot.time.split(":").map(Number)
-  const demoDateTime = new Date(date)
-  demoDateTime.setHours(hour, min, 0, 0)
-  const demoExpiresAt = new Date(demoDateTime)
-  demoExpiresAt.setMinutes(demoExpiresAt.getMinutes() + 30)
-  const expiresAt = new Date(date)
-  expiresAt.setHours(23, 59, 59, 999)
-  const formExpiresAt = new Date()
-  formExpiresAt.setMinutes(formExpiresAt.getMinutes() + 10)
-  const startDay = new Date(date)
-  startDay.setHours(0, 0, 0, 0)
-  const endDay = new Date(date)
-  endDay.setHours(23, 59, 59, 999)
-
-  const conflict = await Booking.findOne({
-    _id: { $ne: bookingId },
-    date: { $gte: startDay, $lte: endDay },
-    time: slot.time,
-    status: "confirmed",
-  }).lean()
-  if (conflict) return false
-
-  await Booking.updateOne(
-    { _id: bookingId },
-    {
-      $set: {
-        date,
-        time: slot.time,
-        duration: 30,
-        status: "confirmed",
-        expiresAt,
-        formExpiresAt,
-        demoExpiresAt,
-      },
-    },
-  )
-  return true
+  return allDelivered
 }
 
 async function findRescheduleTarget(params: {
@@ -866,7 +814,7 @@ export async function POST(req: Request) {
     const t = (es: string, en: string) => (locale === "en" ? en : es)
     const message = parsed.message.trim()
     const lower = message.toLowerCase()
-    const { wantsBooking, wantsReschedule, wantsCancel } = detectIntents(message)
+    const { wantsBooking, wantsReschedule, wantsCancel } = detectChatIntents(message)
     const webBookingUrl = `${(process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "").replace(/\/+$/, "")}/demo`
     const rawSessionToken = typeof parsed.sessionToken === "string" ? parsed.sessionToken.trim() : ""
     const sessionToken = rawSessionToken.length > 0 ? rawSessionToken : null
@@ -999,6 +947,17 @@ export async function POST(req: Request) {
           "I can help with that. Send me the email used for the booking or the ID of one of the bookings and we'll see which one you want to manage.",
         ),
         state: { intent: "reschedule", step: "await_booking_id", objectionAttempts: 0 },
+      })
+    }
+
+    if (wantsRoiCalculator(message)) {
+      return respond({
+        reply: t(
+          "Claro. Te abro de nuevo la calculadora ROI.",
+          "Sure. I'll reopen the ROI calculator for you.",
+        ),
+        openRoiCalculator: true,
+        state: { ...current, step: "idle" },
       })
     }
 
@@ -1732,8 +1691,13 @@ export async function POST(req: Request) {
             state: { intent: "none", step: "idle" },
           })
         }
-        const ok = await rescheduleBooking(String(targetBooking._id), current.selectedSlot)
-        if (!ok) {
+        const rescheduled = await rescheduleExistingBooking({
+          bookingId: String(targetBooking._id),
+          date: new Date(`${current.selectedSlot.date}T00:00:00.000Z`),
+          time: current.selectedSlot.time,
+          duration: 30,
+        })
+        if (!rescheduled.ok) {
           const slots = await buildSlots(3, locale)
           return respond({
             reply: t(
@@ -1748,17 +1712,22 @@ export async function POST(req: Request) {
             },
           })
         }
+        const nextBooking = rescheduled.booking
         const customerEmail = current.email || null
         const customerPhone = current.phone || null
         let emailDelivered = false
         if (customerEmail && customerPhone) {
           emailDelivered = await sendBookingSummaryEmailFromChat({
-            bookingId: String(targetBooking._id),
-            date: new Date(current.selectedSlot.date),
-            time: current.selectedSlot.time,
-            duration: 30,
+            bookingId: nextBooking.id,
+            date: nextBooking.date,
+            time: nextBooking.time,
+            duration: nextBooking.duration,
             email: customerEmail,
             phone: customerPhone,
+            operatorEmail: nextBooking.operatorEmail ?? null,
+            subject: "Tu demo ha sido reagendada",
+            emailEventCategory: "booking_rescheduled",
+            emailMessage: `Cita reagendada desde la reserva ${rescheduled.previousBookingId}.`,
             sessionToken: sessionToken ?? null,
             roi: activeSession?.roi ?? null,
           })
@@ -1766,20 +1735,20 @@ export async function POST(req: Request) {
         return respond({
           reply: emailDelivered
             ? t(
-                `Listo, tu cita ${String(targetBooking._id)} quedó reagendada para ${current.selectedSlot.label}. Te he enviado el correo actualizado. ¿Necesitas algo más?`,
-                `Done, your booking ${String(targetBooking._id)} was rescheduled to ${current.selectedSlot.label}. I sent your updated confirmation email. Do you need anything else?`,
+                `Listo, tu nueva cita ${nextBooking.id} quedó reagendada para ${current.selectedSlot.label}. Te he enviado el correo actualizado. ¿Necesitas algo más?`,
+                `Done, your new booking ${nextBooking.id} was rescheduled to ${current.selectedSlot.label}. I sent your updated confirmation email. Do you need anything else?`,
               )
             : t(
-                `Listo, tu cita ${String(targetBooking._id)} quedó reagendada para ${current.selectedSlot.label}. ¿Necesitas algo más?`,
-                `Done, your booking ${String(targetBooking._id)} was rescheduled to ${current.selectedSlot.label}. Do you need anything else?`,
+                `Listo, tu nueva cita ${nextBooking.id} quedó reagendada para ${current.selectedSlot.label}. ¿Necesitas algo más?`,
+                `Done, your new booking ${nextBooking.id} was rescheduled to ${current.selectedSlot.label}. Do you need anything else?`,
               ),
           state: { intent: "none", step: "await_more_help", objectionAttempts: 0 },
           booking: {
-            bookingId: String(targetBooking._id),
-            accessToken: String(targetBooking.accessToken),
-            date: current.selectedSlot.date,
-            time: current.selectedSlot.time,
-            duration: 30,
+            bookingId: nextBooking.id,
+            accessToken: nextBooking.accessToken,
+            date: nextBooking.date.toISOString(),
+            time: nextBooking.time,
+            duration: nextBooking.duration,
           },
         })
       }

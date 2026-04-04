@@ -15,6 +15,7 @@ import {
   ensureBookingGoogleMeetLink,
 } from "@/lib/booking-communication"
 import { getSharedMailboxEmail } from "@/lib/admin-mailbox"
+import { recordAdminAudit } from "@/lib/admin-audit"
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 import { callN8nChatWebhook, isN8nChatConfigured } from "@/lib/n8n-integration"
 
@@ -144,6 +145,20 @@ export async function POST(req: Request) {
         email: parsed.email,
         name: parsed.nombre,
         role: "external",
+      },
+    })
+
+    await recordAdminAudit({
+      actorType: "external",
+      actorLabel: parsed.email,
+      action: bookingId ? "RECEIVE_BOOKING_CONTACT_EMAIL" : "RECEIVE_CONTACT_EMAIL",
+      targetType: bookingId ? "booking" : "contact",
+      targetId: bookingId || createdContact._id.toString(),
+      metadata: {
+        from: parsed.email,
+        name: parsed.nombre,
+        clinic: parsed.clinica,
+        subject: bookingForEmail ? "Nuevo lead con reserva demo" : "Nuevo lead de contacto",
       },
     })
 
