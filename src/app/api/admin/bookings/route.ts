@@ -19,6 +19,7 @@ import { deleteBookingFromGoogleCalendar, syncBookingToGoogleCalendar } from "@/
 import { rescheduleExistingBooking } from "@/lib/booking-reschedule"
 import { clearRoiForBookingContext } from "@/lib/roi-cleanup"
 import { expireOverdueBookings } from "@/lib/booking-expiration"
+import { buildBookingDateTime, formatBookingDate, parseDateKey, DATE_KEY_REGEX } from "@/lib/booking-date"
 import { isBookableDemoTimeSlot, isValidDemoTimeSlot } from "@/lib/demo-schedule"
 import {
   createDemoBooking,
@@ -39,7 +40,7 @@ const updateBookingSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("reschedule"),
     id: z.string().min(1),
-    date: z.string().datetime(),
+    date: z.string().regex(DATE_KEY_REGEX),
     time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
     duration: z.number().int().min(15).max(120),
   }),
@@ -49,7 +50,7 @@ const updateBookingSchema = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("create"),
-    date: z.string().datetime(),
+    date: z.string().regex(DATE_KEY_REGEX),
     time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
     duration: z.number().int().min(15).max(120),
     email: z.string().email(),
@@ -207,9 +208,8 @@ export async function POST(req: Request) {
         const operatorEmail = auth.data.admin.email.trim().toLowerCase()
         const deliveryTargets = buildCreateBookingDeliveryTargets(customerEmail, operatorEmail)
         const meetingLink = buildGoogleMeetLink(`demo-${crypto.randomUUID()}`)
-        const start = new Date(parsed.date)
-        const [hour, min] = parsed.time.split(":").map(Number)
-        start.setHours(hour, min, 0, 0)
+        const date = parseDateKey(parsed.date)
+        const start = buildBookingDateTime(date, parsed.time)
         const dateLabel = start.toLocaleDateString("es-ES", {
           weekday: "long",
           day: "numeric",
@@ -314,24 +314,22 @@ export async function POST(req: Request) {
       }
 
       const customerEmail = parsed.email.trim().toLowerCase()
-      const date = new Date(parsed.date)
-      const [hour, min] = parsed.time.split(":").map(Number)
-      const start = new Date(date)
-      start.setHours(hour, min, 0, 0)
+      const date = parseDateKey(parsed.date)
+      const start = buildBookingDateTime(date, parsed.time)
       const end = new Date(start)
       end.setMinutes(end.getMinutes() + parsed.duration)
       const demoExpiresAt = new Date(end)
       const expiresAt = new Date(date)
-      expiresAt.setHours(23, 59, 59, 999)
+      expiresAt.setUTCHours(23, 59, 59, 999)
       const formExpiresAt = new Date()
       formExpiresAt.setMinutes(formExpiresAt.getMinutes() + 10)
       const supportEmail = getSharedMailboxEmail()
       const brandName = "Clinvetia"
 
       const startDay = new Date(date)
-      startDay.setHours(0, 0, 0, 0)
+      startDay.setUTCHours(0, 0, 0, 0)
       const endDay = new Date(date)
-      endDay.setHours(23, 59, 59, 999)
+      endDay.setUTCHours(23, 59, 59, 999)
 
       const slotConflict = await Booking.findOne({
         date: { $gte: startDay, $lte: endDay },
@@ -409,7 +407,7 @@ export async function POST(req: Request) {
         roi: null,
       })
 
-      const dateLabel = start.toLocaleDateString("es-ES", {
+      const dateLabel = formatBookingDate(date, "es-ES", {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -442,6 +440,7 @@ export async function POST(req: Request) {
               description: `Demo personalizada con Clinvetia. Enlace Google Meet: ${meetingLink}`,
               location: meetingLink,
               url: meetingLink,
+              timeZone: "Europe/Madrid",
               organizerEmail: supportEmail,
               attendeeEmail: customerEmail,
             })
@@ -529,10 +528,10 @@ export async function POST(req: Request) {
         if (contact?.email) {
           const [hour, min] = booking.time.split(":").map(Number)
           const start = new Date(booking.date)
-          start.setHours(hour, min, 0, 0)
+          start.setUTCHours(hour, min, 0, 0)
           const end = new Date(start)
           end.setMinutes(end.getMinutes() + booking.duration)
-          const dateLabel = start.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+          const dateLabel = formatBookingDate(booking.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
           const subject = "Tu demo ha sido cancelada"
           const htmlContent = leadSummaryEmail({
             brandName,
@@ -562,6 +561,7 @@ export async function POST(req: Request) {
                   description: `Demo personalizada con Clinvetia. Enlace Google Meet: ${meetingLink}`,
                   location: meetingLink,
                   url: meetingLink,
+                  timeZone: "Europe/Madrid",
                   organizerEmail: supportEmail,
                   attendeeEmail: contact.email,
                 })
@@ -638,10 +638,10 @@ export async function POST(req: Request) {
       if (contact?.email && (parsed.status === "confirmed" || parsed.status === "cancelled")) {
         const [hour, min] = booking.time.split(":").map(Number)
         const start = new Date(booking.date)
-        start.setHours(hour, min, 0, 0)
+        start.setUTCHours(hour, min, 0, 0)
         const end = new Date(start)
         end.setMinutes(end.getMinutes() + booking.duration)
-        const dateLabel = start.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+        const dateLabel = formatBookingDate(booking.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
         const timeLabel = booking.time
 
         const subject =
@@ -678,6 +678,7 @@ export async function POST(req: Request) {
                       description: `Demo personalizada con Clinvetia. Enlace Google Meet: ${meetingLink}`,
                       location: meetingLink,
                       url: meetingLink,
+                      timeZone: "Europe/Madrid",
                       organizerEmail: supportEmail,
                       attendeeEmail: contact.email,
                     })
@@ -723,17 +724,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Slot unavailable" }, { status: 409 })
       }
 
-      const date = new Date(parsed.date)
+      const date = parseDateKey(parsed.date)
       const [hour, min] = parsed.time.split(":").map(Number)
-      const demoDateTime = new Date(date)
-      demoDateTime.setHours(hour, min, 0, 0)
+      const demoDateTime = buildBookingDateTime(date, parsed.time)
       const demoExpiresAt = new Date(demoDateTime)
       demoExpiresAt.setMinutes(demoExpiresAt.getMinutes() + parsed.duration)
 
       const startDay = new Date(date)
-      startDay.setHours(0, 0, 0, 0)
+      startDay.setUTCHours(0, 0, 0, 0)
       const endDay = new Date(date)
-      endDay.setHours(23, 59, 59, 999)
+      endDay.setUTCHours(23, 59, 59, 999)
 
       const slotConflict = await Booking.findOne({
         _id: { $ne: booking._id },
@@ -797,10 +797,10 @@ export async function POST(req: Request) {
 
       if (contact?.email) {
         const start = new Date(nextBooking.date)
-        start.setHours(hour, min, 0, 0)
+        start.setUTCHours(hour, min, 0, 0)
         const end = new Date(start)
         end.setMinutes(end.getMinutes() + parsed.duration)
-        const dateLabel = start.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+        const dateLabel = formatBookingDate(nextBooking.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
         const timeLabel = nextBooking.time
 
         const ics = buildICS({
@@ -811,6 +811,7 @@ export async function POST(req: Request) {
           description: `Demo personalizada con Clinvetia - cita reagendada desde ${bookingId}. Enlace Google Meet: ${nextMeetingLink}`,
           location: nextMeetingLink,
           url: nextMeetingLink,
+          timeZone: "Europe/Madrid",
           organizerEmail: supportEmail,
           attendeeEmail: contact.email,
         })

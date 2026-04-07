@@ -12,6 +12,7 @@ import { appendBookingEmailEvent } from "@/lib/booking-communication"
 import { leadSummaryEmail } from "@/lib/emails"
 import { buildICS } from "@/lib/ics"
 import { rescheduleExistingBooking } from "@/lib/booking-reschedule"
+import { formatBookingDate } from "@/lib/booking-date"
 
 interface BookingLeanView {
   _id: { toString(): string }
@@ -404,7 +405,7 @@ export async function PATCH(req: Request) {
     const nextBooking = rescheduled.booking
     const [hour, min] = parsed.time.split(":").map(Number)
     const start = new Date(nextBooking.date)
-    start.setHours(hour, min, 0, 0)
+    start.setUTCHours(hour, min, 0, 0)
     const end = new Date(start)
     end.setMinutes(end.getMinutes() + nextBooking.duration)
 
@@ -416,7 +417,7 @@ export async function PATCH(req: Request) {
 
     if (contact?.email) {
       const supportEmail = process.env.BREVO_REPLY_TO || "info@clinvetia.com"
-      const dateLabel = start.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+      const dateLabel = formatBookingDate(nextBooking.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
       const subject = "Tu demo ha sido reagendada"
       const htmlContent = leadSummaryEmail({
         brandName: "Clinvetia",
@@ -442,6 +443,7 @@ export async function PATCH(req: Request) {
         description: `Demo personalizada con Clinvetia - cita reagendada desde ${rescheduled.previousBookingId}. Enlace Google Meet: ${nextBooking.googleMeetLink}`,
         location: nextBooking.googleMeetLink,
         url: nextBooking.googleMeetLink,
+        timeZone: "Europe/Madrid",
         organizerEmail: supportEmail,
         attendeeEmail: contact.email,
       })

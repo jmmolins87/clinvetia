@@ -32,6 +32,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { formatBookingDate } from "@/lib/booking-date"
 import {
   Dialog,
   DialogContent,
@@ -322,7 +323,7 @@ function RecentBookingCard({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="break-words text-sm font-medium">
-            {new Date(booking.date).toLocaleDateString("es-ES")} · {booking.time}
+            {formatBookingDate(booking.date, "es-ES")} · {booking.time}
           </div>
           <div className="break-all text-xs text-muted-foreground">{booking.duration} min · ID {booking.id.slice(-6)}</div>
           {rescheduleTrace(booking) ? (
@@ -346,7 +347,7 @@ function RecentBookingCard({
           <div className="text-[11px] uppercase tracking-wider">Resumen de demo</div>
           <div className="mt-1">
             <div className="break-words">
-              {new Date(booking.date).toLocaleDateString("es-ES")} · {booking.time} · {booking.duration} min
+              {formatBookingDate(booking.date, "es-ES")} · {booking.time} · {booking.duration} min
             </div>
             <a
               href={meetLink}
@@ -735,7 +736,7 @@ export default function AdminDashboardPage() {
             <DialogTitle>Conversación con Moka</DialogTitle>
             <DialogDescription>
               {conversationBooking
-                ? `${new Date(conversationBooking.date).toLocaleDateString("es-ES")} · ${conversationBooking.time} · ${conversationBooking.nombre || conversationBooking.email || conversationBooking.id}`
+                ? `${formatBookingDate(conversationBooking.date, "es-ES")} · ${conversationBooking.time} · ${conversationBooking.nombre || conversationBooking.email || conversationBooking.id}`
                 : "Detalle de la conversación asociada a la reserva."}
             </DialogDescription>
           </DialogHeader>

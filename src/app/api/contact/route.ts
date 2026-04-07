@@ -18,6 +18,7 @@ import { getSharedMailboxEmail } from "@/lib/admin-mailbox"
 import { recordAdminAudit } from "@/lib/admin-audit"
 import { verifyRecaptchaToken } from "@/lib/recaptcha-server"
 import { callN8nChatWebhook, isN8nChatConfigured } from "@/lib/n8n-integration"
+import { buildBookingDateTime, formatBookingDate } from "@/lib/booking-date"
 
 interface SessionLeanView {
   _id: { toString(): string }
@@ -226,13 +227,11 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Meeting link unavailable" }, { status: 500 })
       }
       bookingMeetingLink = meetingLink
-      const [hour, min] = bookingForEmail.time.split(":").map(Number)
-      const start = new Date(bookingForEmail.date)
-      start.setHours(hour, min, 0, 0)
+      const start = buildBookingDateTime(bookingForEmail.date, bookingForEmail.time)
       const end = new Date(start)
       end.setMinutes(end.getMinutes() + bookingForEmail.duration)
 
-      const dateLabel = start.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+      const dateLabel = formatBookingDate(bookingForEmail.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
       const timeLabel = bookingForEmail.time
       bookingForInternal = {
         dateLabel,
@@ -248,6 +247,7 @@ export async function POST(req: Request) {
         description: `Demo personalizada con Clinvetia. Enlace Google Meet: ${meetingLink}`,
         location: meetingLink,
         url: meetingLink,
+        timeZone: "Europe/Madrid",
         organizerEmail: supportEmail,
         attendeeEmail: parsed.email,
       })

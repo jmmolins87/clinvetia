@@ -26,6 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast as sonnerToast } from "@/components/ui/sonner"
 import { Spinner } from "@/components/ui/spinner"
 import { useToast } from "@/components/ui/use-toast"
+import { formatBookingDate, formatLocalDateKey } from "@/lib/booking-date"
 import { cn } from "@/lib/utils"
 
 type CalendarBooking = {
@@ -52,18 +53,16 @@ type CalendarActionType = "confirm" | "cancel" | "reschedule" | "meet" | "delete
 type SummaryFilter = "month" | "confirmed" | "pending" | "cancelled" | "rescheduled"
 
 function dateKey(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
+  return formatLocalDateKey(date)
 }
 
 function bookingDateKey(date: string) {
   return date.slice(0, 10)
 }
 
-function isSameMonthDate(date: Date, month: Date) {
-  return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth()
+function isSameMonthBooking(date: string, month: Date) {
+  const [year, monthIndex] = bookingDateKey(date).split("-").map(Number)
+  return year === month.getFullYear() && monthIndex === month.getMonth() + 1
 }
 
 function isPastCalendarDate(date: Date) {
@@ -308,7 +307,7 @@ export default function AdminCalendarPage() {
     return selectedDayBookings.slice(start, start + dayPageSize)
   }, [safeDayPage, selectedDayBookings])
   const monthBookings = useMemo(() => {
-    return sortBookingsByDateTime(bookings.filter((booking) => isSameMonthDate(new Date(booking.date), calendarMonth)))
+    return sortBookingsByDateTime(bookings.filter((booking) => isSameMonthBooking(booking.date, calendarMonth)))
   }, [bookings, calendarMonth])
   const monthSummary = useMemo(() => {
     return monthBookings.reduce(
@@ -340,7 +339,7 @@ export default function AdminCalendarPage() {
         booking.nombre,
         booking.clinica,
         booking.email,
-        new Date(booking.date).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }),
+        formatBookingDate(booking.date, "es-ES", { day: "numeric", month: "long", year: "numeric" }),
       ]
 
       return parts.some((part) => part?.toLowerCase().includes(query))
@@ -517,7 +516,7 @@ export default function AdminCalendarPage() {
   }, [dayPageLoading])
 
   const loadAvailability = useCallback(async (date: Date) => {
-    const res = await fetch(`/api/availability?date=${encodeURIComponent(date.toISOString().slice(0, 10))}`, { cache: "no-store" })
+    const res = await fetch(`/api/availability?date=${encodeURIComponent(formatLocalDateKey(date))}`, { cache: "no-store" })
     if (!res.ok) {
       const payload = await res.json().catch(() => null)
       throw new Error(payload?.error || "No se pudieron cargar los horarios")
@@ -715,7 +714,7 @@ export default function AdminCalendarPage() {
         body: JSON.stringify({
           action: "reschedule",
           id: rescheduleBooking.id,
-          date: payload.date.toISOString(),
+          date: formatLocalDateKey(payload.date),
           time: payload.time,
           duration: 30,
         }),
@@ -760,7 +759,7 @@ export default function AdminCalendarPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "create",
-          date: payload.date.toISOString(),
+          date: formatLocalDateKey(payload.date),
           time: payload.time,
           duration: payload.duration,
           email,
@@ -984,7 +983,7 @@ export default function AdminCalendarPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="text-sm font-semibold">
-                            {new Date(booking.date).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} · {booking.time} · {booking.duration} min
+                            {formatBookingDate(booking.date, "es-ES", { day: "numeric", month: "long" })} · {booking.time} · {booking.duration} min
                           </div>
                           <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
                           {rescheduleTrace(booking) ? (
@@ -1019,7 +1018,7 @@ export default function AdminCalendarPage() {
                   <div className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
                     <div>
                       <div className="text-sm font-semibold">
-                        {new Date(summaryDetailBooking.date).toLocaleDateString("es-ES", {
+                        {formatBookingDate(summaryDetailBooking.date, "es-ES", {
                           weekday: "long",
                           day: "numeric",
                           month: "long",
@@ -1339,7 +1338,7 @@ export default function AdminCalendarPage() {
               <div className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
                 <div>
                   <div className="text-sm font-semibold">
-                    {new Date(activeBooking.date).toLocaleDateString("es-ES", {
+                    {formatBookingDate(activeBooking.date, "es-ES", {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
@@ -1934,7 +1933,7 @@ export default function AdminCalendarPage() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="text-sm font-medium">
-                                {new Date(booking.date).toLocaleDateString("es-ES", { day: "numeric", month: "short" })} · {booking.time}
+                                {formatBookingDate(booking.date, "es-ES", { day: "numeric", month: "short" })} · {booking.time}
                               </div>
                               <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
                               <div className="mt-1 text-xs text-muted-foreground">

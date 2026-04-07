@@ -23,6 +23,7 @@ import {
   type N8nChatWebhookPayload,
 } from "@/lib/chat-contract"
 import { callN8nChatWebhook, isN8nChatConfigured } from "@/lib/n8n-integration"
+import { buildBookingDateTime, formatBookingDate } from "@/lib/booking-date"
 
 const schema = chatAssistantRequestSchema
 
@@ -620,11 +621,9 @@ async function sendBookingSummaryEmailFromChat(params: {
   const supportEmail = process.env.BREVO_REPLY_TO || "info@clinvetia.com"
   const brandName = "Clinvetia"
   const name = buildLeadNameFromEmail(params.email)
-  const dateLabel = params.date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
+  const dateLabel = formatBookingDate(params.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
   const meetingLink = buildGoogleMeetLink(params.bookingId)
-  const [hour, min] = params.time.split(":").map(Number)
-  const start = new Date(params.date)
-  start.setHours(hour, min, 0, 0)
+  const start = buildBookingDateTime(params.date, params.time)
   const end = new Date(start)
   end.setMinutes(end.getMinutes() + params.duration)
   const ics = buildICS({
@@ -635,6 +634,7 @@ async function sendBookingSummaryEmailFromChat(params: {
     description: `Demo personalizada con Clinvetia. Enlace Google Meet: ${meetingLink}`,
     location: meetingLink,
     url: meetingLink,
+    timeZone: "Europe/Madrid",
     organizerEmail: supportEmail,
     attendeeEmail: params.email,
   })

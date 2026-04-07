@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { BookingWizard, type BookingWizardSubmitPayload } from "@/components/scheduling/BookingWizard"
+import { formatBookingDate, formatLocalDateKey } from "@/lib/booking-date"
 import { useDynamicPageSize } from "@/lib/use-dynamic-page-size"
 
 type BookingRow = {
@@ -180,7 +181,7 @@ export default function AdminBookingsPage() {
   }
 
   const openCancelDialog = (booking: BookingRow) => {
-    const formattedDate = new Date(booking.date).toLocaleDateString("es-ES")
+    const formattedDate = formatBookingDate(booking.date, "es-ES")
     const customerName = booking.nombre?.trim() || "equipo"
     setCancelDialogBooking(booking)
     setCancelEmailMailbox(mode === "demo" ? "self" : "shared")
@@ -510,7 +511,7 @@ export default function AdminBookingsPage() {
         body: JSON.stringify({
           action: "reschedule",
           id: rescheduleBooking.id,
-          date: payload.date.toISOString(),
+          date: formatLocalDateKey(payload.date),
           time: payload.time,
           duration: payload.duration,
         }),
@@ -556,7 +557,7 @@ export default function AdminBookingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "create",
-          date: payload.date.toISOString(),
+          date: formatLocalDateKey(payload.date),
           time: payload.time,
           duration: payload.duration,
           email,
@@ -596,10 +597,10 @@ export default function AdminBookingsPage() {
             <DialogDescription>
               {deleteBookingTarget
                 ? ["pending", "confirmed"].includes(deleteBookingTarget.status)
-                  ? `La cita del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time} sigue activa. Si continúas, se cancelará para notificar al cliente y después se eliminará del sistema.`
+                  ? `La cita del ${formatBookingDate(deleteBookingTarget.date, "es-ES")} a las ${deleteBookingTarget.time} sigue activa. Si continúas, se cancelará para notificar al cliente y después se eliminará del sistema.`
                   : `Vas a eliminar la cita ${
                       deleteBookingTarget.status === "expired" ? "expirada" : "cancelada"
-                    } del ${new Date(deleteBookingTarget.date).toLocaleDateString("es-ES")} a las ${deleteBookingTarget.time}.`
+                    } del ${formatBookingDate(deleteBookingTarget.date, "es-ES")} a las ${deleteBookingTarget.time}.`
                 : "Confirma la eliminación de la cita."}
             </DialogDescription>
           </DialogHeader>
@@ -629,7 +630,7 @@ export default function AdminBookingsPage() {
             <DialogTitle>Conversación con Moka</DialogTitle>
             <DialogDescription>
               {conversationBooking
-                ? `${new Date(conversationBooking.date).toLocaleDateString("es-ES")} · ${conversationBooking.time} · ${conversationBooking.nombre || conversationBooking.email || conversationBooking.id}`
+                ? `${formatBookingDate(conversationBooking.date, "es-ES")} · ${conversationBooking.time} · ${conversationBooking.nombre || conversationBooking.email || conversationBooking.id}`
                 : "Detalle de la conversación asociada a la reserva."}
             </DialogDescription>
           </DialogHeader>
@@ -704,7 +705,7 @@ export default function AdminBookingsPage() {
                   new Date(rescheduleBooking.date).toDateString() === date.toDateString()
               }}
               loadAvailability={async (date) => {
-                const res = await fetch(`/api/availability?date=${encodeURIComponent(date.toISOString().slice(0, 10))}`, { cache: "no-store" })
+                const res = await fetch(`/api/availability?date=${encodeURIComponent(formatLocalDateKey(date))}`, { cache: "no-store" })
                 if (!res.ok) {
                   const payload = await res.json().catch(() => null)
                   throw new Error(payload?.error || "No se pudieron cargar los horarios")
@@ -771,7 +772,7 @@ export default function AdminBookingsPage() {
             canSubmit={Boolean(createEmail.trim())}
             initialStep="date"
             loadAvailability={async (date) => {
-              const res = await fetch(`/api/availability?date=${encodeURIComponent(date.toISOString().slice(0, 10))}`, { cache: "no-store" })
+              const res = await fetch(`/api/availability?date=${encodeURIComponent(formatLocalDateKey(date))}`, { cache: "no-store" })
               if (!res.ok) {
                 const responsePayload = await res.json().catch(() => null)
                 throw new Error(responsePayload?.error || "No se pudieron cargar los horarios")
@@ -1017,7 +1018,7 @@ export default function AdminBookingsPage() {
                   <div className="h-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 space-y-2">
                     <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Cita</div>
                     <div className="text-sm font-semibold">
-                      {new Date(booking.date).toLocaleDateString("es-ES")} · {booking.time}
+                      {formatBookingDate(booking.date, "es-ES")} · {booking.time}
                     </div>
                     <div className="text-xs text-muted-foreground">{booking.duration} min</div>
                     <div className="text-xs text-muted-foreground/80 break-all">ID {booking.id}</div>

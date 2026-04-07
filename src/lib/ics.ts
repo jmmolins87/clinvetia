@@ -15,6 +15,18 @@ function toICSDate(date: Date) {
   )
 }
 
+function toICSLocalDate(date: Date) {
+  return (
+    date.getUTCFullYear().toString() +
+    pad(date.getUTCMonth() + 1) +
+    pad(date.getUTCDate()) +
+    "T" +
+    pad(date.getUTCHours()) +
+    pad(date.getUTCMinutes()) +
+    pad(date.getUTCSeconds())
+  )
+}
+
 export function buildICS(params: {
   uid: string
   start: Date
@@ -23,12 +35,13 @@ export function buildICS(params: {
   description: string
   location: string
   url?: string
+  timeZone?: string
   organizerEmail: string
   attendeeEmail: string
 }) {
   const dtStamp = toICSDate(new Date())
-  const dtStart = toICSDate(params.start)
-  const dtEnd = toICSDate(params.end)
+  const dtStart = params.timeZone ? toICSLocalDate(params.start) : toICSDate(params.start)
+  const dtEnd = params.timeZone ? toICSLocalDate(params.end) : toICSDate(params.end)
 
   return [
     "BEGIN:VCALENDAR",
@@ -39,8 +52,8 @@ export function buildICS(params: {
     "BEGIN:VEVENT",
     `UID:${params.uid}`,
     `DTSTAMP:${dtStamp}`,
-    `DTSTART:${dtStart}`,
-    `DTEND:${dtEnd}`,
+    params.timeZone ? `DTSTART;TZID=${params.timeZone}:${dtStart}` : `DTSTART:${dtStart}`,
+    params.timeZone ? `DTEND;TZID=${params.timeZone}:${dtEnd}` : `DTEND:${dtEnd}`,
     `SUMMARY:${params.summary}`,
     `DESCRIPTION:${params.description}`,
     `LOCATION:${params.location}`,
