@@ -212,8 +212,7 @@ export default function AdminCalendarPage() {
   const [summarySearch, setSummarySearch] = useState("")
   const [summaryModalLoading, setSummaryModalLoading] = useState<"search" | "prev" | "next" | null>(null)
   const [summaryDetailBooking, setSummaryDetailBooking] = useState<CalendarBooking | null>(null)
-  const [mobileDayAgendaOpen, setMobileDayAgendaOpen] = useState(false)
-  const [isMobileViewport, setIsMobileViewport] = useState(false)
+  const [dayAgendaOpen, setDayAgendaOpen] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -250,16 +249,6 @@ export default function AdminCalendarPage() {
   useEffect(() => {
     load()
   }, [load])
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)")
-    const syncViewport = () => setIsMobileViewport(mediaQuery.matches)
-    syncViewport()
-    mediaQuery.addEventListener("change", syncViewport)
-    return () => {
-      mediaQuery.removeEventListener("change", syncViewport)
-    }
-  }, [])
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -587,10 +576,10 @@ export default function AdminCalendarPage() {
     setCreateOpen(true)
   }, [canOperate])
 
-  const openMobileDayAgenda = useCallback((date: Date) => {
+  const openDayAgenda = useCallback((date: Date) => {
     setSelectedDate(date)
     setCalendarMonth(date)
-    setMobileDayAgendaOpen(true)
+    setDayAgendaOpen(true)
   }, [])
 
   const DayButton = useCallback(({ day, modifiers, className, ...props }: DayButtonProps) => {
@@ -626,12 +615,8 @@ export default function AdminCalendarPage() {
         )}
         onClick={(event) => {
           props.onClick?.(event)
-          if (event.defaultPrevented || modifiers.outside || blockedEmptyPastDay || !canOperate) return
-          if (isMobileViewport) {
-            openMobileDayAgenda(day.date)
-            return
-          }
-          openCreateDialog(day.date)
+          if (event.defaultPrevented || modifiers.outside || blockedEmptyPastDay) return
+          openDayAgenda(day.date)
         }}
       >
         <span className="flex h-full w-full flex-col items-center justify-between rounded-[inherit] px-1.5 py-1.5">
@@ -653,7 +638,7 @@ export default function AdminCalendarPage() {
         </span>
       </button>
     )
-  }, [bookingStatusCountsByDate, canOperate, isMobileViewport, openCreateDialog, openMobileDayAgenda])
+  }, [bookingStatusCountsByDate, openDayAgenda])
 
   const closeBookingDetailLayers = useCallback(() => {
     setConfirmAction(null)
@@ -987,7 +972,7 @@ export default function AdminCalendarPage() {
                           </div>
                           <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
                           {rescheduleTrace(booking) ? (
-                            <div className="mt-1 text-xs text-accent">{rescheduleTrace(booking)}</div>
+                            <div className="mt-1 text-xs text-foreground">{rescheduleTrace(booking)}</div>
                           ) : null}
                           <div className="mt-1 text-sm text-muted-foreground">
                             {booking.nombre || booking.clinica || booking.email || "Cita sin contacto asignado"}
@@ -1030,7 +1015,7 @@ export default function AdminCalendarPage() {
                         ID {summaryDetailBooking.id}
                       </div>
                       {rescheduleTrace(summaryDetailBooking) ? (
-                        <div className="mt-1 text-xs text-accent">{rescheduleTrace(summaryDetailBooking)}</div>
+                        <div className="mt-1 text-xs text-foreground">{rescheduleTrace(summaryDetailBooking)}</div>
                       ) : null}
                     </div>
                     <Badge variant={statusBadgeVariant(summaryDetailBooking.status)}>
@@ -1446,11 +1431,17 @@ export default function AdminCalendarPage() {
                         <Icon
                           icon={action.icon}
                           size="sm"
-                          variant="default"
+                          variant={
+                            action.variant === "default"
+                              ? "primary"
+                              : action.variant === "accent"
+                                ? "accent"
+                                : "destructive"
+                          }
                           className={cn(
-                            action.variant === "default" && "text-primary drop-shadow-[0_0_8px_rgba(var(--primary-rgb),0.45)]",
-                            action.variant === "accent" && "text-accent drop-shadow-[0_0_10px_rgba(var(--accent-rgb),0.6)]",
-                            action.variant === "destructive" && "text-destructive drop-shadow-[0_0_8px_rgba(var(--destructive-rgb),0.45)]",
+                            action.variant === "default" && "text-primary",
+                            action.variant === "accent" && "text-accent",
+                            action.variant === "destructive" && "text-destructive",
                           )}
                         />
                       )}
@@ -1467,7 +1458,7 @@ export default function AdminCalendarPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={mobileDayAgendaOpen} onOpenChange={setMobileDayAgendaOpen}>
+      <Dialog open={dayAgendaOpen} onOpenChange={setDayAgendaOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Agenda del día</DialogTitle>
@@ -1483,12 +1474,12 @@ export default function AdminCalendarPage() {
                 <span>Cargando agenda...</span>
               </div>
             )}
-            {!loading && canOperate && (
+            {!loading && canOperate && selectedDayBookings.length === 0 && (
               <button
                 type="button"
                 disabled={selectedDateIsPast || selectedDateBookingClosed}
                 onClick={() => {
-                  setMobileDayAgendaOpen(false)
+                  setDayAgendaOpen(false)
                   openCreateDialog(selectedDate)
                 }}
                 className={cn(
@@ -1534,7 +1525,7 @@ export default function AdminCalendarPage() {
                 key={booking.id}
                 type="button"
                 onClick={() => {
-                  setMobileDayAgendaOpen(false)
+                  setDayAgendaOpen(false)
                   setActiveBooking(booking)
                 }}
                 className={bookingCardClass(booking.status)}
@@ -1544,7 +1535,7 @@ export default function AdminCalendarPage() {
                     <div className="text-sm font-semibold">{booking.time} · {booking.duration} min</div>
                     <div className="mt-1 text-xs text-muted-foreground">ID {booking.id}</div>
                     {rescheduleTrace(booking) ? (
-                      <div className="mt-1 text-xs text-accent">{rescheduleTrace(booking)}</div>
+                      <div className="mt-1 text-xs text-foreground">{rescheduleTrace(booking)}</div>
                     ) : null}
                     <div className="mt-1 text-sm text-muted-foreground">
                       {booking.nombre || booking.clinica || booking.email || "Cita sin contacto asignado"}

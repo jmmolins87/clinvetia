@@ -8,7 +8,7 @@ import { Contact } from "@/models/Contact"
 import { sendBrevoEmail } from "@/lib/brevo"
 import { leadSummaryEmail } from "@/lib/emails"
 import { buildICS } from "@/lib/ics"
-import { appendBookingEmailEvent, buildGoogleMeetLink } from "@/lib/booking-communication"
+import { appendBookingEmailEvent, ensureBookingGoogleMeetLink } from "@/lib/booking-communication"
 import { rescheduleExistingBooking } from "@/lib/booking-reschedule"
 import { clearRoiForBookingContext } from "@/lib/roi-cleanup"
 import { DEMO_BOOKABLE_TIME_SLOTS } from "@/lib/demo-schedule"
@@ -23,7 +23,7 @@ import {
   type N8nChatWebhookPayload,
 } from "@/lib/chat-contract"
 import { callN8nChatWebhook, isN8nChatConfigured } from "@/lib/n8n-integration"
-import { buildBookingDateTime, formatBookingDate } from "@/lib/booking-date"
+import { buildBookingRange, formatBookingDate } from "@/lib/booking-date"
 
 const schema = chatAssistantRequestSchema
 
@@ -622,10 +622,8 @@ async function sendBookingSummaryEmailFromChat(params: {
   const brandName = "Clinvetia"
   const name = buildLeadNameFromEmail(params.email)
   const dateLabel = formatBookingDate(params.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
-  const meetingLink = buildGoogleMeetLink(params.bookingId)
-  const start = buildBookingDateTime(params.date, params.time)
-  const end = new Date(start)
-  end.setMinutes(end.getMinutes() + params.duration)
+  const meetingLink = await ensureBookingGoogleMeetLink(params.bookingId)
+  const { start, end } = buildBookingRange(params.date, params.time, params.duration)
   const ics = buildICS({
     uid: params.bookingId,
     start,

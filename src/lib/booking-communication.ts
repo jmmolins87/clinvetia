@@ -7,6 +7,16 @@ export function buildGoogleMeetLink(bookingId: string) {
   return `https://meet.google.com/new#booking-${bookingId}`
 }
 
+export function buildInternalBookingUrl(bookingId: string, accessToken?: string | null) {
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "").replace(/\/+$/, "")
+  const params = new URLSearchParams({ booking_id: bookingId })
+  if (accessToken) {
+    params.set("booking_token", accessToken)
+  }
+  const pathname = `/contacto?${params.toString()}`
+  return appUrl ? `${appUrl}${pathname}` : pathname
+}
+
 export async function ensureBookingGoogleMeetLink(bookingId: string) {
   if (!Types.ObjectId.isValid(bookingId)) {
     return buildGoogleMeetLink(bookingId)

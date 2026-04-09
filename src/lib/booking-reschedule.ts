@@ -1,6 +1,7 @@
 import { Booking } from "@/models/Booking"
 import { Contact } from "@/models/Contact"
 import { buildGoogleMeetLink } from "@/lib/booking-communication"
+import { buildBookingDateTime, endOfUtcDay, startOfUtcDay } from "@/lib/booking-date"
 
 type RescheduleSourceContact = {
   nombre: string
@@ -33,6 +34,7 @@ type RescheduleResult =
         formExpiresAt: Date
         demoExpiresAt: Date
         googleMeetLink: string
+        googleCalendarHtmlLink?: string | null
         operatorEmail?: string | null
         rescheduledFromBookingId: string
       }
@@ -73,23 +75,17 @@ export async function rescheduleExistingBooking(params: {
     return { ok: false, reason: "booking_not_found" }
   }
 
-  const [hour, min] = params.time.split(":").map(Number)
-  const demoDateTime = new Date(params.date)
-  demoDateTime.setHours(hour, min, 0, 0)
-
+  const demoDateTime = buildBookingDateTime(params.date, params.time)
   const demoExpiresAt = new Date(demoDateTime)
-  demoExpiresAt.setMinutes(demoExpiresAt.getMinutes() + params.duration)
+  demoExpiresAt.setUTCMinutes(demoExpiresAt.getUTCMinutes() + params.duration)
 
-  const expiresAt = new Date(params.date)
-  expiresAt.setHours(23, 59, 59, 999)
+  const expiresAt = endOfUtcDay(params.date)
 
   const formExpiresAt = new Date()
   formExpiresAt.setMinutes(formExpiresAt.getMinutes() + 10)
 
-  const startDay = new Date(params.date)
-  startDay.setHours(0, 0, 0, 0)
-  const endDay = new Date(params.date)
-  endDay.setHours(23, 59, 59, 999)
+  const startDay = startOfUtcDay(params.date)
+  const endDay = endOfUtcDay(params.date)
 
   const slotConflict = await Booking.findOne({
     _id: { $ne: originalBooking._id },
@@ -168,6 +164,7 @@ export async function rescheduleExistingBooking(params: {
       formExpiresAt: nextBooking.formExpiresAt,
       demoExpiresAt: nextBooking.demoExpiresAt,
       googleMeetLink: nextBooking.googleMeetLink || buildGoogleMeetLink(String(nextBooking._id)),
+      googleCalendarHtmlLink: nextBooking.googleCalendarHtmlLink ?? null,
       operatorEmail: nextBooking.operatorEmail ?? null,
       rescheduledFromBookingId: String(originalBooking._id),
     },

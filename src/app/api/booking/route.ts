@@ -12,7 +12,13 @@ import { appendBookingEmailEvent } from "@/lib/booking-communication"
 import { leadSummaryEmail } from "@/lib/emails"
 import { buildICS } from "@/lib/ics"
 import { rescheduleExistingBooking } from "@/lib/booking-reschedule"
-import { formatBookingDate } from "@/lib/booking-date"
+import {
+  buildBookingDateTime,
+  buildBookingRange,
+  endOfUtcDay,
+  formatBookingDate,
+  startOfUtcDay,
+} from "@/lib/booking-date"
 
 interface BookingLeanView {
   _id: { toString(): string }
@@ -154,24 +160,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 })
     }
 
-    const [hour, min] = parsed.time.split(":").map(Number)
-    const demoDateTime = new Date(date)
-    demoDateTime.setHours(hour, min, 0, 0)
-
+    const demoDateTime = buildBookingDateTime(date, parsed.time)
     const demoExpiresAt = new Date(demoDateTime)
-    demoExpiresAt.setMinutes(demoExpiresAt.getMinutes() + parsed.duration)
-
-    const expiresAt = new Date(date)
-    expiresAt.setHours(23, 59, 59, 999)
+    demoExpiresAt.setUTCMinutes(demoExpiresAt.getUTCMinutes() + parsed.duration)
+    const expiresAt = endOfUtcDay(date)
 
     const formExpiresAt = new Date()
     formExpiresAt.setMinutes(formExpiresAt.getMinutes() + 10)
 
-    const start = new Date(date)
-    start.setHours(0, 0, 0, 0)
-
-    const end = new Date(date)
-    end.setHours(23, 59, 59, 999)
+    const start = startOfUtcDay(date)
+    const end = endOfUtcDay(date)
 
     if (parsed.sessionToken) {
       const rawActiveBooking = await Booking.findOne({
@@ -233,6 +231,7 @@ export async function POST(req: Request) {
       formExpiresAt: booking.formExpiresAt.toISOString(),
       demoExpiresAt: booking.demoExpiresAt.toISOString(),
       googleMeetLink: booking.googleMeetLink,
+      googleCalendarHtmlLink: booking.googleCalendarHtmlLink ?? null,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -287,6 +286,7 @@ export async function GET(req: Request) {
         formExpiresAt: activeBooking.formExpiresAt.toISOString(),
         demoExpiresAt: activeBooking.demoExpiresAt.toISOString(),
         googleMeetLink: activeBooking.googleMeetLink || buildGoogleMeetLink(activeBooking._id.toString()),
+        googleCalendarHtmlLink: activeBooking.googleCalendarHtmlLink ?? null,
         status: activeBooking.status,
         contactSubmitted: Boolean(existingContact),
         contact: existingContact
@@ -338,6 +338,7 @@ export async function GET(req: Request) {
       formExpiresAt: booking.formExpiresAt.toISOString(),
       demoExpiresAt: booking.demoExpiresAt.toISOString(),
       googleMeetLink: booking.googleMeetLink || buildGoogleMeetLink(booking._id.toString()),
+      googleCalendarHtmlLink: booking.googleCalendarHtmlLink ?? null,
       status: booking.status,
       contactSubmitted: Boolean(existingContact),
       contact: existingContact
@@ -403,11 +404,7 @@ export async function PATCH(req: Request) {
     }
 
     const nextBooking = rescheduled.booking
-    const [hour, min] = parsed.time.split(":").map(Number)
-    const start = new Date(nextBooking.date)
-    start.setUTCHours(hour, min, 0, 0)
-    const end = new Date(start)
-    end.setMinutes(end.getMinutes() + nextBooking.duration)
+    const { start, end } = buildBookingRange(nextBooking.date, nextBooking.time, nextBooking.duration)
 
     const contact =
       rescheduled.contact ||
@@ -492,6 +489,7 @@ export async function PATCH(req: Request) {
       formExpiresAt: nextBooking.formExpiresAt.toISOString(),
       demoExpiresAt: nextBooking.demoExpiresAt.toISOString(),
       googleMeetLink: nextBooking.googleMeetLink,
+      googleCalendarHtmlLink: nextBooking.googleCalendarHtmlLink ?? null,
       status: "confirmed",
     })
   } catch (error) {

@@ -313,15 +313,7 @@ export default function AdminBookingsPage() {
     }
   }
 
-  const visibleBookings = bookings.filter((booking) => {
-    if (booking.status !== "cancelled") return true
-    const bookingDate = new Date(booking.date)
-    const endOfDay = new Date(bookingDate)
-    endOfDay.setHours(23, 59, 59, 999)
-    return endOfDay.getTime() >= Date.now()
-  })
-
-  const counts = visibleBookings.reduce(
+  const counts = bookings.reduce(
     (acc, booking) => {
       acc.total += 1
       if (booking.status === "confirmed") acc.confirmed += 1
@@ -334,7 +326,11 @@ export default function AdminBookingsPage() {
     { total: 0, confirmed: 0, pending: 0, expired: 0, cancelled: 0, rescheduled: 0 }
   )
 
-  const filteredBookings = visibleBookings.filter((booking) => {
+  const filteredBookings = bookings.filter((booking) => {
+    if (statusFilter !== "cancelled" && booking.status === "cancelled") {
+      return false
+    }
+
     const bookingDate = new Date(booking.date)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -1114,7 +1110,7 @@ export default function AdminBookingsPage() {
                         <Badge variant={badgeVariantForStatus(booking.status)}>{statusLabel(booking.status)}</Badge>
                       </div>
                       {rescheduleTrace(booking) ? (
-                        <div className="rounded-lg border border-accent/20 bg-accent/5 px-3 py-2 text-xs text-accent">
+                        <div className="rounded-lg border border-accent/20 bg-accent/5 px-3 py-2 text-xs text-foreground">
                           {rescheduleTrace(booking)}
                         </div>
                       ) : null}
@@ -1161,8 +1157,7 @@ export default function AdminBookingsPage() {
                               <Icon
                                 icon={CalendarDays}
                                 size="xs"
-                                variant="default"
-                                className="text-accent drop-shadow-[0_0_10px_rgba(var(--accent-rgb),0.72)]"
+                                variant="accent"
                               />
                             </span>
                           </Button>

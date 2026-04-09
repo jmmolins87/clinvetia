@@ -28,6 +28,25 @@ export function buildBookingDateTime(date: Date, time: string) {
   return nextDate
 }
 
+export function buildBookingRange(date: Date, time: string, duration: number) {
+  const start = buildBookingDateTime(date, time)
+  const end = new Date(start)
+  end.setUTCMinutes(end.getUTCMinutes() + duration)
+  return { start, end }
+}
+
+export function startOfUtcDay(date: Date) {
+  const nextDate = new Date(date)
+  nextDate.setUTCHours(0, 0, 0, 0)
+  return nextDate
+}
+
+export function endOfUtcDay(date: Date) {
+  const nextDate = new Date(date)
+  nextDate.setUTCHours(23, 59, 59, 999)
+  return nextDate
+}
+
 export function formatBookingDate(
   value: Date | string,
   locale: string,

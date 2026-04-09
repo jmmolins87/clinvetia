@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/admin-auth"
 import { Booking } from "@/models/Booking"
 import { Contact } from "@/models/Contact"
 import { dbConnect } from "@/lib/db"
-import { buildGoogleMeetLink } from "@/lib/booking-communication"
+import { buildGoogleMeetLink, buildInternalBookingUrl } from "@/lib/booking-communication"
 import { expireOverdueBookings } from "@/lib/booking-expiration"
 import { listDemoBookings, listDemoContactsWithBookings } from "@/lib/admin-demo-bookings-state"
 
@@ -87,6 +87,7 @@ export async function GET(req: Request) {
           mensaje: contact?.mensaje || "",
           roi: contact?.roi || null,
           googleMeetLink: buildGoogleMeetLink(booking.id),
+          reservationUrl: buildInternalBookingUrl(booking.id),
           emailEvents: booking.emailEvents || [],
         }
       }),
@@ -261,6 +262,7 @@ export async function GET(req: Request) {
         rescheduledFromBookingId: b.rescheduledFromBookingId ? String(b.rescheduledFromBookingId) : null,
         rescheduledToBookingId: b.rescheduledToBookingId ? String(b.rescheduledToBookingId) : null,
         googleMeetLink: b.googleMeetLink || buildGoogleMeetLink(String(b._id)),
+        reservationUrl: buildInternalBookingUrl(String(b._id), b.accessToken),
         conversationSummary: typeof b.conversationSummary === "string" ? b.conversationSummary : "",
         conversationMessages: Array.isArray(b.conversationMessages)
           ? b.conversationMessages.map((message) => ({

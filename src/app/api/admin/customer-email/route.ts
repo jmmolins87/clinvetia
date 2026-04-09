@@ -16,6 +16,7 @@ import {
 import { canUseSharedMailbox, getSharedMailboxEmail } from "@/lib/admin-mailbox"
 import { addDemoSentMail } from "@/lib/admin-demo-mail-state"
 import { callN8nWebhook, isN8nConfigured } from "@/lib/n8n-integration"
+import { buildBookingRange } from "@/lib/booking-date"
 
 const schema = z.object({
   mailbox: z.enum(["self", "shared"]).default("shared"),
@@ -81,11 +82,11 @@ export async function POST(req: Request) {
     const attachments =
       bookingData && meetingLink
         ? (() => {
-            const [hour, min] = String(bookingData.time ?? "").split(":").map(Number)
-            const start = new Date(bookingData.date ?? Date.now())
-            start.setHours(hour, min, 0, 0)
-            const end = new Date(start)
-            end.setMinutes(end.getMinutes() + Number(bookingData.duration || 30))
+            const { start, end } = buildBookingRange(
+              new Date(bookingData.date ?? Date.now()),
+              String(bookingData.time ?? "00:00"),
+              Number(bookingData.duration || 30),
+            )
             const ics = buildICS({
               uid: bookingId || crypto.randomUUID(),
               start,
@@ -94,6 +95,7 @@ export async function POST(req: Request) {
               description: `Seguimiento de tu solicitud en Clinvetia. Enlace Google Meet: ${meetingLink}`,
               location: meetingLink,
               url: meetingLink,
+              timeZone: "Europe/Madrid",
               organizerEmail: supportEmail,
               attendeeEmail: parsed.to,
             })

@@ -3,10 +3,12 @@ import { Contact } from "@/models/Contact"
 import { Session } from "@/models/Session"
 
 const ROI_RESET = {
-  "roi.monthlyPatients": null,
-  "roi.averageTicket": null,
-  "roi.conversionLoss": null,
-  "roi.roi": null,
+  roi: {
+    monthlyPatients: null,
+    averageTicket: null,
+    conversionLoss: null,
+    roi: null,
+  },
 } as const
 
 function uniqueTokens(tokens: Array<string | null | undefined>) {

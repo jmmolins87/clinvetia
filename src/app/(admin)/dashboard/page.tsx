@@ -88,6 +88,7 @@ type OverviewResponse = {
       roi?: number
     } | null
     googleMeetLink?: string | null
+    reservationUrl?: string | null
     emailEvents?: Array<{
       category: string
       subject: string
@@ -304,6 +305,7 @@ function RecentBookingCard({
   onOpenConversation: (booking: RecentBooking) => void
 }) {
   const meetLink = booking.googleMeetLink || `https://meet.google.com/new#booking-${booking.id}`
+  const reservationUrl = booking.reservationUrl || null
   const hasConversation = Boolean(booking.conversationMessages && booking.conversationMessages.length > 0)
 
   return (
@@ -327,7 +329,7 @@ function RecentBookingCard({
           </div>
           <div className="break-all text-xs text-muted-foreground">{booking.duration} min · ID {booking.id.slice(-6)}</div>
           {rescheduleTrace(booking) ? (
-            <div className="mt-1 text-xs text-accent">{rescheduleTrace(booking)}</div>
+            <div className="mt-1 text-xs text-foreground">{rescheduleTrace(booking)}</div>
           ) : null}
         </div>
         <Badge className="self-start" variant={statusBadgeVariant(booking.status)}>{statusLabel(booking.status)}</Badge>
@@ -345,18 +347,36 @@ function RecentBookingCard({
 
         <div className="min-w-0 rounded-lg border border-white/10 bg-background/40 px-2 py-2 sm:px-3">
           <div className="text-[11px] uppercase tracking-wider">Resumen de demo</div>
-          <div className="mt-1">
+          <div className="mt-1 space-y-1">
             <div className="break-words">
               {formatBookingDate(booking.date, "es-ES")} · {booking.time} · {booking.duration} min
             </div>
-            <a
-              href={meetLink}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-block max-w-full break-all text-primary underline-offset-2 hover:underline"
-            >
-              {meetLink}
-            </a>
+            <div className="break-all">
+              <span>Meet: </span>
+              <a
+                href={meetLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block max-w-full text-primary underline-offset-2 hover:underline"
+              >
+                {meetLink}
+              </a>
+            </div>
+            <div className="break-all">
+              <span>Reserva: </span>
+              {reservationUrl ? (
+                <a
+                  href={reservationUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block max-w-full text-primary underline-offset-2 hover:underline"
+                >
+                  {reservationUrl}
+                </a>
+              ) : (
+                <span>No disponible</span>
+              )}
+            </div>
           </div>
         </div>
 

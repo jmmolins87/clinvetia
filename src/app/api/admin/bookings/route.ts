@@ -19,7 +19,15 @@ import { deleteBookingFromGoogleCalendar, syncBookingToGoogleCalendar } from "@/
 import { rescheduleExistingBooking } from "@/lib/booking-reschedule"
 import { clearRoiForBookingContext } from "@/lib/roi-cleanup"
 import { expireOverdueBookings } from "@/lib/booking-expiration"
-import { buildBookingDateTime, formatBookingDate, parseDateKey, DATE_KEY_REGEX } from "@/lib/booking-date"
+import {
+  buildBookingDateTime,
+  buildBookingRange,
+  endOfUtcDay,
+  formatBookingDate,
+  parseDateKey,
+  startOfUtcDay,
+  DATE_KEY_REGEX,
+} from "@/lib/booking-date"
 import { isBookableDemoTimeSlot, isValidDemoTimeSlot } from "@/lib/demo-schedule"
 import {
   createDemoBooking,
@@ -92,7 +100,7 @@ async function normalizeHistoricalBookingsByEmail(email: string, excludeBookingI
     .map((booking) => {
       const [hour = 0, minute = 0] = booking.time.split(":").map(Number)
       const date = new Date(booking.date)
-      date.setHours(hour, minute, 0, 0)
+      date.setUTCHours(hour, minute, 0, 0)
       return { id: String(booking._id), sortValue: date.getTime() }
     })
     .sort((left, right) => right.sortValue - left.sortValue)
@@ -166,6 +174,7 @@ export async function GET(req: Request) {
       rescheduledFromBookingId: b.rescheduledFromBookingId ? String(b.rescheduledFromBookingId) : null,
       rescheduledToBookingId: b.rescheduledToBookingId ? String(b.rescheduledToBookingId) : null,
       googleMeetLink: b.googleMeetLink ?? null,
+      googleCalendarHtmlLink: b.googleCalendarHtmlLink ?? null,
       conversationSummary: typeof b.conversationSummary === "string" ? b.conversationSummary : "",
       conversationMessages: Array.isArray(b.conversationMessages)
         ? b.conversationMessages.map((message) => ({
@@ -317,19 +326,16 @@ export async function POST(req: Request) {
       const date = parseDateKey(parsed.date)
       const start = buildBookingDateTime(date, parsed.time)
       const end = new Date(start)
-      end.setMinutes(end.getMinutes() + parsed.duration)
+      end.setUTCMinutes(end.getUTCMinutes() + parsed.duration)
       const demoExpiresAt = new Date(end)
-      const expiresAt = new Date(date)
-      expiresAt.setUTCHours(23, 59, 59, 999)
+      const expiresAt = endOfUtcDay(date)
       const formExpiresAt = new Date()
       formExpiresAt.setMinutes(formExpiresAt.getMinutes() + 10)
       const supportEmail = getSharedMailboxEmail()
       const brandName = "Clinvetia"
 
-      const startDay = new Date(date)
-      startDay.setUTCHours(0, 0, 0, 0)
-      const endDay = new Date(date)
-      endDay.setUTCHours(23, 59, 59, 999)
+      const startDay = startOfUtcDay(date)
+      const endDay = endOfUtcDay(date)
 
       const slotConflict = await Booking.findOne({
         date: { $gte: startDay, $lte: endDay },
@@ -494,15 +500,16 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         ok: true,
-        booking: {
-          id: bookingId,
-          status: booking.status,
-          date: booking.date.toISOString(),
-          time: booking.time,
-          duration: booking.duration,
-          googleMeetLink: meetingLink,
-        },
-      })
+          booking: {
+            id: bookingId,
+            status: booking.status,
+            date: booking.date.toISOString(),
+            time: booking.time,
+            duration: booking.duration,
+            googleMeetLink: meetingLink,
+            googleCalendarHtmlLink: booking.googleCalendarHtmlLink ?? null,
+          },
+        })
     }
     const booking = await Booking.findById(parsed.id)
     if (!booking) {
@@ -519,6 +526,21 @@ export async function POST(req: Request) {
 
     const deleteCancelsBooking = parsed.action === "delete" && !["cancelled", "expired"].includes(booking.status)
 
+    if (parsed.action === "status" && booking.status === parsed.status) {
+      return NextResponse.json({
+        ok: true,
+        booking: {
+          id: bookingId,
+          status: booking.status,
+          date: booking.date.toISOString(),
+          time: booking.time,
+          duration: booking.duration,
+          googleMeetLink: booking.googleMeetLink ?? null,
+          googleCalendarHtmlLink: booking.googleCalendarHtmlLink ?? null,
+        },
+      })
+    }
+
     if (parsed.action === "delete") {
       if (deleteCancelsBooking) {
         await Booking.updateOne({ _id: booking._id }, { $set: { status: "cancelled" } })
@@ -526,11 +548,7 @@ export async function POST(req: Request) {
         await deleteBookingFromGoogleCalendar(booking.googleCalendarEventId ?? null)
 
         if (contact?.email) {
-          const [hour, min] = booking.time.split(":").map(Number)
-          const start = new Date(booking.date)
-          start.setUTCHours(hour, min, 0, 0)
-          const end = new Date(start)
-          end.setMinutes(end.getMinutes() + booking.duration)
+          const { start, end } = buildBookingRange(booking.date, booking.time, booking.duration)
           const dateLabel = formatBookingDate(booking.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
           const subject = "Tu demo ha sido cancelada"
           const htmlContent = leadSummaryEmail({
@@ -636,11 +654,7 @@ export async function POST(req: Request) {
       }
 
       if (contact?.email && (parsed.status === "confirmed" || parsed.status === "cancelled")) {
-        const [hour, min] = booking.time.split(":").map(Number)
-        const start = new Date(booking.date)
-        start.setUTCHours(hour, min, 0, 0)
-        const end = new Date(start)
-        end.setMinutes(end.getMinutes() + booking.duration)
+        const { start, end } = buildBookingRange(booking.date, booking.time, booking.duration)
         const dateLabel = formatBookingDate(booking.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
         const timeLabel = booking.time
 
@@ -725,15 +739,12 @@ export async function POST(req: Request) {
       }
 
       const date = parseDateKey(parsed.date)
-      const [hour, min] = parsed.time.split(":").map(Number)
       const demoDateTime = buildBookingDateTime(date, parsed.time)
       const demoExpiresAt = new Date(demoDateTime)
-      demoExpiresAt.setMinutes(demoExpiresAt.getMinutes() + parsed.duration)
+      demoExpiresAt.setUTCMinutes(demoExpiresAt.getUTCMinutes() + parsed.duration)
 
-      const startDay = new Date(date)
-      startDay.setUTCHours(0, 0, 0, 0)
-      const endDay = new Date(date)
-      endDay.setUTCHours(23, 59, 59, 999)
+      const startDay = startOfUtcDay(date)
+      const endDay = endOfUtcDay(date)
 
       const slotConflict = await Booking.findOne({
         _id: { $ne: booking._id },
@@ -796,10 +807,7 @@ export async function POST(req: Request) {
       }
 
       if (contact?.email) {
-        const start = new Date(nextBooking.date)
-        start.setUTCHours(hour, min, 0, 0)
-        const end = new Date(start)
-        end.setMinutes(end.getMinutes() + parsed.duration)
+        const { start, end } = buildBookingRange(nextBooking.date, nextBooking.time, nextBooking.duration)
         const dateLabel = formatBookingDate(nextBooking.date, "es-ES", { weekday: "long", day: "numeric", month: "long" })
         const timeLabel = nextBooking.time
 
@@ -907,6 +915,8 @@ export async function POST(req: Request) {
         date: booking.date.toISOString(),
         time: booking.time,
         duration: booking.duration,
+        googleMeetLink: booking.googleMeetLink ?? null,
+        googleCalendarHtmlLink: booking.googleCalendarHtmlLink ?? null,
       },
     })
   } catch (error) {
