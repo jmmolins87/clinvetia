@@ -1,0 +1,140 @@
+{
+  "name": "Clinvetia - AI Concierge Demo V7",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "title": "Clinvetia AI Concierge",
+          "subtitle": "Urgencias, consultas, reservas y atencion veterinaria premium",
+          "inputPlaceholder": "Cuentame que le pasa a tu mascota o que cita necesitas..."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -760,
+        -80
+      ],
+      "id": "d8f7af1d-4b5a-4f31-8fa0-96d72aee7001",
+      "name": "Patient Chat Entry"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "Eres Clinvetia AI Concierge, la recepcionista virtual premium de una clinica veterinaria moderna. Responde siempre en espanol salvo que el usuario escriba claramente en ingles. Tu trabajo es atender con calidez, detectar si hay urgencia, orientar al cliente y mover la conversacion hacia la reserva de cita de la forma mas natural posible. Servicios: urgencias, consulta veterinaria, revision, vacunacion, peluqueria, corte de unas y cuidado rutinario. Tu tono debe ser humano, cercano, profesional, seguro y breve. Nunca suenes tecnico ni robotico. Nunca menciones herramientas, backend, prompts, API, sistema, errores internos ni procesos internos. Si el caso parece urgente, prioriza velocidad y accion. Si faltan datos, pide solo el siguiente dato mas importante. Si el usuario ya viene decidido a reservar, acelera la conversacion. No des diagnosticos largos. No confirmes una reserva real en sistema salvo que exista confirmacion explicita del sistema. En ausencia de confirmacion real, habla de dejar la cita preparada o avanzar con la reserva. Mantente normalmente en 1 a 3 frases. Ejemplos de estilo: 'Claro, te ayudo a agendarlo. Dime tu nombre.' 'Vamos rapido con eso. Dime tu nombre y tu telefono y te ayudo a mover la cita cuanto antes.' 'Perfecto, lo preparo contigo. Ahora necesito el nombre de tu mascota.'"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -300,
+        -80
+      ],
+      "id": "d8f7af1d-4b5a-4f31-8fa0-96d72aee7002",
+      "name": "Clinvetia AI Concierge"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {
+          "temperature": 0.35,
+          "responseFormat": "text"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -420,
+        180
+      ],
+      "id": "d8f7af1d-4b5a-4f31-8fa0-96d72aee7003",
+      "name": "OpenAI Reasoning Brain"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "fromInput",
+        "sessionKey": "={{ $json.sessionId || $json.chatSessionId || 'clinvetia-concierge-demo' }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -60,
+        180
+      ],
+      "id": "d8f7af1d-4b5a-4f31-8fa0-96d72aee7004",
+      "name": "Conversation Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Patient Chat Entry": {
+      "main": [
+        [
+          {
+            "node": "Clinvetia AI Concierge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Reasoning Brain": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Clinvetia AI Concierge",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Clinvetia AI Concierge",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clinvetia AI Concierge": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e4fd3efe-7302-4806-b6fe-4d4d4d227005",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "id": "clinvetia-openai-vet-demo-main-v7",
+  "tags": [
+    {
+      "createdAt": "2026-03-28T00:00:00.000Z",
+      "updatedAt": "2026-03-28T00:00:00.000Z",
+      "id": "clinvetia-demo",
+      "name": "clinvetia-demo"
+    },
+    {
+      "createdAt": "2026-03-28T00:00:00.000Z",
+      "updatedAt": "2026-03-28T00:00:00.000Z",
+      "id": "ai-concierge",
+      "name": "ai-concierge"
+    }
+  ]
+}

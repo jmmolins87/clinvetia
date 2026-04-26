@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { dbConnect } from "@/lib/db"
 import { WhatsAppConversation } from "@/models/WhatsAppConversation"
 import { Session } from "@/models/Session"
-import { callN8nWebhook, isN8nConfigured } from "@/lib/n8n-integration"
+import { callN8nWhatsAppWebhook, isN8nWhatsAppConfigured } from "@/lib/n8n-integration"
 import { sendWhatsAppText } from "@/lib/kapso-whatsapp"
 
 type ChatAssistantResponse = {
@@ -259,16 +259,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, ignored: true })
     }
 
-    if (isN8nConfigured()) {
+    if (isN8nWhatsAppConfigured()) {
       for (const message of messages) {
         const text = String(message.text || "").trim()
         const phone = String(message.from || "").trim()
         if (!text || !phone) continue
 
-        await callN8nWebhook({
+        await callN8nWhatsAppWebhook({
+          event: "whatsapp.message.received",
           channel: "whatsapp",
+          source: "kapso",
           message: text,
           phone,
+          phoneNumberId: typeof body?.phone_number_id === "string" ? body.phone_number_id : null,
           history: [],
           locale: "es",
         })

@@ -24,6 +24,18 @@ export function isN8nChatConfigured() {
   return Boolean(getN8nChatWebhookUrl())
 }
 
+export function getN8nWhatsAppWebhookUrl() {
+  return getTrimmedEnv("N8N_WHATSAPP_WEBHOOK_URL") || getN8nWebhookUrl()
+}
+
+export function getN8nWhatsAppWebhookSecret() {
+  return getTrimmedEnv("N8N_WHATSAPP_WEBHOOK_SECRET") || getTrimmedEnv("N8N_WEBHOOK_SECRET")
+}
+
+export function isN8nWhatsAppConfigured() {
+  return Boolean(getN8nWhatsAppWebhookUrl())
+}
+
 async function postToWebhook<T = Record<string, unknown>>(
   webhookUrl: string | null,
   secret: string | null,
@@ -88,4 +100,11 @@ export async function callN8nChatWebhook<T = Record<string, unknown>>(
   options?: { timeoutMs?: number },
 ) {
   return postToWebhook<T>(getN8nChatWebhookUrl(), getN8nChatWebhookSecret(), payload, options)
+}
+
+export async function callN8nWhatsAppWebhook<T = Record<string, unknown>>(
+  payload: Record<string, unknown>,
+  options?: { timeoutMs?: number },
+) {
+  return postToWebhook<T>(getN8nWhatsAppWebhookUrl(), getN8nWhatsAppWebhookSecret(), payload, options)
 }
