@@ -264,7 +264,7 @@ export async function POST(req: Request) {
         const phone = String(message.from || "").trim()
         if (!text || !phone) continue
 
-        void callN8nWhatsAppWebhook({
+        const n8nResult = await callN8nWhatsAppWebhook({
           event: "whatsapp.message.received",
           channel: "whatsapp",
           source: "kapso",
@@ -273,20 +273,15 @@ export async function POST(req: Request) {
           phoneNumberId: typeof body?.phone_number_id === "string" ? body.phone_number_id : null,
           history: [],
           locale: "es",
-        }).then((result) => {
-          if (!result?.ok) {
-            console.error("N8N WhatsApp webhook failed", {
-              phone,
-              status: result?.status ?? null,
-              error: result?.error ?? "N8N request failed",
-            })
-          }
-        }).catch((error) => {
-          console.error("N8N WhatsApp webhook threw", {
-            phone,
-            error: error instanceof Error ? error.message : "N8N request failed",
-          })
         })
+
+        if (!n8nResult?.ok) {
+          console.error("N8N WhatsApp webhook failed", {
+            phone,
+            status: n8nResult?.status ?? null,
+            error: n8nResult?.error ?? "N8N request failed",
+          })
+        }
       }
 
       return NextResponse.json({ ok: true, delegatedToN8n: true })

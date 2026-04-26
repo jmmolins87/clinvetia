@@ -38,6 +38,7 @@ describe("POST /api/whatsapp/webhook", () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    vi.useRealTimers()
     mockDbConnect.mockResolvedValue(undefined)
     mockConversationFindOne.mockReturnValue({
       lean: vi.fn().mockResolvedValue(null),
@@ -52,13 +53,8 @@ describe("POST /api/whatsapp/webhook", () => {
     })
   })
 
-  it("returns before waiting for n8n to finish", async () => {
-    let resolveN8n: ((value: unknown) => void) | null = null
-    const pendingN8n = new Promise((resolve) => {
-      resolveN8n = resolve
-    })
-    mockCallN8nWhatsAppWebhook.mockReturnValue(pendingN8n)
-
+  it("waits for n8n to finish before responding", async () => {
+    vi.useFakeTimers()
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -76,6 +72,12 @@ describe("POST /api/whatsapp/webhook", () => {
     )
 
     const { POST } = await import("./route")
+
+    mockCallN8nWhatsAppWebhook.mockReturnValue(
+      new Promise((resolve) => {
+        setTimeout(() => resolve({ ok: true, data: { reply: "Hola" } }), 20)
+      }),
+    )
 
     const request = new Request("http://localhost/api/whatsapp/webhook", {
       method: "POST",
@@ -99,15 +101,10 @@ describe("POST /api/whatsapp/webhook", () => {
     })
 
     const responsePromise = POST(request)
-    const settled = await Promise.race([
-      responsePromise.then(() => "resolved"),
-      new Promise<string>((resolve) => setTimeout(() => resolve("timeout"), 200)),
-    ])
+    await vi.advanceTimersByTimeAsync(20)
+    const response = await responsePromise
 
-    resolveN8n?.({ ok: true, data: { reply: "Hola" } })
-
-    expect(settled).toBe("resolved")
-    await expect(responsePromise).resolves.toMatchObject({ status: 200 })
+    expect(response.status).toBe(200)
     expect(mockCallN8nWhatsAppWebhook).toHaveBeenCalledTimes(1)
   })
 })
