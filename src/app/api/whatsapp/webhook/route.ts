@@ -259,13 +259,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, ignored: true })
     }
 
+    let messagesToProcess = messages
+
     if (isN8nWhatsAppConfigured()) {
+      const failedMessages: InboundWhatsAppMessage[] = []
+
       for (const message of messages) {
         const text = String(message.text || "").trim()
         const phone = String(message.from || "").trim()
         if (!text || !phone) continue
 
-        await callN8nWhatsAppWebhook({
+        const n8nResult = await callN8nWhatsAppWebhook({
           event: "whatsapp.message.received",
           channel: "whatsapp",
           source: "kapso",
@@ -275,14 +279,27 @@ export async function POST(req: Request) {
           history: [],
           locale: "es",
         })
+
+        if (!n8nResult?.ok) {
+          failedMessages.push(message)
+          console.error("N8N WhatsApp webhook failed, falling back to local handling", {
+            phone,
+            status: n8nResult?.status ?? null,
+            error: n8nResult?.error ?? "N8N request failed",
+          })
+        }
       }
 
-      return NextResponse.json({ ok: true, delegatedToN8n: true })
+      if (!failedMessages.length) {
+        return NextResponse.json({ ok: true, delegatedToN8n: true })
+      }
+
+      messagesToProcess = failedMessages
     }
 
     await dbConnect()
 
-    for (const message of messages) {
+    for (const message of messagesToProcess) {
       const phone = String(message.from)
       const text = String(message.text || "").trim()
       if (!text) continue
